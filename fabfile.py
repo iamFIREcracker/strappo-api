@@ -38,7 +38,7 @@ def dev():
     env.site_path = '/srv/www/poolit'
     env.venv_path = '/srv/www/poolit/venv'
     env.uploads_path = '/srv/www/poolit/static/uploads'
-    env.site_url  = 'http://poolit.matteolandi.net:8080'
+    env.site_url  = 'http://localhost:8080/hello'
 
 
 
