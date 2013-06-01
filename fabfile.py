@@ -135,14 +135,6 @@ def vsdo(cmd=""):
             sudo(env.venv_path.rstrip('/') + '/bin/' + cmd)
 
 @task
-def cupload():
-    '''Upload the configuration file on the remote server.'''
-    with cd(env.site_path):
-        put('prod_config.py', 'prod_config.py')
-
-
-
-@task
 def dbupdate():
     '''Update the database schema.'''
     vcmd('alembic upgrade head')
@@ -245,9 +237,6 @@ def bootstrap():
         print(cyan("Cloning repo..."))
         rclone()
 
-    print(cyan("Uploading config..."))
-    cupload()
-
     print(cyan("Applying puppet manifest..."))
     papply()
 
@@ -268,9 +257,6 @@ def update():
     if 'skip_repo' not in env:
         print(cyan("Updating repo..."))
         rupdate()
-
-    print(cyan("Uploading config..."))
-    cupload()
 
     print(cyan("Applying puppet manifest..."))
     papply()
