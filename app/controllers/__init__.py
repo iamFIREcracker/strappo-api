@@ -3,5 +3,5 @@
 
 
 class HelloHandler(object):
-    def GET():
+    def GET(self):
         return 'Hello world!'
