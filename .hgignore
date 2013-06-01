@@ -1,6 +1,6 @@
 syntax: glob
 
-*db
+*sqlite
 *pyc
 .vagrant
 build/*
