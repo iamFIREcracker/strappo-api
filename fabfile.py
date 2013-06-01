@@ -19,6 +19,7 @@ from fabric.decorators import task
 
 
 env.repo_url = 'ssh://hg@bitbucket.org/iamFIREcracker/poolit'
+env.repo_branch = 'default'
 
 
 def vagrant_key():
@@ -39,6 +40,7 @@ def dev():
     env.venv_path = '/srv/www/poolit/venv'
     env.uploads_path = '/srv/www/poolit/static/uploads'
     env.site_url  = 'http://localhost:8080/hello'
+    env.repo_branch = 'develop'
 
 
 
@@ -187,13 +189,13 @@ def rclone():
 
     run('sudo mkdir -p %s' % env.site_path)
     run('sudo chown %s:%s %s' % (env.user, env.user, env.site_path))
-    run('hg clone %s %s' % (env.repo_url, env.site_path))
+    run('hg clone -b %s %s %s' % (env.repo_branch, env.repo_url, env.site_path))
 
 
 @task
 def rupdate():
     ''' Update the repository. '''
-
+    cmd('hg update %s' % (env.repo_branch,))
     cmd('hg pull -u')
 
 
