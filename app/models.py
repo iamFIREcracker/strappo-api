@@ -3,8 +3,8 @@
 
 from datetime import datetime
 
-from weblub.db import declarative_base
-from weblub.db import uuid
+from weblib.db import declarative_base
+from weblib.db import uuid
 from weblib.db import Boolean
 from weblib.db import Column
 from weblib.db import DateTime
