@@ -18,6 +18,9 @@ import web
 from logging import getLogger, StreamHandler, Formatter, getLoggerClass, DEBUG
 
 
+__all__ = ['create_logger']
+
+
 def create_logger():
     """Creates a logger for the given application.
     
