@@ -6,5 +6,6 @@ syntax: glob
 build/*
 cscope*
 dist/*
+local_config.py
 poolit.egg*
 tags
