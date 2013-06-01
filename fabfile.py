@@ -194,8 +194,8 @@ def rclone():
 @task
 def rupdate():
     ''' Update the repository. '''
-    cmd('hg update %s' % (env.repo_branch,))
     cmd('hg pull -u')
+    cmd('hg update %s' % (env.repo_branch,))
 
 
 @task
