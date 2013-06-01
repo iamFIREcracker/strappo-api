@@ -8,7 +8,6 @@ from fabric.api import hide
 from fabric.api import cd
 from fabric.api import env
 from fabric.api import local
-from fabric.api import put
 from fabric.api import run
 from fabric.api import require
 from fabric.api import settings
@@ -223,11 +222,6 @@ def prerequisites():
 
 
 @task
-def compile():
-    ''' Compile all the dynamic resources (e.g. png from svg). '''
-    cmd("find static/images/ -iname '*svg' -exec convert -background none {} {}.png \;")
-
-@task
 def bootstrap():
     ''' Configure the app '''
     print(cyan("Prerequisites..."))
@@ -245,9 +239,6 @@ def bootstrap():
 
     print(cyan('Initialize database...'))
     dbupdate()
-
-    print(cyan('Compiling stuff...'))
-    compile()
 
     restart()
 
@@ -267,17 +258,14 @@ def update():
     print(cyan('Updating database...'))
     dbupdate()
 
-    print(cyan('Compiling stuff...'))
-    compile()
-
     restart()
 
 
 @task
 def restart():
     ''' Restart the app.  Usable from other commands or from the CLI.'''
-    print(cyan("Restarting rabbitmq..."))
-    sdo("service rabbitmq-server restart")
+    print(cyan("Restarting celery..."))
+    sdo("service redis-server restart")
 
     print(cyan("Restarting celery..."))
     cmd("sudo supervisorctl restart celery")
