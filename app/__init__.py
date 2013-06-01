@@ -37,7 +37,6 @@ def get_version():
 
 def app_factory():
     """App factory."""
-    from app.database import create_session
     from app.logging import create_logger
     from app.tools.app_processors import load_logger
     from app.tools.app_processors import load_path_url
@@ -45,6 +44,7 @@ def app_factory():
     from app.tools.app_processors import load_session
     from app.tools.app_processors import load_sqla
     from app.urls import URLS
+    from weblib.db import create_session
 
     views = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'views')
     app = web.application(URLS, globals())
