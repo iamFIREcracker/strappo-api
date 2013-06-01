@@ -17,7 +17,7 @@ class Future(object):
 
     def get(self):
         """Gets the object contained by the future."""
-        self._queue.get()
+        return self._queue.get()
 
 
 class Publisher(object):
