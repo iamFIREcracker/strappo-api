@@ -1,7 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
+
+import web
+
 import app.config
+
+
+web.config.debug = app.config.debug
+web.config.debug_sql = app.config.debug_sql
+
+web.config.DEV = app.config.DEV
+
+web.config.LOGGER_NAME = app.config.LOGGER_NAME
+web.config.LOG_ENABLE = app.config.LOG_ENABLE
+web.config.LOG_FORMAT = app.config.LOG_FORMAT
+
+web.config.DATABASE_URL = app.config.DATABASE_URL
+
 
 
 def get_name():
@@ -18,3 +35,28 @@ def get_version():
     pending, _ = proc.communicate()
     return "%(tag)sd%(pending)s" % dict(tag=app.config.TAG, pending=pending)
 
+
+def create_app():
+    """App factory."""
+    from app.database import create_session
+    from app.logging import create_logger
+    from app.tools.app_processors import load_logger
+    from app.tools.app_processors import load_path_url
+    from app.tools.app_processors import load_render
+    from app.tools.app_processors import load_session
+    from app.tools.app_processors import load_sqla
+    from app.urls import URLS
+
+    views = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'views')
+    app = web.application(URLS, globals())
+    dbpath = web.config.DATABASE_URL.replace('sqlite:///', '')
+    db = web.database(dbn='sqlite', db=dbpath)
+    session = web.session.Session(app, web.session.DBStore(db, 'session'))
+
+    app.add_processor(web.loadhook(load_path_url))
+    app.add_processor(web.loadhook(load_logger(create_logger(web.config))))
+    app.add_processor(web.loadhook(load_render(views)))
+    app.add_processor(web.loadhook(load_session(session)))
+    app.add_processor(load_sqla(create_session()))
+
+    return app
