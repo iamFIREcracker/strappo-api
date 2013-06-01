@@ -3,27 +3,12 @@
 
 import os
 
-import web
-
-import app.config
-
-
-web.config.debug = app.config.debug
-web.config.debug_sql = app.config.debug_sql
-
-web.config.DEV = app.config.DEV
-
-web.config.LOGGER_NAME = app.config.LOGGER_NAME
-web.config.LOG_ENABLE = app.config.LOG_ENABLE
-web.config.LOG_FORMAT = app.config.LOG_FORMAT
-
-web.config.DATABASE_URL = app.config.DATABASE_URL
-
+from . import config
 
 
 def get_name():
     """Gets the name of the application."""
-    return app.config.APP_NAME
+    return config.APP_NAME
 
 
 def get_version():
@@ -33,11 +18,25 @@ def get_version():
             'hg log -r tip --template "{latesttagdistance}"',
             shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     pending, _ = proc.communicate()
-    return "%(tag)sd%(pending)s" % dict(tag=app.config.TAG, pending=pending)
+    return "%(tag)sd%(pending)s" % dict(tag=config.TAG, pending=pending)
 
 
-def create_app():
+def app_factory():
     """App factory."""
+    import web
+
+    web.config.debug = config.debug
+    web.config.debug_sql = config.debug_sql
+
+    web.config.DEV = config.DEV
+
+    web.config.LOGGER_NAME = config.LOGGER_NAME
+    web.config.LOG_ENABLE = config.LOG_ENABLE
+    web.config.LOG_FORMAT = config.LOG_FORMAT
+
+    web.config.DATABASE_URL = config.DATABASE_URL
+
+
     from app.database import create_session
     from app.logging import create_logger
     from app.tools.app_processors import load_logger
