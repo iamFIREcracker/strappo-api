@@ -54,7 +54,8 @@ def create_app():
     session = web.session.Session(app, web.session.DBStore(db, 'session'))
 
     app.add_processor(web.loadhook(load_path_url))
-    app.add_processor(web.loadhook(load_logger(create_logger(web.config))))
+    app.add_processor(web.loadhook(load_logger(lambda:
+                                               create_logger(web.config))))
     app.add_processor(web.loadhook(load_render(views)))
     app.add_processor(web.loadhook(load_session(session)))
     app.add_processor(load_sqla(create_session()))
