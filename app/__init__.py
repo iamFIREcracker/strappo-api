@@ -7,8 +7,8 @@ import web
 
 from . import config
 
-web.config.debug = config.debug
-web.config.debug_sql = config.debug_sql
+web.config.debug = web.config.DEBUG = config.debug
+web.config.debug_sql = web.config.DEBUG_SQL = config.debug_sql
 
 web.config.DEV = config.DEV
 
@@ -37,14 +37,13 @@ def get_version():
 
 def app_factory():
     """App factory."""
-    from app.logging import create_logger
-    from app.tools.app_processors import load_logger
-    from app.tools.app_processors import load_path_url
-    from app.tools.app_processors import load_render
-    from app.tools.app_processors import load_session
-    from app.tools.app_processors import load_sqla
+    import weblib.db
     from app.urls import URLS
-    from weblib.db import create_session
+    from app.weblib.app_processors import load_logger
+    from app.weblib.app_processors import load_path_url
+    from app.weblib.app_processors import load_render
+    from app.weblib.app_processors import load_session
+    from app.weblib.app_processors import load_and_manage_orm
 
     views = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'views')
     app = web.application(URLS, globals())
@@ -52,11 +51,10 @@ def app_factory():
     db = web.database(dbn='sqlite', db=dbpath)
     session = web.session.Session(app, web.session.DBStore(db, 'session'))
 
+    app.add_processor(web.loadhook(load_logger))
     app.add_processor(web.loadhook(load_path_url))
-    app.add_processor(web.loadhook(load_logger(lambda:
-                                               create_logger(web.config))))
     app.add_processor(web.loadhook(load_render(views)))
     app.add_processor(web.loadhook(load_session(session)))
-    app.add_processor(load_sqla(create_session()))
+    app.add_processor(load_and_manage_orm(weblib.db.create_session()))
 
     return app

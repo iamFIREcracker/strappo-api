@@ -4,20 +4,18 @@
 import web
 from web.contrib.template import render_jinja
 
-from weblib.logging import create_logger
+from app.weblib.logging import create_logger
 
 
 
-def load_logger(logfactory=None):
+def load_logger():
     '''Add a logger to the shared context.'''
-    reallogfactory = create_logger if logfactory is None else logfactory
-    def inner():
-        web.ctx.logger = reallogfactory()
-    return inner
+    web.ctx.logger = create_logger()
 
 
-def load_pathurl():
-    '''Add path_url property to the shared context.'''
+def load_path_url():
+    '''Add 'path_url' property to the shared context containing the
+    concatenation of ``web.ctx.home`` and ``web.ctx.path``.'''
     web.ctx.path_url = web.ctx.home + web.ctx.path
 
 
@@ -50,13 +48,7 @@ def load_session(session):
     return inner
 
 
-def load_orm(ormfactory):
-    '''Load the database orm layer into the shared context.'''
-    def inner():
-        web.ctx.orm = ormfactory()
-    return inner
-
-def load_manage_orm(ormfactory):
+def load_and_manage_orm(ormfactory):
     '''Load ORM database connection and manage exceptions properly.'''
     def inner(handler):
         web.ctx.orm = ormfactory()
