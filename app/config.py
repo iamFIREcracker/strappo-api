@@ -12,3 +12,8 @@ LOG_ENABLE = True
 LOG_FORMAT = '[%(process)d] %(levelname)s %(message)s [in %(pathname)s:%(lineno)d]'
 
 DATABASE_URL = 'sqlite:///appdb.sqlite'
+
+try:
+    from local_config import *
+except ImportError:
+    pass
