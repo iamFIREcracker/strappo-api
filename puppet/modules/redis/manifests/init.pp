@@ -1,9 +1,9 @@
 class redis {
-  package { [ 'redis' ]:
+  package { [ 'redis-server' ]:
     ensure => 'installed',
   }
-  service { 'redis':
+  service { 'redis-server':
     ensure => running,
-    require => Package['redis']
+    require => Package['redis-server']
   }
 }
