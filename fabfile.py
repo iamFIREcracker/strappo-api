@@ -38,7 +38,6 @@ def dev():
 
     env.site_path = '/srv/www/poolit'
     env.venv_path = '/srv/www/poolit/venv'
-    env.uploads_path = '/srv/www/poolit/static/uploads'
     env.site_url  = 'http://localhost:8080/hello'
     env.repo_branch = 'develop'
 
@@ -274,20 +273,3 @@ def restart():
 
     print(cyan("Restarting gunicorn..."))
     cmd("sudo supervisorctl restart gunicorn")
-
-
-@task
-def pull_uploads():
-    '''Copy the uploads from the site to your local machine.'''
-    require('uploads_path')
-
-    sudo('chmod -R a+r "%s"' % env.uploads_path)
-
-    rsync_command = r"""rsync -av -e 'ssh -p %s' %s@%s:%s %s""" % (
-        env.port,
-        env.user, env.host,
-        env.uploads_path.rstrip('/') + '/',
-        'static/uploads'
-    )
-    print local(rsync_command, capture=False)
-
