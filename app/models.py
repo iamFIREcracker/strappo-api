@@ -3,15 +3,18 @@
 
 from datetime import datetime
 
-from sqlalchemy import Column
-from sqlalchemy import String
-from sqlalchemy import Text
-from sqlalchemy import Time
+from weblub.db import declarative_base
+from weblub.db import uuid
+from weblib.db import Boolean
+from weblib.db import Column
+from weblib.db import DateTime
+from weblib.db import String
+from weblib.db import Text
+from weblib.db import Time
 
-import app.database
 
 
-Base = app.database.declarative_base()
+Base = declarative_base()
 
 
 class Session(Base):
