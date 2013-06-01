@@ -3,15 +3,15 @@
 
 import sys
 
+import web
 from werkzeug.debug import DebuggedApplication
 
-import app.config as config
-from app import create_app
+from app import app_factory
 
 
-app = create_app()
+app = app_factory()
 
-if config.DEBUG:
+if web.config.debug:
     def nointernalerror():
         raise sys.exc_info()
     app.internalerror = nointernalerror

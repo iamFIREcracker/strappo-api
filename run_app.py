@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from app import create_app
+from app import app_factory
 
 
 if __name__ == '__main__':
-    create_app().run()
+    app_factory().run()
