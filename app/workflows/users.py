@@ -24,7 +24,7 @@ def add_user(logger, params, repository):
 
     class UserUpdaterSubscriber(object):
         def user_created(self, userid, name, phone, avatar):
-            res.set((True, None))
+            res.set((True, userid))
 
     formvalidator.add_subscriber(logger, FormValidatorSubscriber())
     usercreator.add_subscriber(logger, UserUpdaterSubscriber())
