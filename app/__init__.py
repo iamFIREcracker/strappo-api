@@ -37,8 +37,6 @@ def get_version():
 
 def app_factory():
     """App factory."""
-    import web
-
     from app.database import create_session
     from app.logging import create_logger
     from app.tools.app_processors import load_logger
