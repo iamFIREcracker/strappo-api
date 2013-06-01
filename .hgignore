@@ -1,0 +1,10 @@
+syntax: glob
+
+*db
+*pyc
+.vagrant
+build/*
+cscope*
+dist/*
+poolit.egg*
+tags
