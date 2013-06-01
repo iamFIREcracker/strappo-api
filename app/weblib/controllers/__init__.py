@@ -8,7 +8,7 @@ import web
 
 class AbstractCookieAuthorizedController(object):
     """
-    >>> class Handler(BaseHandler):
+    >>> class Handler(AbstractCookieAuthorizedController):
     ...   def get_user(self, userid):
     ...     return 'ok' if userid == 'valid' else 'no'
 
