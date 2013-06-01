@@ -7,9 +7,8 @@ from web import form
 __all__ = ['add']
 
 
-def validurl(v):
-    """Verifies that the given string starts with 'http://'"""
-    return v.startswith('http://')
+validurl = form.Validator('Should be a valid URL.',
+                          lambda v: v.startswith('http://'))
 
 
 add = form.Form(form.Textbox('name', form.notnull, description='Name',
