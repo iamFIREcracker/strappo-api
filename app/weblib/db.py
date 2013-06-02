@@ -8,6 +8,7 @@ from sqlalchemy import create_engine as _create_engine
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import DateTime
+from sqlalchemy import ForeignKey
 from sqlalchemy import String
 from sqlalchemy import Text
 from sqlalchemy import Time
@@ -17,7 +18,8 @@ from sqlalchemy.ext.declarative import declarative_base as _declarative_base
 
 
 __all__ = ['create_engine', 'create_session', 'declarative_base', 'init_db',
-           'uuid', 'Boolean', 'Column', 'DateTime', 'String', 'Text', 'Time']
+           'uuid', 'Boolean', 'Column', 'DateTime', 'ForeignKey', 'String',
+           'Text', 'Time']
 
 
 def create_engine():

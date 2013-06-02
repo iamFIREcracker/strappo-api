@@ -9,15 +9,20 @@ import web
 class AbstractCookieAuthorizedController(object):
     """
     >>> class Handler(AbstractCookieAuthorizedController):
-    ...   def get_user(self, userid):
-    ...     return 'ok' if userid == 'valid' else 'no'
+    ...   def get_user(self, token):
+    ...     return 'ok' if token == 'valid' else 'no'
 
     >>> web.cookies = lambda: dict()
     >>> this = Handler()
     >>> this.current_user
     'no'
 
-    >>> web.cookies = lambda: dict(userid='valid')
+    >>> web.cookies = lambda: dict(token='invalid')
+    >>> this = Handler()
+    >>> this.current_user
+    'no'
+
+    >>> web.cookies = lambda: dict(token='valid')
     >>> this = Handler()
     >>> this.current_user
     'ok'
@@ -27,11 +32,11 @@ class AbstractCookieAuthorizedController(object):
     @property
     def current_user(self):
         if not hasattr(self, '_current_user'):
-            userid = web.cookies().get('userid')
+            userid = web.cookies().get('token')
             self._current_user = self.get_user(userid)
         return self._current_user
 
     @abc.abstractmethod
-    def get_user(self, userid):
-        """Gets the user identified by ``userid`` or None otherwise."""
+    def get_user(self, token):
+        """Gets the user identified associated with ``token``."""
         pass

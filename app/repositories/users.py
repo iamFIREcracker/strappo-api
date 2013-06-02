@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 
 from app.models import User
+from app.models import Token
 
 
 class UsersRepository(object):
 
     @staticmethod
-    def get(userid):
-        """Get the user identified by ``userid`` or None otherwise."""
-        return User.query.filter_by(id=userid, deleted=False).first()
+    def authorized_by(token):
+        return User.query.join(User).filter(Token.id == token).\
+                filter(User.deleted == False).first()

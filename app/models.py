@@ -8,6 +8,7 @@ from weblib.db import uuid
 from weblib.db import Boolean
 from weblib.db import Column
 from weblib.db import DateTime
+from weblib.db import ForeignKey
 from weblib.db import String
 from weblib.db import Text
 from weblib.db import Time
@@ -36,6 +37,11 @@ class User(Base):
     avatar = Column(String, nullable=True)
     deleted = Column(Boolean, default=False, nullable=False)
 
-    def __repr__(self):
-        return '<User %r>' % (self.name)
 
+class Token(Base):
+    __tablename__ = 'token'
+
+    id = Column(String, default=uuid, primary_key=True)
+    user_id = Column(String, ForeignKey('user.id'))
+    created = Column(DateTime, default=datetime.now)
+    updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
