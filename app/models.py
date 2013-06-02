@@ -8,6 +8,7 @@ from weblib.db import uuid
 from weblib.db import Boolean
 from weblib.db import Column
 from weblib.db import DateTime
+from weblib.db import Enum
 from weblib.db import ForeignKey
 from weblib.db import String
 from weblib.db import Text
@@ -36,6 +37,16 @@ class User(Base):
     phone = Column(String, nullable=False)
     avatar = Column(String, nullable=True)
     deleted = Column(Boolean, default=False, nullable=False)
+
+
+class Account(Base):
+    __tablename__ = 'account'
+
+    id = Column(String, default=uuid, primary_key=True)
+    user_id = Column(String, ForeignKey('user.id'))
+    type = Column(Enum('facebook', name='account_type'), nullable=False)
+    created = Column(DateTime, default=datetime.now)
+    updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
 
 class Token(Base):
