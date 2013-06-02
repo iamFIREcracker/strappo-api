@@ -11,12 +11,31 @@ from app.weblib.pubsub.auth import InSessionVerifier
 from app.weblib.pubsub.auth import OAuthInvoker
 
 
-AUTHORIZE_URL = 'https://www.facebook.com/dialog/oauth'
-ACCESS_TOKEN_URL = 'https://graph.facebook.com/oauth/access_token'
+class LoginFakeWorkflow(Publisher):
+    """Defines a workflow managing a fake OAuth authentication."""
+
+    def perform(self, logger, session, codegenerator):
+        """Performs the necessary steps to obtain a fake access token."""
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        sessionverifier = InSessionVerifier()
+
+        class InSessionVerifierSubscriber(object):
+            def session_contains(self, key, value):
+                outer.publish('already_authorized')
+            def session_lacks(self, key):
+                token = codegenerator()
+                outer.publish('oauth_success', None, token)
+
+        sessionverifier.add_subscriber(logger, InSessionVerifierSubscriber())
+        sessionverifier.perform(session, 'fake_access_token')
 
 
 class LoginFacebookWorkflow(Publisher):
     """Defines a workflow managing the authentication with Facebook."""
+
+    AUTHORIZE_URL = 'https://www.facebook.com/dialog/oauth'
+    ACCESS_TOKEN_URL = 'https://graph.facebook.com/oauth/access_token'
 
     def perform(self, logger, session, params, redirect_uri, app_id, app_secret,
                 oauthadapter):
@@ -55,12 +74,12 @@ class LoginFacebookWorkflow(Publisher):
                 qs = dict(client_id=app_id, redirect_uri=redirect_uri,
                         response_type='code', scope='')
                 outer.publish('code_required',
-                              AUTHORIZE_URL + '?' + urllib.urlencode(qs))
+                              outer.AUTHORIZE_URL + '?' + urllib.urlencode(qs))
             def code_valid(self, code):
                 client = oauthadapter.create_client(app_id, app_secret)
                 qs = dict(code=code, client_id=app_id, client_secret=app_secret,
                         redirect_uri=redirect_uri)
-                url = ACCESS_TOKEN_URL + '?' + urllib.urlencode(qs)
+                url = outer.ACCESS_TOKEN_URL + '?' + urllib.urlencode(qs)
                 oauthinvoker.perform(client, url)
 
         class OAuthInvokerSubscriber(object):

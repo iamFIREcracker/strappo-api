@@ -7,8 +7,39 @@ from mock import MagicMock
 from mock import Mock
 
 from app.weblib.workflows.auth import LoginFacebookWorkflow
+from app.weblib.workflows.auth import LoginFakeWorkflow
 from app.weblib.adapters.auth import AlwaysFailOAuthAdapter
 from app.weblib.adapters.auth import AlwaysSuccessOAuthAdapter
+
+
+class TestLoginFakeWorkflow(unittest.TestCase):
+
+    def test_cannot_proceed_if_already_authorized(self):
+        # Given
+        logger = Mock()
+        subscriber = Mock(already_authorized=MagicMock())
+        instance = LoginFakeWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, {'fake_access_token': '123'}, None)
+
+        # Then
+        subscriber.already_authorized.assert_called_with()
+
+    def test_authentication_completes_successfully(self):
+        # Given
+        logger = Mock()
+        codegenerator = lambda: '1245'
+        subscriber = Mock(oauth_success=MagicMock())
+        instance = LoginFakeWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, {}, codegenerator)
+
+        # Then
+        subscriber.oauth_success.assert_called_with(None, '1245')
 
 
 class TestLoginFacebookWorkflow(unittest.TestCase):
