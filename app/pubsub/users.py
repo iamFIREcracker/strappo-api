@@ -35,11 +35,36 @@ class AlreadyRegisteredVerifier(Publisher):
         a 'not_registered' message together with the external id and account
         type.
         """
-        user = repository.with_account(externalid, accounttype)
-        if user is not None:
+        if repository.with_account(externalid, accounttype) is not None:
             self.publish('already_registered', externalid, accounttype)
         else:
             self.publish('not_registered', externalid, accounttype)
+
+
+class TokenRefresher(Publisher):
+    """
+    >>> from mock import MagicMock
+    >>> from mock import Mock
+    >>> class Subscriber(object):
+    ...   def token_refreshed(self, tokenid, externalid, account):
+    ...     msg = 'Token refreshed: %(tokenid)s %(externalid)s %(account)s'
+    ...     print msg % locals()
+    >>> this = TokenRefresher()
+    >>> this.add_subscriber(Subscriber())
+
+    >>> repo = Mock(refresh_account=MagicMock(return_value='token_id'))
+    >>> this.perform(repo, 'external_id', 'facebook')
+    Token refreshed: token_id external_id facebook
+    """
+
+    def perform(self, repository, externalid, accounttype):
+        """Refreshes the token associated with the external account.
+
+        When done, a 'token_refreshed' message will be published followed by
+        the ID of the new token.
+        """
+        tokenid = repository.refresh_account(externalid, accounttype)
+        self.publish('token_refreshed', tokenid, externalid, accounttype)
 
 
 class UserCreator(Publisher):
