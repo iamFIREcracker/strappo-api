@@ -3,65 +3,86 @@
 
 import unittest
 
+from web.utils import storage
+
 from mock import MagicMock
 from mock import Mock
 
-from app.workflows.users import add_user
+from app.workflows.users import LoginAuthorizedWorkflow
+#from app.workflows.users import add_user
 
 
-class TestAddUserWorkflow(unittest.TestCase):
-
-    def test_cannot_add_user_without_specifying_name(self):
+class TestLoginAuthorizedWorkflow(unittest.TestCase):
+    
+    def test_cannot_proceed_if_not_authorized(self):
         # Given
         logger = Mock()
-        params = dict(phone='+2354 325345', avatar='http://avatar.com/me.png')
+        subscriber = Mock(not_authorized=MagicMock())
+        instance = LoginAuthorizedWorkflow()
 
         # When
-        ok, ret = add_user(logger, params, None)
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, {}, 'access_token', None, None, None)
 
         # Then
-        self.assertFalse(ok)
-        self.assertFalse(ret['success'])
-        self.assertIn('name', ret['errors'])
+        subscriber.not_authorized.assert_called_with()
 
-    def test_cannot_add_user_without_specifying_phone(self):
+    def test_unregistered_user_cannot_proceed_with_one_or_more_fields_missing(self):
         # Given
         logger = Mock()
-        params = dict(name='John Smith', avatar='http://avatar.com/me.png')
+        paramsextractor = MagicMock(return_value=storage(externalid='eid'))
+        repository = Mock(with_account=MagicMock(return_value=None))
+        subscriber = Mock(invalid_form=MagicMock())
+        instance = LoginAuthorizedWorkflow()
 
         # When
-        ok, ret = add_user(logger, params, None)
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, {'access_token': 1234}, 'access_token',
+                         paramsextractor, repository, None)
 
         # Then
-        self.assertFalse(ok)
-        self.assertFalse(ret['success'])
-        self.assertIn('phone', ret['errors'])
+        subscriber.invalid_form.assert_called_with({
+            'errors': {
+                'phone': 'Required',
+                'name': 'Required',
+                'avatar': 'Should be a valid URL.'
+            },
+            'success': False
+        })
 
-    def test_cannot_add_user_with_invalid_avatar(self):
+    def test_unregistered_user_gets_registered_and_a_token_is_assigned(self):
         # Given
         logger = Mock()
-        params = dict(name='John Smith', phone='+2354 325345',
-                      avatar='file://avatar.com/me.png')
+        paramsextractor = MagicMock(return_value=storage(externalid='eid',
+                                                         name='Name',
+                                                         phone='Phone',
+                                                         avatar='http://...'))
+        repository = Mock(with_account=MagicMock(return_value=None),
+                          refresh_account=MagicMock(return_value='tid'))
+        subscriber = Mock(token_created=MagicMock())
+        instance = LoginAuthorizedWorkflow()
 
         # When
-        ok, ret = add_user(logger, params, None)
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, {'access_token': 1234}, 'access_token',
+                         paramsextractor, repository, None)
 
         # Then
-        self.assertFalse(ok)
-        self.assertFalse(ret['success'])
-        self.assertIn('avatar', ret['errors'])
+        subscriber.token_created.assert_called_with('tid')
 
-    def test_can_add_new_user(self):
+    def test_registered_user_can_refresh_authentication_token(self):
         # Given
         logger = Mock()
-        params = dict(name='John Smith', phone='+2354 325345',
-                      avatar='http://avatar.com/me.png')
-        repository = Mock(update=MagicMock(return_value=True))
+        paramsextractor = MagicMock(return_value=storage(externalid='eid'))
+        repository = Mock(with_account=MagicMock(),
+                          refresh_account=MagicMock(return_value='tid'))
+        subscriber = Mock(token_created=MagicMock())
+        instance = LoginAuthorizedWorkflow()
 
         # When
-        ok, _ = add_user(logger, params, repository)
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, {'access_token': 1234}, 'access_token',
+                         paramsextractor, repository, None)
 
         # Then
-        self.assertTrue(ok)
-
-
+        subscriber.token_created.assert_called_with('tid')
