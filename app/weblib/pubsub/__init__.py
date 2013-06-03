@@ -9,15 +9,30 @@ class Future(object):
     a standard blocking queue).
     """
     def __init__(self):
+        self._data = None
+        self._data_pushed = self._data_popped = False
         self._queue = Queue.Queue()
 
     def set(self, value):
-        """Sets the object returned by the future."""
-        self._queue.put(value)
+        """Sets the object returned by the future.
+
+        This implementation is subject to races, but given that we are going to
+        use it in a single-threaded environment we can simply stick with that.
+        """
+        if not self._data_pushed:
+            self._queue.put(value)
+            self._data_pushed = True
 
     def get(self):
-        """Gets the object contained by the future."""
-        return self._queue.get()
+        """Gets the object contained by the future.
+
+        This implementation is subject to races, but given that we are going to
+        use it in a single-threaded environment we can simply stick with that.
+        """
+        if not self._data_popped:
+            self._data = self._queue.get()
+            self._data_popped = True
+        return self._data
 
 
 class Publisher(object):
