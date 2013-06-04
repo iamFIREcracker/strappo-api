@@ -44,6 +44,7 @@ class Account(Base):
 
     id = Column(String, default=uuid, primary_key=True)
     user_id = Column(String, ForeignKey('user.id'))
+    external_id = Column(String, nullable=False)
     type = Column(Enum('facebook', name='account_type'), nullable=False)
     created = Column(DateTime, default=datetime.now)
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
