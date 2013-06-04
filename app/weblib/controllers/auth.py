@@ -27,8 +27,8 @@ class LoginFakeController(object):
                 raise web.found(web.ctx.path_url + '/authorized')
 
         codegenerator = hashlib.sha256(str(datetime.now())).digest
-        loginfake.add_subsriber(logger, LoginFakeSubscriber())
-        loginfake.perform(web.ctx.logger, codegenerator)
+        loginfake.add_subscriber(logger, LoginFakeSubscriber())
+        loginfake.perform(web.ctx.logger, web.ctx.session, codegenerator)
 
 
 class LoginFacebookController():
@@ -51,7 +51,7 @@ class LoginFacebookController():
                 web.ctx.session['facebook_access_token'] = content
                 raise web.found(web.ctx.path_url + '/authorized')
 
-        loginfacebook.add_subsriber(logger, LoginFacebookSubscriber())
+        loginfacebook.add_subscriber(logger, LoginFacebookSubscriber())
         loginfacebook.perform(web.ctx.logger, 
                               InSessionVerifier(), CodeExtractor(),
                               OAuthInvoker(), web.ctx.path_url,
