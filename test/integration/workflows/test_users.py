@@ -58,7 +58,8 @@ class TestLoginAuthorizedWorkflow(unittest.TestCase):
                                                          phone='Phone',
                                                          avatar='http://...'))
         repository = Mock(with_account=MagicMock(return_value=None),
-                          refresh_account=MagicMock(return_value='tid'))
+                          refresh_account=MagicMock(return_value='aid'),
+                          refresh_token=MagicMock(return_value='tid'))
         subscriber = Mock(token_created=MagicMock())
         instance = LoginAuthorizedWorkflow()
 
@@ -75,7 +76,8 @@ class TestLoginAuthorizedWorkflow(unittest.TestCase):
         logger = Mock()
         paramsextractor = MagicMock(return_value=storage(externalid='eid'))
         repository = Mock(with_account=MagicMock(),
-                          refresh_account=MagicMock(return_value='tid'))
+                          refresh_account=MagicMock(return_value='aid'),
+                          refresh_token=MagicMock(return_value='tid'))
         subscriber = Mock(token_created=MagicMock())
         instance = LoginAuthorizedWorkflow()
 
