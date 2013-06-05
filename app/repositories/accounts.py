@@ -23,4 +23,6 @@ class AccountsRepository(object):
                 filter(Account.user_id == user_id).\
                 filter(Account.external_id == external_id).\
                 filter(Account.type == account_type).\
-                filter(User.deleted == False).first()
+                filter(User.deleted == False).\
+                order_by(Account.created.desc()).\
+                first()

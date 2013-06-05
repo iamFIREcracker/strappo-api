@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import datetime
 import unittest
 
 from app.models import Account
@@ -85,3 +86,22 @@ class TestAccountsRepository(unittest.TestCase):
 
         # Then
         self.assertEquals('aid', account.id)
+
+    def test_get_existing_account_should_return_the_latest_account_record(self):
+        # Given
+        now = datetime.datetime.now()
+        now_plus_1day = now + datetime.timedelta(days=1)
+        self.session.begin(subtransactions=True)
+        self.session.add(User(id='uid', name='Name', phone='Phone',
+                              avatar='Avatar'))
+        self.session.add(Account(id='aid1', user_id='uid', external_id='eid',
+                         type='facebook', created=now))
+        self.session.add(Account(id='aid2', user_id='uid', external_id='eid',
+                         type='facebook', created=now_plus_1day))
+        self.session.commit()
+
+        # When
+        account = AccountsRepository.get('uid', 'eid', 'facebook')
+
+        # Then
+        self.assertEquals('aid2', account.id)
