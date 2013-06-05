@@ -31,12 +31,12 @@ class User(Base):
     __tablename__ = 'user'
 
     id = Column(String, default=uuid, primary_key=True)
-    created = Column(DateTime, default=datetime.now)
-    updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     name = Column(String, nullable=False)
     phone = Column(String, nullable=False)
     avatar = Column(String, nullable=True)
     deleted = Column(Boolean, default=False, nullable=False)
+    created = Column(DateTime, default=datetime.now)
+    updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
 
 class Account(Base):
