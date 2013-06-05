@@ -4,7 +4,6 @@
 import uuid
 
 from app.models import Account
-from app.models import User
 
 
 class AccountsRepository(object):
@@ -16,13 +15,3 @@ class AccountsRepository(object):
                           type=account_type)
         Account.session.add(account)
         return id
-
-    @staticmethod
-    def get(user_id, external_id, account_type):
-        return Account.query.join(User).\
-                filter(Account.user_id == user_id).\
-                filter(Account.external_id == external_id).\
-                filter(Account.type == account_type).\
-                filter(User.deleted == False).\
-                order_by(Account.created.desc()).\
-                first()
