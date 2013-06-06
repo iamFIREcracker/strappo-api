@@ -45,3 +45,34 @@ def api(func):
 
         return func(*args, **kwargs)
     return inner
+
+
+def authorized(func):
+    """Checks that an authorized user has been successfully associated with the
+    request.
+
+    The decorator checks the 'current_user' property of the request controller:
+    if that contains a valid object, then the request gets marked as authorized,
+    otherwise a '401 Unhauthorize' error message is sent back to the client.
+
+    >>> from mock import MagicMock
+    >>> from mock import Mock
+    >>> class MyUnauthorized(Exception):
+    ...   pass
+    >>> web.unauthorized = MyUnauthorized
+    >>> request = lambda *a: 'Hello world'
+    
+    >>> authorized(request)(Mock(current_user=None))
+    Traceback (most recent call last):
+        ...
+    MyUnauthorized
+
+    >>> authorized(request)(Mock())
+    'Hello world'
+    """
+    def inner(self, *args, **kwargs):
+        if not self.current_user:
+            raise web.unauthorized()
+
+        return func(self, *args, **kwargs)
+    return inner
