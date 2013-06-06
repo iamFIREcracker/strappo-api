@@ -13,7 +13,5 @@ validurl = form.Validator('Should be a valid URL.',
 
 add = form.Form(form.Textbox('name', form.notnull, description='Name',
                              placeholder='John Smith'),
-                form.Textbox('phone', form.notnull, description='Phone',
-                             placeholder='(415) 736-0000'),
                 form.Textbox('avatar', validurl, description='Avatar',
                              placeholder='http://...'))

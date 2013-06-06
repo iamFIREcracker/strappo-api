@@ -30,8 +30,7 @@ class TestTokensRepository(unittest.TestCase):
     def test_added_token_is_then_returned_inside_a_query(self):
         # When
         self.session.begin(subtransactions=True)
-        self.session.add(User(id='uid', name='Name', phone='Phone',
-                              avatar='Avatar'))
+        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
         id = TokensRepository.add('uid')
         self.session.commit()
         token = self.query.filter_by(id=id).first()
@@ -42,8 +41,7 @@ class TestTokensRepository(unittest.TestCase):
     def test_added_token_does_not_override_previously_created_ones(self):
         # When
         self.session.begin(subtransactions=True)
-        self.session.add(User(id='uid', name='Name', phone='Phone',
-                              avatar='Avatar'))
+        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
         self.session.add(Token(id='tid', user_id='uid'))
         id = TokensRepository.add('uid')
         self.session.commit()

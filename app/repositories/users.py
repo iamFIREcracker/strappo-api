@@ -13,9 +13,9 @@ from app.repositories.tokens import TokensRepository
 class UsersRepository(object):
 
     @staticmethod
-    def add(name, phone, avatar):
+    def add(name, avatar):
         id = unicode(uuid.uuid4())
-        user = User(id=id, name=name, phone=phone, avatar=avatar)
+        user = User(id=id, name=name, avatar=avatar)
         User.session.add(user)
         return id
 

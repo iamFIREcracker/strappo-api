@@ -32,7 +32,6 @@ class User(Base):
 
     id = Column(String, default=uuid, primary_key=True)
     name = Column(String, nullable=False)
-    phone = Column(String, nullable=False)
     avatar = Column(String, nullable=True)
     deleted = Column(Boolean, default=False, nullable=False)
     created = Column(DateTime, default=datetime.now)

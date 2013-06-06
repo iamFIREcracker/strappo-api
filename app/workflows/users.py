@@ -51,11 +51,10 @@ class LoginAuthorizedWorkflow(Publisher):
                 outer.publish('invalid_form',
                               dict(success=False, errors=errors))
             def valid_form(self, form):
-                usercreator.perform(repository, form.d.name, form.d.phone,
-                                    form.d.avatar)
+                usercreator.perform(repository, form.d.name, form.d.avatar)
 
         class UserCreatorSubscriber(object):
-            def user_created(self, userid, name, phone, avatar):
+            def user_created(self, userid, name, avatar):
                 future_userid.set(userid)
                 accountrefresher.perform(repository, userid,
                                          params.get().externalid, account)

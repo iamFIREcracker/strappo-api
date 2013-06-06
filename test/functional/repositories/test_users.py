@@ -30,12 +30,12 @@ class TestUsersRepository(unittest.TestCase):
     def test_added_user_is_then_returned_inside_a_query(self):
         # When
         self.session.begin(subtransactions=True)
-        id = UsersRepository.add('Name', 'Phone', 'Avatar')
+        id = UsersRepository.add('Name', 'Avatar')
         self.session.commit()
         user = self.query.filter_by(id=id).first()
 
         # Then
-        self.assertEquals('Phone', user.phone)
+        self.assertEquals('Avatar', user.avatar)
 
     def test_refresh_account_of_not_existing_account_should_crate_new_account(self):
         # When
@@ -51,8 +51,7 @@ class TestUsersRepository(unittest.TestCase):
     def test_refresh_account_of_existing_account_should_crate_new_account(self):
         # When
         self.session.begin(subtransactions=True)
-        self.session.add(User(id='uid', name='Name', phone='Phone',
-                              avatar='Avatar'))
+        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
         self.session.add(Account(id='aid', user_id='uid', external_id='eid',
                                  type='facebook'))
         id = UsersRepository.refresh_account('uid', 'eid', 'facebook')
@@ -85,8 +84,7 @@ class TestUsersRepository(unittest.TestCase):
     def test_authorized_by_valid_token_should_return_the_associated_user(self):
         # Given
         self.session.begin(subtransactions=True)
-        self.session.add(User(id='uid', name='Name', phone='Phone',
-                         avatar='Avatar'))
+        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
         self.session.add(Token(id='tid', user_id='uid'))
         self.session.commit()
 
@@ -130,8 +128,7 @@ class TestUsersRepository(unittest.TestCase):
     def test_having_account_with_valid_external_id_and_account_type_should_return_the_associated_user(self):
         # Given
         self.session.begin(subtransactions=True)
-        self.session.add(User(id='uid', name='Name', phone='Phone',
-                         avatar='Avatar'))
+        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
         self.session.add(Account(id='aid', user_id='uid', external_id='eid',
                          type='facebook'))
         self.session.commit()

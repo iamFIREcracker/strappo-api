@@ -30,8 +30,7 @@ class TestAccountsRepository(unittest.TestCase):
     def test_added_account_is_then_returned_inside_a_query(self):
         # When
         self.session.begin(subtransactions=True)
-        self.session.add(User(id='uid', name='Name', phone='Phone',
-                              avatar='Avatar'))
+        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
         id = AccountsRepository.add('uid', 'eid', 'facebook')
         self.session.commit()
         account = self.query.filter_by(id=id).first()
@@ -42,8 +41,7 @@ class TestAccountsRepository(unittest.TestCase):
     def test_added_account_does_not_override_previously_created_ones(self):
         # When
         self.session.begin(subtransactions=True)
-        self.session.add(User(id='uid', name='Name', phone='Phone',
-                              avatar='Avatar'))
+        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
         self.session.add(Account(id='aid', user_id='uid', external_id='eid',
                                  type='facebook'))
         id = AccountsRepository.add('uid', 'eid', 'facebook')

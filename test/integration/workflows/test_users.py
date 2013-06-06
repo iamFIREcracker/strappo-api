@@ -43,7 +43,6 @@ class TestLoginAuthorizedWorkflow(unittest.TestCase):
         # Then
         subscriber.invalid_form.assert_called_with({
             'errors': {
-                'phone': 'Required',
                 'name': 'Required',
                 'avatar': 'Should be a valid URL.'
             },
@@ -55,7 +54,6 @@ class TestLoginAuthorizedWorkflow(unittest.TestCase):
         logger = Mock()
         paramsextractor = MagicMock(return_value=storage(externalid='eid',
                                                          name='Name',
-                                                         phone='Phone',
                                                          avatar='http://...'))
         repository = Mock(with_account=MagicMock(return_value=None),
                           refresh_account=MagicMock(return_value='aid'),
