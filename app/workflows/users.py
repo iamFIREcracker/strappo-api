@@ -18,7 +18,7 @@ class LoginAuthorizedWorkflow(Publisher):
     """Defines a workflow managing the user post-authorization process."""
 
     def perform(self, logger, session, sessionkey, paramsextractor,
-                repository, account):
+                repository, account_type):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         sessionverifier = InSessionVerifier()
@@ -36,10 +36,10 @@ class LoginAuthorizedWorkflow(Publisher):
             def session_contains(self, key, value):
                 params.set(paramsextractor(value))
                 alreadyregistered.perform(repository, params.get().externalid,
-                                          account)
+                                          account_type)
 
         class AlreadyRegisteredVerifierSubscriber(object):
-            def not_registered(self, externalid, account):
+            def not_registered(self, externalid, account_type):
                 formvalidator.perform(userforms.add(), params.get(),
                                       describe_invalid_form)
             def already_registered(self, userid):
@@ -57,7 +57,7 @@ class LoginAuthorizedWorkflow(Publisher):
             def user_created(self, userid, name, avatar):
                 future_userid.set(userid)
                 accountrefresher.perform(repository, userid,
-                                         params.get().externalid, account)
+                                         params.get().externalid, account_type)
 
         class AccountRefresherSubscriber(object):
             def account_refreshed(self, accountid):
