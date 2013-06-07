@@ -3,11 +3,11 @@
 
 import web
 
-from app.controllers import HelloHandler
+from app.controllers.drivers import DriversController
 
 
 URLS = (
-    '/hello', HelloHandler,
+    '/1/drivers', DriversController,
 ) + (() if not web.config.DEV else (
     # Develop routes
 ))
