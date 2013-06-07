@@ -46,6 +46,5 @@ class TestDriversWithUserIdWorkflow(unittest.TestCase):
             'user_id': 'uid',
             'license_plate': '1242124',
             'telephone': '+124 453534',
-            'active': None
         })
 
