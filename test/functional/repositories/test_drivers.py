@@ -28,7 +28,7 @@ class TestDriversRepository(unittest.TestCase):
 
     def test_get_using_invalid_user_id_should_return_nothing(self):
         # When
-        driver = DriversRepository.get('not_existing_id')
+        driver = DriversRepository.with_user_id('not_existing_id')
 
         # Then
         self.assertIsNone(driver)
@@ -42,7 +42,7 @@ class TestDriversRepository(unittest.TestCase):
         self.session.commit()
 
         # When
-        driver = DriversRepository.get('uid')
+        driver = DriversRepository.with_user_id('uid')
 
         # Then
         self.assertIsNone(driver)
@@ -55,7 +55,7 @@ class TestDriversRepository(unittest.TestCase):
         self.session.commit()
 
         # When
-        driver = DriversRepository.get('uid')
+        driver = DriversRepository.with_user_id('uid')
 
         # Then
         self.assertEquals('plate', driver.license_plate)
