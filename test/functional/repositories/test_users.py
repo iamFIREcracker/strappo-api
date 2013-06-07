@@ -81,6 +81,20 @@ class TestUsersRepository(unittest.TestCase):
         # Then
         self.assertIsNone(user)
 
+    def test_authorized_by_valid_token_pointing_to_deleted_user_should_return_nothing(self):
+        # Given
+        self.session.begin(subtransactions=True)
+        self.session.add(User(id='uid', name='Name', avatar='Avatar',
+                              deleted=True))
+        self.session.add(Token(id='tid', user_id='uid'))
+        self.session.commit()
+
+        # When
+        user = UsersRepository.authorized_by('tid')
+
+        # Then
+        self.assertIsNone(user)
+
     def test_authorized_by_valid_token_should_return_the_associated_user(self):
         # Given
         self.session.begin(subtransactions=True)
@@ -113,9 +127,24 @@ class TestUsersRepository(unittest.TestCase):
         # Then
         self.assertIsNone(user)
 
+    def test_having_account_pointing_to_invalid_user_should_return_nothing(self):
+        # Given
+        self.session.begin(subtransactions=True)
+        self.session.add(Account(id='aid', user_id='uid', external_id='eid',
+                         type='facebook'))
+        self.session.commit()
+        # When
+        user = UsersRepository.with_account('aid', 'facebook')
+
+        # Then
+        self.assertIsNone(user)
+
+
     def test_having_account_pointing_to_a_deleted_user_should_return_nothing(self):
         # Given
         self.session.begin(subtransactions=True)
+        self.session.add(User(id='uid', name='Name', avatar='Avatar',
+                              deleted=True))
         self.session.add(Account(id='aid', user_id='uid', external_id='eid',
                          type='facebook'))
         self.session.commit()
