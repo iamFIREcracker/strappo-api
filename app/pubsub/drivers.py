@@ -49,4 +49,4 @@ class DriverSerializer(Publisher):
         self.publish('driver_serialized',
                      dict(id=driver.id, user_id=driver.user_id,
                           license_plate=driver.license_plate,
-                          telephone=driver.telephone, active=None))
+                          telephone=driver.telephone))
