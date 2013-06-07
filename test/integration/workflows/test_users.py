@@ -9,7 +9,6 @@ from mock import MagicMock
 from mock import Mock
 
 from app.workflows.users import LoginAuthorizedWorkflow
-#from app.workflows.users import add_user
 
 
 class TestLoginAuthorizedWorkflow(unittest.TestCase):
