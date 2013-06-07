@@ -8,7 +8,7 @@ from app.models import Driver
 class DriversRepository(object):
 
     @staticmethod
-    def get(user_id):
+    def with_user_id(user_id):
         return Driver.query.join(User).\
                 filter(User.id == user_id).\
                 filter(User.deleted == False).first()

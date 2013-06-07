@@ -8,17 +8,17 @@ from web.utils import storage
 from mock import MagicMock
 from mock import Mock
 
-from app.workflows.drivers import ViewDriverWorkflow
+from app.workflows.drivers import DriversWithUserIdWorkflow
 
 
-class TestViewDriverWorkflow(unittest.TestCase):
+class TestDriversWithUserIdWorkflow(unittest.TestCase):
     
     def test_not_found_is_published_if_invoked_with_invalid_driver_id(self):
         # Given
         logger = Mock()
-        repository = Mock(get=MagicMock(return_value=None))
+        repository = Mock(with_user_id=MagicMock(return_value=None))
         subscriber = Mock(not_found=MagicMock())
-        instance = ViewDriverWorkflow()
+        instance = DriversWithUserIdWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
@@ -30,12 +30,11 @@ class TestViewDriverWorkflow(unittest.TestCase):
     def test_serialized_driver_is_published_if_invoked_with_existing_driver_id(self):
         # Given
         logger = Mock()
-        repository = Mock(get=MagicMock(return_value=storage(id='did',
-                                                             user_id='uid',
-                                                             license_plate='1242124',
-                                                             telephone='+124 453534')))
+        driver = storage(id='did', user_id='uid', license_plate='1242124',
+                         telephone='+124 453534')
+        repository = Mock(with_user_id=MagicMock(return_value=driver))
         subscriber = Mock(driver_view=MagicMock())
-        instance = ViewDriverWorkflow()
+        instance = DriversWithUserIdWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
