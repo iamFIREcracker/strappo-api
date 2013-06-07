@@ -47,7 +47,7 @@ class TestDriversRepository(unittest.TestCase):
         # Then
         self.assertIsNone(driver)
 
-    def test_get_using_id_of_active_user_should_the_associated_driver(self):
+    def test_get_using_id_of_active_user_but_not_active_driver_should_return_nothing(self):
         # Given
         self.session.begin(subtransactions=True)
         self.session.add(User(id='uid', name='Name', avatar='Avatar'))
@@ -58,4 +58,4 @@ class TestDriversRepository(unittest.TestCase):
         driver = DriversRepository.with_user_id('uid')
 
         # Then
-        self.assertEquals('plate', driver.license_plate)
+        self.assertIsNone(driver)
