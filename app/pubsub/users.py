@@ -6,26 +6,6 @@ from app.weblib.pubsub import Publisher
 
 
 class AlreadyRegisteredVerifier(Publisher):
-    """
-    >>> from mock import MagicMock
-    >>> from mock import Mock
-    >>> class Subscriber(object):
-    ...   def already_registered(self, userid):
-    ...     print 'Already registered: %(userid)s' % locals()
-    ...   def not_registered(self, externalid, account):
-    ...     print 'Not registered: %(externalid)s, %(account)s' % locals()
-    >>> this = AlreadyRegisteredVerifier()
-    >>> this.add_subscriber(Subscriber())
-
-    >>> repo = Mock(with_account=MagicMock(return_value=None))
-    >>> this.perform(repo, 'wrong_external_id', 'facebook')
-    Not registered: wrong_external_id, facebook
-
-    >>> repo = Mock(with_account=MagicMock(return_value=Mock(id='uid')))
-    >>> this.perform(repo, 'existing_id', 'twitter')
-    Already registered: uid
-    """
-
     def perform(self, repository, externalid, accounttype):
         """Checks whether a user identified by the given ID has already an
         associated external account of the specified type.
@@ -43,20 +23,6 @@ class AlreadyRegisteredVerifier(Publisher):
 
 
 class AccountRefresher(Publisher):
-    """
-    >>> from mock import MagicMock
-    >>> from mock import Mock
-    >>> class Subscriber(object):
-    ...   def account_refreshed(self, accountid):
-    ...     print 'Account refreshed: %(accountid)s' % locals()
-    >>> this = AccountRefresher()
-    >>> this.add_subscriber(Subscriber())
-
-    >>> repo = Mock(refresh_account=MagicMock(return_value='account_id'))
-    >>> this.perform(repo, 'user_id', 'external_id', 'facebook')
-    Account refreshed: account_id
-    """
-
     def perform(self, repository, userid, externalid, accounttype):
         """Refreshes the user external account.
 
@@ -68,20 +34,6 @@ class AccountRefresher(Publisher):
 
 
 class TokenRefresher(Publisher):
-    """
-    >>> from mock import MagicMock
-    >>> from mock import Mock
-    >>> class Subscriber(object):
-    ...   def token_refreshed(self, tokenid):
-    ...     print 'Token refreshed: %(tokenid)s' % locals()
-    >>> this = TokenRefresher()
-    >>> this.add_subscriber(Subscriber())
-
-    >>> repo = Mock(refresh_token=MagicMock(return_value='token_id'))
-    >>> this.perform(repo, 'user_id')
-    Token refreshed: token_id
-    """
-
     def perform(self, repository, userid):
         """Refreshes the token associated with user identified by ``userid``.
 
@@ -93,20 +45,6 @@ class TokenRefresher(Publisher):
 
 
 class UserCreator(Publisher):
-    """
-    >>> from mock import MagicMock
-    >>> from mock import Mock
-    >>> class Subscriber(object):
-    ...   def user_created(self, userid, name, avatar):
-    ...     print 'User created: %(userid)s %(name)s %(avatar)s' % locals()
-    >>> this = UserCreator()
-    >>> this.add_subscriber(Subscriber())
-
-    >>> repo = Mock(add=MagicMock(return_value='new_id'))
-    >>> this.perform(repo, 'John Smith', 'http://avatar.com/me')
-    User created: new_id John Smith http://avatar.com/me
-    """
-
     def perform(self, repository, name, avatar):
         """Creates a new user with the specified set of properties.
 
