@@ -17,7 +17,7 @@ from app.weblib.pubsub.auth import InSessionVerifier
 class LoginAuthorizedWorkflow(Publisher):
     """Defines a workflow managing the user post-authorization process."""
 
-    def perform(self, logger, session, session_key, params_extractor,
+    def perform(self, orm, logger, session, session_key, params_extractor,
                 repository, account_type):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
@@ -54,18 +54,21 @@ class LoginAuthorizedWorkflow(Publisher):
                 user_creator.perform(repository, form.d.name, form.d.avatar)
 
         class UserCreatorSubscriber(object):
-            def user_created(self, user_id, name, avatar):
-                future_user_id.set(user_id)
-                account_refresher.perform(repository, user_id,
+            def user_created(self, user):
+                orm.add(user)
+                future_user_id.set(user.id)
+                account_refresher.perform(repository, user.id,
                                           params.get().externalid, account_type)
 
         class AccountRefresherSubscriber(object):
-            def account_refreshed(self, account_id):
+            def account_refreshed(self, account):
+                orm.add(account)
                 token_refresher.perform(repository, future_user_id.get())
 
         class TokenRefresherSubscriber(object):
-            def token_refreshed(self, token_id):
-                outer.publish('token_created', token_id)
+            def token_refreshed(self, token):
+                orm.add(token)
+                outer.publish('success')
 
         session_verifier.add_subscriber(logger, InSessionVerifierSubscriber())
         already_registered.add_subscriber(logger,
