@@ -4,6 +4,7 @@
 def populate_db():
     import app.models
     from app.models import Account
+    from app.models import ActiveDriver
     from app.models import Driver
     from app.models import Token
     from app.models import User
@@ -15,4 +16,5 @@ def populate_db():
     app.models.Base.session.add(Driver(id='did', user_id='uid',
                                        license_plate='plate',
                                        telephone='1241241'))
+    app.models.Base.session.add(ActiveDriver(id='adid', driver_id='did'))
     app.models.Base.session.commit()
