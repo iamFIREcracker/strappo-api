@@ -62,7 +62,7 @@ class EditDriverWorkflow(Publisher):
             def driver_updated(self, driver):
                 orm.add(driver)
                 orm.commit()
-                outer.publish('updated', driver)
+                outer.publish('success')
 
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
         driver_updater.add_subscriber(logger, DriverUpdaterSubscriber())

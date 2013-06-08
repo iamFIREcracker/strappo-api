@@ -93,7 +93,7 @@ class TestEditDriverWorkflow(unittest.TestCase):
         new_driver = storage(id='did', user_id='uid',
                              license_plate='new_plate', telephone='new_phone')
         repository = Mock(update=MagicMock(return_value=new_driver))
-        subscriber = Mock(updated=MagicMock())
+        subscriber = Mock(success=MagicMock())
         instance = EditDriverWorkflow()
 
         # When
@@ -101,4 +101,4 @@ class TestEditDriverWorkflow(unittest.TestCase):
         instance.perform(orm, logger, params, repository, 'did')
 
         # Then
-        subscriber.updated.assert_called_with(new_driver)
+        subscriber.success.assert_called_with()
