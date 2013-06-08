@@ -45,10 +45,13 @@ class EditDriverController(ParamAuthorizedController):
 
         class EditDriverSubscriber(object):
             def invalid_form(self, errors):
+                web.ctx.orm.rollback()
                 ret.set(jsonify(success=False, errors=errors))
             def not_found(self, driver_id):
+                web.ctx.orm.rollback()
                 raise web.notfound()
             def success(self):
+                web.ctx.orm.commit()
                 raise app.weblib.nocontent()
 
         edit_driver.add_subscriber(logger, EditDriverSubscriber())

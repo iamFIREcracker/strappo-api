@@ -49,7 +49,6 @@ class EditDriverWorkflow(Publisher):
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
                 outer.publish('invalid_form', errors)
-                orm.rollback()
             def valid_form(self, form):
                 driver_updater.perform(repository, driver_id,
                                        form.d.license_plate,
@@ -57,11 +56,9 @@ class EditDriverWorkflow(Publisher):
 
         class DriverUpdaterSubscriber(object):
             def driver_not_found(self, driver_id):
-                orm.rollback()
                 outer.publish('not_found', driver_id)
             def driver_updated(self, driver):
                 orm.add(driver)
-                orm.commit()
                 outer.publish('success')
 
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
