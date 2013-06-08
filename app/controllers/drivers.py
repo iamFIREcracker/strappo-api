@@ -3,6 +3,7 @@
 
 import web
 
+import app.weblib
 from app.controllers import ParamAuthorizedController
 from app.repositories.drivers import DriversRepository
 from app.weblib.pubsub import Future
@@ -10,6 +11,7 @@ from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.request_decorators import api
 from app.weblib.request_decorators import authorized
 from app.weblib.utils import jsonify
+from app.workflows.drivers import EditDriverWorkflow
 from app.workflows.drivers import DriversWithUserIdWorkflow
 
 
@@ -26,8 +28,30 @@ class DriversController(ParamAuthorizedController):
                 raise web.notfound()
             def driver_view(self, blob):
                 ret.set(jsonify(drivers=[blob]))
+
         drivers.add_subscriber(logger, DriversWithUserIdSubscriber())
         drivers.perform(web.ctx.logger, DriversRepository,
                         web.input(user_id=None).user_id)
         return ret.get()
-    
+
+
+class EditDriverController(ParamAuthorizedController):
+    #@api
+    @authorized
+    def POST(self, driver_id):
+        logger = LoggingSubscriber(web.ctx.logger)
+        edit_driver = EditDriverWorkflow()
+        ret = Future()
+
+        class EditDriverSubscriber(object):
+            def invalid_form(self, errors):
+                ret.set(jsonify(success=False, errors=errors))
+            def not_found(self, driver_id):
+                raise web.notfound()
+            def success(self):
+                raise app.weblib.nocontent()
+
+        edit_driver.add_subscriber(logger, EditDriverSubscriber())
+        edit_driver.perform(web.ctx.orm, web.ctx.logger, web.input(),
+                            DriversRepository, driver_id)
+        return ret.get()
