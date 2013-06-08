@@ -6,9 +6,9 @@ import abc
 import web
 
 
-class AbstractCookieAuthorizedController(object):
+class AbstractCookieAuthorizableController(object):
     """
-    >>> class Handler(AbstractCookieAuthorizedController):
+    >>> class Handler(AbstractCookieAuthorizableController):
     ...   def get_user(self, token):
     ...     return 'ok' if token == 'valid' else 'no'
 
@@ -42,9 +42,9 @@ class AbstractCookieAuthorizedController(object):
         pass
 
 
-class AbstractParamAuthorizedController(object):
+class AbstractParamAuthorizableController(object):
     """
-    >>> class Handler(AbstractParamAuthorizedController):
+    >>> class Handler(AbstractParamAuthorizableController):
     ...   def get_user(self, token):
     ...     return 'ok' if token == 'valid' else 'no'
 

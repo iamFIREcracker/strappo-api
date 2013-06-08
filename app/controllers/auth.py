@@ -6,13 +6,13 @@ import uuid
 import web
 from web.utils import storage
 
-from app.controllers import CookieAuthorizedController
+from app.controllers import CookieAuthorizableController
 from app.repositories.users import UsersRepository
 from app.workflows.users import LoginAuthorizedWorkflow
 from app.weblib.pubsub import LoggingSubscriber
 
 
-class FakeLoginAuthorizedController(CookieAuthorizedController):
+class FakeLoginAuthorizedController(CookieAuthorizableController):
     def GET(self):
         logger = LoggingSubscriber(web.ctx.logger)
         login_authorized = LoginAuthorizedWorkflow()

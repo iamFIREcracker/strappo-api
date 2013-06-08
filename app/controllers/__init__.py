@@ -2,15 +2,15 @@
 # -*- coding: utf-8 -*-
 
 from app.repositories.users import UsersRepository
-from app.weblib.controllers import AbstractCookieAuthorizedController
-from app.weblib.controllers import AbstractParamAuthorizedController
+from app.weblib.controllers import AbstractCookieAuthorizableController
+from app.weblib.controllers import AbstractParamAuthorizableController
 
 
-class CookieAuthorizedController(AbstractCookieAuthorizedController):
+class CookieAuthorizableController(AbstractCookieAuthorizableController):
     def get_user(self, token):
         return UsersRepository.authorized_by(token)
 
 
-class ParamAuthorizedController(AbstractParamAuthorizedController):
+class ParamAuthorizableController(AbstractParamAuthorizableController):
     def get_user(self, token):
         return UsersRepository.authorized_by(token)

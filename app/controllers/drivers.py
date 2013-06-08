@@ -4,7 +4,7 @@
 import web
 
 import app.weblib
-from app.controllers import ParamAuthorizedController
+from app.controllers import ParamAuthorizableController
 from app.repositories.drivers import DriversRepository
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
@@ -15,7 +15,7 @@ from app.workflows.drivers import EditDriverWorkflow
 from app.workflows.drivers import DriversWithUserIdWorkflow
 
 
-class DriversController(ParamAuthorizedController):
+class DriversController(ParamAuthorizableController):
     #@api
     @authorized
     def GET(self):
@@ -35,7 +35,7 @@ class DriversController(ParamAuthorizedController):
         return ret.get()
 
 
-class EditDriverController(ParamAuthorizedController):
+class EditDriverController(ParamAuthorizableController):
     #@api
     @authorized
     def POST(self, driver_id):
