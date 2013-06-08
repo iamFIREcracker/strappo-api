@@ -15,7 +15,12 @@ from __future__ import absolute_import
 
 import web
 
-from logging import getLogger, StreamHandler, Formatter, getLoggerClass, DEBUG
+from logging import getLogger
+from logging import getLoggerClass
+from logging import DEBUG
+from logging import Formatter
+from logging import INFO
+from logging import StreamHandler
 
 
 __all__ = ['create_logger']
@@ -32,14 +37,14 @@ def create_logger():
     Logger = getLoggerClass()
 
     class DebugLogger(Logger):
-        def getEffectiveLevel(x):
-            if x.level == 0 and web.config.DEBUG:
-                return DEBUG
-            return Logger.getEffectiveLevel(x)
+        def getEffectiveLevel(self):
+            if self.level == 0:
+                return DEBUG if web.config.DEBUG else INFO
+            return super(DebugLogger, self).getEffectiveLevel()
 
     class DebugHandler(StreamHandler):
         def emit(x, record):
-            StreamHandler.emit(x, record) if web.config.DEBUG else None
+            StreamHandler.emit(x, record)
 
     handler = DebugHandler()
     handler.setLevel(DEBUG)
