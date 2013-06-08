@@ -58,7 +58,7 @@ class EditDriverWorkflow(Publisher):
             def driver_not_found(self, driver_id):
                 outer.publish('not_found', driver_id)
             def driver_updated(self, driver):
-                outer.publish('updated')
+                outer.publish('updated', driver)
 
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
         driver_updater.add_subscriber(logger, DriverUpdaterSubscriber())
