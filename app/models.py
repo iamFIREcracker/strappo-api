@@ -10,6 +10,7 @@ from weblib.db import Column
 from weblib.db import DateTime
 from weblib.db import Enum
 from weblib.db import ForeignKey
+from weblib.db import Integer
 from weblib.db import String
 from weblib.db import Text
 from weblib.db import Time
@@ -92,3 +93,13 @@ class ActiveDriver(Base):
     driver_id = Column(String, ForeignKey('driver.id'))
     created = Column(DateTime, default=datetime.now)
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+
+class Passenger(Base):
+    __tablename__ = 'passenger'
+
+    id = Column(String, default=uuid, primary_key=True)
+    user_id = Column(String, ForeignKey('user.id'))
+    origin = Column(Text)
+    destination = Column(Text)
+    buddies = Column(Integer)
