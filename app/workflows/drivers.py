@@ -29,7 +29,7 @@ class DriversWithUserIdWorkflow(Publisher):
 
         class DriverSerializerSubscriber(object):
             def driver_serialized(self, blob):
-                outer.publish('driver_view', blob)
+                outer.publish('success', blob)
 
 
         driver_getter.add_subscriber(logger, DriverWithUserIdGetterSubscriber())

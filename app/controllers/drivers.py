@@ -26,7 +26,7 @@ class DriversController(ParamAuthorizableController):
         class DriversWithUserIdSubscriber(object):
             def not_found(self, driver_id):
                 raise web.notfound()
-            def driver_view(self, blob):
+            def success(self, blob):
                 ret.set(jsonify(drivers=[blob]))
 
         drivers.add_subscriber(logger, DriversWithUserIdSubscriber())
