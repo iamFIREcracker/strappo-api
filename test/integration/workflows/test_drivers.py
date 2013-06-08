@@ -86,10 +86,10 @@ class TestEditDriverWorkflow(unittest.TestCase):
     def test_driver_is_successfully_updated_if_params_and_id_are_valid(self):
         # Given
         logger = Mock()
-        params = storage(license_plate='plate', telephone='Telephone')
-        driver = storage(id='did', user_id='uid', license_plate='1242124',
-                         telephone='+124 453534')
-        repository = Mock(with_user_id=MagicMock(return_value=driver))
+        params = storage(license_plate='new_plate', telephone='new_phone')
+        new_driver = storage(id='did', user_id='uid',
+                             license_plate='new_plate', telephone='new_phone')
+        repository = Mock(update=MagicMock(return_value=new_driver))
         subscriber = Mock(updated=MagicMock())
         instance = EditDriverWorkflow()
 
@@ -98,4 +98,4 @@ class TestEditDriverWorkflow(unittest.TestCase):
         instance.perform(logger, params, repository, 'did')
 
         # Then
-        subscriber.updated.assert_called_with()
+        subscriber.updated.assert_called_with(new_driver)
