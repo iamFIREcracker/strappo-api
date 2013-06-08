@@ -65,10 +65,7 @@ class TestEditDriverWorkflow(unittest.TestCase):
 
         # Then
         subscriber.invalid_form.assert_called_with({
-            'errors': {
-                'telephone': 'Required'
-            },
-            'success': False
+            'telephone': 'Required'
         })
 
     def test_not_found_is_published_if_provided_driver_id_is_invalid(self):

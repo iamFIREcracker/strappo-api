@@ -48,8 +48,7 @@ class EditDriverWorkflow(Publisher):
 
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
-                outer.publish('invalid_form',
-                              dict(success=False, errors=errors))
+                outer.publish('invalid_form', errors)
             def valid_form(self, form):
                 driver_updater.perform(repository, driver_id,
                                        form.d.license_plate,
