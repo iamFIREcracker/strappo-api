@@ -24,6 +24,10 @@ class DriverUpdater(Publisher):
         """Sets the properties 'license_plate' and 'telephone' of the driver
         identified by ``driver_id``.
 
+        If no driver exists identified by ``driver_id``, then a
+        'driver_not_found' message is published together with the given driver
+        ID;  on the other hand, a 'driver_published' message is published with
+        the retrieved record.
         """
         driver = repository.update(driver_id, license_plate, telephone)
         if driver is None:
