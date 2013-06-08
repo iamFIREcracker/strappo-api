@@ -4,19 +4,17 @@
 from app.models import ActiveDriver
 from app.models import User
 from app.models import Driver
+from app.weblib.db import expunged
 
 
 class DriversRepository(object):
 
     @staticmethod
     def get(driver_id):
-        driver = Driver.query.join(ActiveDriver).join(User).\
-                filter(Driver.id == driver_id).\
-                filter(User.deleted == False).first()
-        if driver is None:
-            return None
-        Driver.session.expunge(driver)
-        return driver
+        return expunged(Driver.query.join(ActiveDriver).join(User).\
+                                filter(Driver.id == driver_id).\
+                                filter(User.deleted == False).first(),
+                        Driver.session)
 
     @staticmethod
     def with_user_id(user_id):

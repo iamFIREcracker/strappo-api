@@ -62,3 +62,16 @@ def init_db():
 def uuid():
     """Generates a ``uuid``."""
     return unicode(_uuid.uuid4())
+
+
+def expunged(obj, session):
+    """Expunges the given object from session.
+
+    A simple wrapper of ``session.expunge()`` enabling user to pass in None
+    object reference.  This comes in handy with methods doing query on the
+    database ed returning the result to the user.
+    """
+    if obj is None:
+        return None
+    session.expunge(obj)
+    return obj
