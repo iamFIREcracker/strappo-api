@@ -1,9 +1,8 @@
-
 APP_NAME = 'poolit'
 TAG = '0.0.1'
 
-debug = False
-debug_sql = False
+DEBUG = False
+DEBUG_SQL = False
 
 DEV = False
 

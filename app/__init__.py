@@ -7,8 +7,9 @@ import web
 
 from . import config
 
-web.config.debug = web.config.DEBUG = config.debug
-web.config.debug_sql = web.config.DEBUG_SQL = config.debug_sql
+
+web.config.debug = web.config.DEBUG = config.DEBUG
+web.config.debug_sql = web.config.DEBUG_SQL = config.DEBUG_SQL
 
 web.config.DEV = config.DEV
 

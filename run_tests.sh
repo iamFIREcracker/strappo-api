@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 cat > local_config.py <<!
-debug = False
-debug_sql = False
+DEBUG = False
+DEBUG_SQL = False
 
 DEV = True
 
