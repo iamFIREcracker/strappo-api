@@ -9,7 +9,24 @@ from app.models import Driver
 class DriversRepository(object):
 
     @staticmethod
+    def get(driver_id):
+        return Driver.query.join(ActiveDriver).join(User).\
+                filter(Driver.id == driver_id).\
+                filter(User.deleted == False).first()
+
+    @staticmethod
     def with_user_id(user_id):
         return Driver.query.join(ActiveDriver).join(User).\
                 filter(User.id == user_id).\
                 filter(User.deleted == False).first()
+
+    @staticmethod
+    def update(driver_id, license_plate, telephone):
+        driver = DriversRepository.get(driver_id)
+        if driver is None:
+            return None
+        else:
+            driver.license_plate = license_plate
+            driver.telephone = telephone
+            Driver.session.add(driver)
+            return driver
