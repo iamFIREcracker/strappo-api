@@ -140,7 +140,7 @@ class TestDriversRepository(unittest.TestCase):
 
         # When
         self.session.begin(subtransactions=True)
-        DriversRepository.update('did', 'license', 'phone')
+        self.session.add(DriversRepository.update('did', 'license', 'phone'))
         self.session.commit()
         driver = Driver.query.filter_by(id='did').first()
 

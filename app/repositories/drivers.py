@@ -10,9 +10,13 @@ class DriversRepository(object):
 
     @staticmethod
     def get(driver_id):
-        return Driver.query.join(ActiveDriver).join(User).\
+        driver = Driver.query.join(ActiveDriver).join(User).\
                 filter(Driver.id == driver_id).\
                 filter(User.deleted == False).first()
+        if driver is None:
+            return None
+        Driver.session.expunge(driver)
+        return driver
 
     @staticmethod
     def with_user_id(user_id):
@@ -28,5 +32,4 @@ class DriversRepository(object):
         else:
             driver.license_plate = license_plate
             driver.telephone = telephone
-            Driver.session.add(driver)
             return driver
