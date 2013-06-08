@@ -7,19 +7,19 @@ from datetime import datetime
 import web
 
 from app.weblib.workflows.auth import LoginFacebookWorkflow
-from app.weblib.workflows.auth import LoginFakeWorkflow
+from app.weblib.workflows.auth import FakeLoginWorkflow
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.pubsub.auth import CodeExtractor
 from app.weblib.pubsub.auth import InSessionVerifier
 from app.weblib.pubsub.auth import OAuthInvoker
 
 
-class LoginFakeController(object):
+class FakeLoginController(object):
     def GET(self):
         logger = LoggingSubscriber(web.ctx.logger)
-        loginfake = LoginFakeWorkflow()
+        loginfake = FakeLoginWorkflow()
 
-        class LoginFakeSubscriber(object):
+        class FakeLoginSubscriber(object):
             def already_authorized(self):
                 raise web.found(web.ctx.path_url + '/authorized')
             def oauth_success(self, url, content):
@@ -27,7 +27,7 @@ class LoginFakeController(object):
                 raise web.found(web.ctx.path_url + '/authorized')
 
         codegenerator = hashlib.sha256(str(datetime.now())).digest
-        loginfake.add_subscriber(logger, LoginFakeSubscriber())
+        loginfake.add_subscriber(logger, FakeLoginSubscriber())
         loginfake.perform(web.ctx.logger, web.ctx.session, codegenerator)
 
 

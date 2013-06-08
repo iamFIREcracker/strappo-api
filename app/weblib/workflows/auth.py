@@ -11,7 +11,7 @@ from app.weblib.pubsub.auth import InSessionVerifier
 from app.weblib.pubsub.auth import OAuthInvoker
 
 
-class LoginFakeWorkflow(Publisher):
+class FakeLoginWorkflow(Publisher):
     """Defines a workflow managing a fake OAuth authentication."""
 
     def perform(self, logger, session, codegenerator):

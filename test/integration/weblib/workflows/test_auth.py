@@ -7,18 +7,18 @@ from mock import MagicMock
 from mock import Mock
 
 from app.weblib.workflows.auth import LoginFacebookWorkflow
-from app.weblib.workflows.auth import LoginFakeWorkflow
+from app.weblib.workflows.auth import FakeLoginWorkflow
 from app.weblib.adapters.auth import AlwaysFailOAuthAdapter
 from app.weblib.adapters.auth import AlwaysSuccessOAuthAdapter
 
 
-class TestLoginFakeWorkflow(unittest.TestCase):
+class TestFakeLoginWorkflow(unittest.TestCase):
 
     def test_cannot_proceed_if_already_authorized(self):
         # Given
         logger = Mock()
         subscriber = Mock(already_authorized=MagicMock())
-        instance = LoginFakeWorkflow()
+        instance = FakeLoginWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
@@ -32,7 +32,7 @@ class TestLoginFakeWorkflow(unittest.TestCase):
         logger = Mock()
         codegenerator = lambda: '1245'
         subscriber = Mock(oauth_success=MagicMock())
-        instance = LoginFakeWorkflow()
+        instance = FakeLoginWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
