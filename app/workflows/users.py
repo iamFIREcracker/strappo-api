@@ -68,7 +68,7 @@ class LoginAuthorizedWorkflow(Publisher):
         class TokenRefresherSubscriber(object):
             def token_refreshed(self, token):
                 orm.add(token)
-                outer.publish('success')
+                outer.publish('success', token)
 
         session_verifier.add_subscriber(logger, InSessionVerifierSubscriber())
         already_registered.add_subscriber(logger,

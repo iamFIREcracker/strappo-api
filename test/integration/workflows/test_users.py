@@ -58,8 +58,8 @@ class TestLoginAuthorizedWorkflow(unittest.TestCase):
                                                          name='Name',
                                                          avatar='http://...'))
         repository = Mock(with_account=MagicMock(return_value=None),
-                          refresh_account=MagicMock(return_value='aid'),
-                          refresh_token=MagicMock(return_value='tid'))
+                          refresh_account=MagicMock(return_value='account'),
+                          refresh_token=MagicMock(return_value='token'))
         subscriber = Mock(success=MagicMock())
         instance = LoginAuthorizedWorkflow()
 
@@ -69,7 +69,7 @@ class TestLoginAuthorizedWorkflow(unittest.TestCase):
                          paramsextractor, repository, None)
 
         # Then
-        subscriber.success.assert_called_with()
+        subscriber.success.assert_called_with('token')
 
     def test_registered_user_can_refresh_authentication_token(self):
         # Given
@@ -77,8 +77,8 @@ class TestLoginAuthorizedWorkflow(unittest.TestCase):
         orm = Mock()
         paramsextractor = MagicMock(return_value=storage(externalid='eid'))
         repository = Mock(with_account=MagicMock(),
-                          refresh_account=MagicMock(return_value='aid'),
-                          refresh_token=MagicMock(return_value='tid'))
+                          refresh_account=MagicMock(return_value='account'),
+                          refresh_token=MagicMock(return_value='token'))
         subscriber = Mock(success=MagicMock())
         instance = LoginAuthorizedWorkflow()
 
@@ -88,4 +88,4 @@ class TestLoginAuthorizedWorkflow(unittest.TestCase):
                          paramsextractor, repository, None)
 
         # Then
-        subscriber.success.assert_called_with()
+        subscriber.success.assert_called_with('token')
