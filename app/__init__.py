@@ -20,22 +20,6 @@ web.config.LOG_FORMAT = config.LOG_FORMAT
 web.config.DATABASE_URL = config.DATABASE_URL
 
 
-
-def get_name():
-    """Gets the name of the application."""
-    return config.APP_NAME
-
-
-def get_version():
-    """Gets the repository version."""
-    import subprocess
-    proc = subprocess.Popen(
-            'hg log -r tip --template "{latesttagdistance}"',
-            shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    pending, _ = proc.communicate()
-    return "%(tag)sd%(pending)s" % dict(tag=config.TAG, pending=pending)
-
-
 def app_factory():
     """App factory."""
     import weblib.db
