@@ -30,33 +30,36 @@ class TestUsersRepository(unittest.TestCase):
     def test_added_user_is_then_returned_inside_a_query(self):
         # When
         self.session.begin(subtransactions=True)
-        id = UsersRepository.add('Name', 'Avatar')
+        user = UsersRepository.add('Name', 'Avatar')
+        self.session.add(user)
         self.session.commit()
-        user = self.query.filter_by(id=id).first()
+        user = self.query.filter_by(id=user.id).first()
 
         # Then
         self.assertEquals('Avatar', user.avatar)
 
-    def test_refresh_account_of_not_existing_account_should_crate_new_account(self):
+    def test_refresh_account_of_not_existing_account_should_create_new_account(self):
         # When
         self.session.begin(subtransactions=True)
-        id = UsersRepository.refresh_account('not_existing_uid', 'external_id',
-                                             'facebook')
+        account = UsersRepository.refresh_account('not_existing_uid',
+                                                  'external_id', 'facebook')
+        self.session.add(account)
         self.session.commit()
-        account = Account.query.filter_by(id=id).first()
+        account = Account.query.filter_by(id=account.id).first()
 
         # Then
         self.assertEquals('external_id', account.external_id)
 
-    def test_refresh_account_of_existing_account_should_crate_new_account(self):
+    def test_refresh_account_of_existing_account_should_create_new_account(self):
         # When
         self.session.begin(subtransactions=True)
         self.session.add(User(id='uid', name='Name', avatar='Avatar'))
         self.session.add(Account(id='aid', user_id='uid', external_id='eid',
                                  type='facebook'))
-        id = UsersRepository.refresh_account('uid', 'eid', 'facebook')
+        account = UsersRepository.refresh_account('uid', 'eid', 'facebook')
+        self.session.add(account)
         self.session.commit()
-        account = Account.query.filter_by(id=id).first()
+        account = Account.query.filter_by(id=account.id).first()
 
         # Then
         self.assertNotEquals('aid', id)

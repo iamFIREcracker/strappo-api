@@ -28,10 +28,15 @@ class TestTokensRepository(unittest.TestCase):
 
     @unittest.skip('For some reason this interfers with the next test...')
     def test_added_token_is_then_returned_inside_a_query(self):
-        # When
+        # Given
         self.session.begin(subtransactions=True)
         self.session.add(User(id='uid', name='Name', avatar='Avatar'))
-        id = TokensRepository.add('uid')
+        self.session.commit()
+
+        # When
+        self.session.begin(subtransactions=True)
+        token = TokensRepository.add('uid')
+        self.session.add(token)
         self.session.commit()
         token = self.query.filter_by(id=id).first()
 
@@ -39,13 +44,18 @@ class TestTokensRepository(unittest.TestCase):
         self.assertEquals('uid', token.user_id)
 
     def test_added_token_does_not_override_previously_created_ones(self):
-        # When
+        # Given
         self.session.begin(subtransactions=True)
         self.session.add(User(id='uid', name='Name', avatar='Avatar'))
         self.session.add(Token(id='tid', user_id='uid'))
-        id = TokensRepository.add('uid')
         self.session.commit()
-        token = self.query.filter_by(id=id).first()
+
+        # When
+        self.session.begin(subtransactions=True)
+        token = TokensRepository.add('uid')
+        self.session.add(token)
+        self.session.commit()
+        token = self.query.filter_by(id=token.id).first()
 
         # Then
         self.assertNotEquals('tid', id)

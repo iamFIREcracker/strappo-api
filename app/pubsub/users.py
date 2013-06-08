@@ -26,31 +26,31 @@ class AccountRefresher(Publisher):
     def perform(self, repository, userid, externalid, accounttype):
         """Refreshes the user external account.
 
-        When done, a 'account_refreshed' message will be published followed by
-        the ID of the new account
+        When done, a 'account_refreshed' message will be published toghether
+        with the refreshed record.
         """
-        accountid = repository.refresh_account(userid, externalid, accounttype)
-        self.publish('account_refreshed', accountid)
+        account = repository.refresh_account(userid, externalid, accounttype)
+        self.publish('account_refreshed', account)
 
 
 class TokenRefresher(Publisher):
     def perform(self, repository, userid):
         """Refreshes the token associated with user identified by ``userid``.
 
-        When done, a 'token_refreshed' message will be published followed by
-        the ID of the new token.
+        When done, a 'token_refreshed' message will be published toghether
+        with the refreshed record.
         """
-        tokenid = repository.refresh_token(userid)
-        self.publish('token_refreshed', tokenid)
+        token = repository.refresh_token(userid)
+        self.publish('token_refreshed', token)
 
 
 class UserCreator(Publisher):
     def perform(self, repository, name, avatar):
         """Creates a new user with the specified set of properties.
 
-        On success a 'user_created' message will be published, followed by
-        the id of the new user and the user properties.
+        On success a 'user_created' message will be published toghether
+        with the created user.
         """
-        userid = repository.add(name, avatar)
-        self.publish('user_created', userid, name, avatar)
+        user = repository.add(name, avatar)
+        self.publish('user_created', user)
 

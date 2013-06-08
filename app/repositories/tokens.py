@@ -12,5 +12,4 @@ class TokensRepository(object):
     def add(user_id):
         id = unicode(uuid.uuid4())
         token = Token(id=id, user_id=user_id)
-        Token.session.add(token)
-        return id
+        return token

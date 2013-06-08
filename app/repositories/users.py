@@ -16,8 +16,7 @@ class UsersRepository(object):
     def add(name, avatar):
         id = unicode(uuid.uuid4())
         user = User(id=id, name=name, avatar=avatar)
-        User.session.add(user)
-        return id
+        return user
 
     @staticmethod
     def refresh_account(user_id, external_id, account_type):
