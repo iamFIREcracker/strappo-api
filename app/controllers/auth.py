@@ -12,7 +12,7 @@ from app.workflows.users import LoginAuthorizedWorkflow
 from app.weblib.pubsub import LoggingSubscriber
 
 
-class LoginFakeAuthorizedController(CookieAuthorizedController):
+class FakeLoginAuthorizedController(CookieAuthorizedController):
     def GET(self):
         logger = LoggingSubscriber(web.ctx.logger)
         login_authorized = LoginAuthorizedWorkflow()
@@ -24,17 +24,19 @@ class LoginFakeAuthorizedController(CookieAuthorizedController):
 
         class LoginAuthorizedSubscriber(object):
             def not_authorized(self):
+                web.ctx.orm.rollback()
                 raise web.unauthorized()
             def invalid_form(self, errors):
+                web.ctx.orm.rollback()
                 web.ctx.session.pop('fake_access_token')
                 raise web.internalerror()
-            def token_created(self, token_id):
-                web.ctx.session.pop('fake_access_token')
+            def success(self, token):
                 web.ctx.orm.commit()
-                web.setcookie('token', token_id) # XXX expiration date
+                web.ctx.session.pop('fake_access_token')
+                web.setcookie('token', token.id) # XXX expiration date
                 raise web.found('/profile')
 
         login_authorized.add_subscriber(logger, LoginAuthorizedSubscriber())
-        login_authorized.perform(web.ctx.logger, web.ctx.session,
+        login_authorized.perform(web.ctx.orm, web.ctx.logger, web.ctx.session,
                                  'fake_access_token', paramsextractor,
-                                 UsersRepository, 'facebook')
+                                 UsersRepository, 'fake')
