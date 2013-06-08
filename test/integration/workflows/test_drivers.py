@@ -55,13 +55,14 @@ class TestEditDriverWorkflow(unittest.TestCase):
     def test_invalid_form_is_published_if_the_list_of_params_is_invalid(self):
         # Given
         logger = Mock()
+        orm = Mock()
         params = storage(license_plate='plate')
         subscriber = Mock(invalid_form=MagicMock())
         instance = EditDriverWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(logger, params, None, None)
+        instance.perform(orm, logger, params, None, None)
 
         # Then
         subscriber.invalid_form.assert_called_with({
@@ -71,6 +72,7 @@ class TestEditDriverWorkflow(unittest.TestCase):
     def test_not_found_is_published_if_provided_driver_id_is_invalid(self):
         # Given
         logger = Mock()
+        orm = Mock()
         params = storage(license_plate='plate', telephone='Telephone')
         repository = Mock(update=MagicMock(return_value=None))
         subscriber = Mock(not_found=MagicMock())
@@ -78,7 +80,7 @@ class TestEditDriverWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(logger, params, repository, 'not_existing_id')
+        instance.perform(orm, logger, params, repository, 'not_existing_id')
 
         # Then
         subscriber.not_found.assert_called_with('not_existing_id')
@@ -86,6 +88,7 @@ class TestEditDriverWorkflow(unittest.TestCase):
     def test_driver_is_successfully_updated_if_params_and_id_are_valid(self):
         # Given
         logger = Mock()
+        orm = Mock()
         params = storage(license_plate='new_plate', telephone='new_phone')
         new_driver = storage(id='did', user_id='uid',
                              license_plate='new_plate', telephone='new_phone')
@@ -95,7 +98,7 @@ class TestEditDriverWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(logger, params, repository, 'did')
+        instance.perform(orm, logger, params, repository, 'did')
 
         # Then
         subscriber.updated.assert_called_with(new_driver)

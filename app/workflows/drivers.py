@@ -40,7 +40,7 @@ class DriversWithUserIdWorkflow(Publisher):
 class EditDriverWorkflow(Publisher):
     """Defines a workflow to edit the details of a registered driver."""
 
-    def perform(self, logger, params, repository, driver_id):
+    def perform(self, orm, logger, params, repository, driver_id):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         form_validator = FormValidator()
@@ -49,6 +49,7 @@ class EditDriverWorkflow(Publisher):
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
                 outer.publish('invalid_form', errors)
+                orm.rollback()
             def valid_form(self, form):
                 driver_updater.perform(repository, driver_id,
                                        form.d.license_plate,
@@ -56,8 +57,11 @@ class EditDriverWorkflow(Publisher):
 
         class DriverUpdaterSubscriber(object):
             def driver_not_found(self, driver_id):
+                orm.rollback()
                 outer.publish('not_found', driver_id)
             def driver_updated(self, driver):
+                orm.add(driver)
+                orm.commit()
                 outer.publish('updated', driver)
 
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
