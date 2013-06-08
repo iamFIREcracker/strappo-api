@@ -5,28 +5,8 @@ from app.weblib.pubsub import Publisher
 
 
 class DriverWithUserIdGetter(Publisher):
-    """
-    >>> from mock import MagicMock
-    >>> from mock import Mock
-    >>> class Subscriber(object):
-    ...   def driver_not_found(self, driver_id):
-    ...     print 'Driver not found: %(driver_id)s' % locals()
-    ...   def driver_found(self, driver):
-    ...     print 'Driver found: %(driver)s' % locals()
-    >>> this = DriverWithUserIdGetter()
-    >>> this.add_subscriber(Subscriber())
-    
-    >>> repo = Mock(with_user_id=MagicMock(return_value=None))
-    >>> this.perform(repo, 'not_existing_id')
-    Driver not found: not_existing_id
-
-    >>> repo = Mock(with_user_id=MagicMock(return_value='driver'))
-    >>> this.perform(repo, 'existing_id')
-    Driver found: driver
-    """
-
     def perform(self, repository, user_id):
-        """Search for a driver identified by ``user_id``.
+        """Search for a driver registered for the specified user ID.
 
         If such driver exists, a 'driver_found' message is published containing
         driver information;  on the other hand, if no driver exists with the
@@ -37,6 +17,19 @@ class DriverWithUserIdGetter(Publisher):
             self.publish('driver_not_found', user_id)
         else:
             self.publish('driver_found', driver)
+
+
+class DriverUpdater(Publisher):
+    def perform(self, repository, driver_id, license_plate, telephone):
+        """Sets the properties 'license_plate' and 'telephone' of the driver
+        identified by ``driver_id``.
+
+        """
+        driver = repository.update(driver_id, license_plate, telephone)
+        if driver is None:
+            self.publish('driver_not_found', driver_id)
+        else:
+            self.publish('driver_updated', driver)
 
 
 class DriverSerializer(Publisher):
