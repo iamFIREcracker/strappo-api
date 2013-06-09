@@ -11,6 +11,7 @@ from app.weblib.request_decorators import api
 from app.weblib.request_decorators import authorized
 from app.weblib.utils import jsonify
 from app.workflows.passengers import PassengersWorkflow
+from app.workflows.passengers import ViewPassengerWorkflow
 
 
 class PassengersController(ParamAuthorizableController):
@@ -29,5 +30,24 @@ class PassengersController(ParamAuthorizableController):
 
         drivers.add_subscriber(logger, PassengersSubscriber())
         drivers.perform(web.ctx.logger, PassengersRepository)
+        return ret.get()
+
+
+class ViewPassengerController(ParamAuthorizableController):
+    @api
+    @authorized
+    def GET(self, passenger_id):
+        logger = LoggingSubscriber(web.ctx.logger)
+        drivers = ViewPassengerWorkflow()
+        ret = Future()
+
+        class PassengersSubscriber(object):
+            def not_found(self, driver_id):
+                raise web.notfound()
+            def success(self, blob):
+                ret.set(jsonify(passenger=blob))
+
+        drivers.add_subscriber(logger, PassengersSubscriber())
+        drivers.perform(web.ctx.logger, PassengersRepository, passenger_id)
         return ret.get()
 
