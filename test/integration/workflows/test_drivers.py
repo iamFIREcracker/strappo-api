@@ -32,7 +32,8 @@ class TestDriversWithUserIdWorkflow(unittest.TestCase):
         # Given
         logger = Mock()
         driver = storage(id='did', user_id='uid', license_plate='1242124',
-                         telephone='+124 453534')
+                         telephone='+124 453534', user=storage(name='name',
+                                                               avatar='avatar'))
         repository = Mock(with_user_id=MagicMock(return_value=driver))
         subscriber = Mock(success=MagicMock())
         instance = DriversWithUserIdWorkflow()
@@ -43,9 +44,11 @@ class TestDriversWithUserIdWorkflow(unittest.TestCase):
 
         # Then
         subscriber.success.assert_called_with({
-            'id': 'did',
             'user_id': 'uid',
+            'name': 'name',
+            'id': 'did',
             'license_plate': '1242124',
+            'avatar': 'avatar',
             'telephone': '+124 453534',
         })
 

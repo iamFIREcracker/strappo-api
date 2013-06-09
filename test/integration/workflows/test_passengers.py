@@ -31,9 +31,11 @@ class TestPassengersWorkflow(unittest.TestCase):
         # Given
         logger = Mock()
         passengers = [storage(id='pid1', user_id='uid1', origin='origin1',
-                              destination='destination1', buddies=1),
+                              destination='destination1', buddies=1,
+                              user=storage(name='Name1', avatar='Avatar1')),
                       storage(id='pid2', user_id='uid2', origin='origin2',
-                              destination='destination2', buddies=2)]
+                              destination='destination2', buddies=2,
+                              user=storage(name='Name2', avatar='Avatar2'))]
         repository = Mock(get_all=MagicMock(return_value=passengers))
         subscriber = Mock(success=MagicMock())
         instance = PassengersWorkflow()
@@ -47,12 +49,16 @@ class TestPassengersWorkflow(unittest.TestCase):
             'origin': 'origin1',
             'destination': 'destination1',
             'user_id': 'uid1',
+            'name': 'Name1',
             'buddies': 1,
-            'id': 'pid1'
+            'id': 'pid1',
+            'avatar': 'Avatar1'
         }, {
             'origin': 'origin2',
             'destination': 'destination2',
             'user_id': 'uid2',
+            'name': 'Name2',
             'buddies': 2,
-            'id': 'pid2'
+            'id': 'pid2',
+            'avatar': 'Avatar2'
         }])
