@@ -44,7 +44,7 @@ def api(func):
             raise web.notacceptable()
 
         return func(*args, **kwargs)
-    return inner
+    return func if web.config.DISABLE_HTTP_ACCEPT_CHECK else inner
 
 
 def authorized(func):

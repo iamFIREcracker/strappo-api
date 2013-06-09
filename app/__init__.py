@@ -19,6 +19,8 @@ web.config.LOG_FORMAT = config.LOG_FORMAT
 
 web.config.DATABASE_URL = config.DATABASE_URL
 
+web.config.DISABLE_HTTP_ACCEPT_CHECK = config.DISABLE_HTTP_ACCEPT_CHECK
+
 
 def app_factory():
     """App factory."""
