@@ -9,6 +9,7 @@ from mock import MagicMock
 from mock import Mock
 
 from app.workflows.passengers import PassengersWorkflow
+from app.workflows.passengers import ViewPassengerWorkflow
 
 
 class TestPassengersWorkflow(unittest.TestCase):
@@ -62,3 +63,45 @@ class TestPassengersWorkflow(unittest.TestCase):
             'id': 'pid2',
             'avatar': 'Avatar2'
         }])
+
+
+class TestViewPassengerWorkflow(unittest.TestCase):
+    
+    def test_with_invalid_id_should_publish_a_not_found(self):
+        # Given
+        logger = Mock()
+        repository = Mock(get=MagicMock(return_value=None))
+        subscriber = Mock(not_found=MagicMock())
+        instance = ViewPassengerWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, repository, 'not_existing')
+
+        # Then
+        subscriber.not_found.assert_called_with('not_existing')
+
+    def test_with_existing_id_should_return_serialized_passenger(self):
+        # Given
+        logger = Mock()
+        passenger = storage(id='pid', user_id='uid', origin='origin',
+                            destination='destination', buddies=1,
+                            user=storage(name='name', avatar='avatar'))
+        repository = Mock(get=MagicMock(return_value=passenger))
+        subscriber = Mock(success=MagicMock())
+        instance = ViewPassengerWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, repository, 'pid')
+
+        # Then
+        subscriber.success.assert_called_with({
+            'origin': 'origin',
+            'destination': 'destination',
+            'user_id': 'uid',
+            'name': 'name',
+            'buddies': 1,
+            'id': 'pid',
+            'avatar': 'avatar'
+        })
