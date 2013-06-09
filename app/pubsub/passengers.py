@@ -23,5 +23,6 @@ class MultiplePassengersSerializer(Publisher):
         """
         self.publish('passengers_serialized',
                      [dict(id=p.id, user_id=p.user_id, origin=p.origin,
-                           destination=p.destination, buddies=p.buddies)
+                           destination=p.destination, buddies=p.buddies,
+                           name=p.user.name, avatar=p.user.avatar)
                       for p in passengers])

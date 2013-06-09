@@ -46,4 +46,5 @@ class DriverSerializer(Publisher):
         self.publish('driver_serialized',
                      dict(id=driver.id, user_id=driver.user_id,
                           license_plate=driver.license_plate,
-                          telephone=driver.telephone))
+                          telephone=driver.telephone, name=driver.user.name,
+                          avatar=driver.user.avatar))
