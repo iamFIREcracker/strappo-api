@@ -103,3 +103,10 @@ class Passenger(Base):
     origin = Column(Text)
     destination = Column(Text)
     buddies = Column(Integer)
+
+    def __repr__(self):
+        return '<Passenger id=%(id)s, user_id=%(user_id)s, '\
+               'origin=%(origin)s, destination=%(destination)s, '\
+               'buddies=%(buddies)d>' % self.__dict__
+
+
