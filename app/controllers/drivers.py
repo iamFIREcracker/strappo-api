@@ -16,7 +16,7 @@ from app.workflows.drivers import DriversWithUserIdWorkflow
 
 
 class DriversController(ParamAuthorizableController):
-    #@api
+    @api
     @authorized
     def GET(self):
         logger = LoggingSubscriber(web.ctx.logger)
@@ -36,7 +36,7 @@ class DriversController(ParamAuthorizableController):
 
 
 class EditDriverController(ParamAuthorizableController):
-    #@api
+    @api
     @authorized
     def POST(self, driver_id):
         logger = LoggingSubscriber(web.ctx.logger)

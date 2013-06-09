@@ -14,7 +14,7 @@ from app.workflows.passengers import PassengersWorkflow
 
 
 class PassengersController(ParamAuthorizableController):
-    #@api
+    @api
     @authorized
     def GET(self):
         logger = LoggingSubscriber(web.ctx.logger)
