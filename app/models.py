@@ -43,6 +43,18 @@ class User(Base):
                'avatar=%(avatar)s>' % self.__dict__
 
 
+class Token(Base):
+    __tablename__ = 'token'
+
+    id = Column(String, default=uuid, primary_key=True)
+    user_id = Column(String, ForeignKey('user.id'))
+    created = Column(DateTime, default=datetime.now)
+    updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    def __repr__(self):
+        return '<Token id=%(id)s, user_id=%(user_id)s>' % self.__dict__
+
+
 class Account(Base):
     __tablename__ = 'account'
 
@@ -56,18 +68,6 @@ class Account(Base):
     def __repr__(self):
         return '<Account id=%(id)s, user_id=%(user_id)s, '\
                'external_id=%(external_id)s, type=%(type)s>' % self.__dict__
-
-
-class Token(Base):
-    __tablename__ = 'token'
-
-    id = Column(String, default=uuid, primary_key=True)
-    user_id = Column(String, ForeignKey('user.id'))
-    created = Column(DateTime, default=datetime.now)
-    updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-
-    def __repr__(self):
-        return '<Token id=%(id)s, user_id=%(user_id)s>' % self.__dict__
 
 
 class Driver(Base):
