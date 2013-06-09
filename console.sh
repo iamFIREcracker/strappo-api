@@ -68,6 +68,10 @@ loop() {
             shift
             gimmeurjson http://localhost:8000/1/passengers GET "token=tid&$@"
             ;;
+        view)
+            shift; id=$1
+            gimmeurjson http://localhost:8000/1/passengers/${id}/view GET "token=tid&$@"
+            ;;
         *)
             wtf
         esac
