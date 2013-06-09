@@ -26,6 +26,52 @@ class TestPassengersRepository(unittest.TestCase):
         Passenger.session.rollback()
         Passenger.session.remove()
 
+    def test_get_with_invalid_id_should_return_nothing(self):
+        # When
+        passenger = PassengersRepository.get('not_existing_id')
+
+        # Then
+        self.assertIsNone(passenger)
+
+    def test_get_with_passenger_linked_to_invalid_user_should_return_nothing(self):
+        # Given
+        self.session.begin(subtransactions=True)
+        self.session.add(Passenger(id='pid', user_id='not_existing_id'))
+        self.session.commit()
+
+        # When
+        passenger = PassengersRepository.get('pid')
+
+        # Then
+        self.assertIsNone(passenger)
+
+    def test_get_with_passenger_linked_to_deleted_user_should_return_nothing(self):
+        # Given
+        self.session.begin(subtransactions=True)
+        self.session.add(User(id='uid', name='Name', avatar='Avatar',
+                              deleted=True))
+        self.session.add(Passenger(id='pid', user_id='uid'))
+        self.session.commit()
+
+        # When
+        passenger = PassengersRepository.get('pid')
+
+        # Then
+        self.assertIsNone(passenger)
+
+    def test_get_with_passenger_linked_to_active_user_should_return_the_passenger(self):
+        # Given
+        self.session.begin(subtransactions=True)
+        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
+        self.session.add(Passenger(id='pid', user_id='uid'))
+        self.session.commit()
+
+        # When
+        passenger = PassengersRepository.get('pid')
+
+        # Then
+        self.assertIsNotNone(passenger)
+
     def test_get_all_without_passengers_should_return_empty_list(self):
         # When
         passengers = PassengersRepository.get_all()
