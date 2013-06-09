@@ -10,7 +10,7 @@ DEV = True
 
 DATABASE_URL = 'sqlite:///testdb.sqlite'
 
-DISABLE_HTTP_ACCEPT_CHECK = True
+#DISABLE_HTTP_ACCEPT_CHECK = True
 !
 
 nosetests --with-doctest app/ test/
