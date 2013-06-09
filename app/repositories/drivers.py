@@ -8,7 +8,6 @@ from app.weblib.db import expunged
 
 
 class DriversRepository(object):
-
     @staticmethod
     def get(driver_id):
         return expunged(Driver.query.join(ActiveDriver).join(User).\
