@@ -3,7 +3,9 @@
 
 from datetime import datetime
 
+from weblib.db import backref
 from weblib.db import declarative_base
+from weblib.db import relationship
 from weblib.db import uuid
 from weblib.db import Boolean
 from weblib.db import Column
@@ -37,6 +39,12 @@ class User(Base):
     deleted = Column(Boolean, default=False, nullable=False)
     created = Column(DateTime, default=datetime.now)
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    driver = relationship('Driver', uselist=False,
+                          backref=backref('user', lazy='joined',
+                                          cascade='expunge'))
+    passenger = relationship('Passenger', uselist=False,
+                             backref=backref('user', lazy='joined',
+                                             cascade='expunge'))
 
     def __repr__(self):
         return '<User id=%(id)s, name=%(name)s, '\
