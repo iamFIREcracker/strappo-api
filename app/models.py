@@ -85,6 +85,7 @@ class Driver(Base):
     user_id = Column(String, ForeignKey('user.id'))
     license_plate = Column(String)
     telephone = Column(String)
+    active = Column(Boolean, default=True)
     created = Column(DateTime, default=datetime.now)
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
@@ -92,15 +93,6 @@ class Driver(Base):
         return '<Driver id=%(id)s, user_id=%(user_id)s, '\
                'license_plate=%(license_plate)s, '\
                'telephone=%(telephone)s>' % self.__dict__
-
-
-class ActiveDriver(Base):
-    __tablename__ = 'active_driver'
-
-    id = Column(String, default=uuid, primary_key=True)
-    driver_id = Column(String, ForeignKey('driver.id'))
-    created = Column(DateTime, default=datetime.now)
-    updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
 
 class Passenger(Base):

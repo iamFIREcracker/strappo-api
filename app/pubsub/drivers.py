@@ -47,4 +47,5 @@ class DriverSerializer(Publisher):
                      dict(id=driver.id, user_id=driver.user_id,
                           license_plate=driver.license_plate,
                           telephone=driver.telephone, name=driver.user.name,
-                          avatar=driver.user.avatar))
+                          avatar=driver.user.avatar,
+                          active=driver.active))
