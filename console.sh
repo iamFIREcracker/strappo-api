@@ -62,6 +62,12 @@ loop() {
             shift; id=$1; shift
             gimmeurjson ${SERVER}/1/drivers/${id}/edit POST "token=tid&$@"
             ;;
+        deactivate)
+            local id
+
+            shift; id=$1; shift
+            gimmeurjson ${SERVER}/1/drivers/${id}/deactivate POST "token=tid&$@"
+            ;;
         *)
             wtf
         esac
