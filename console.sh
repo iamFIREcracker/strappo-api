@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+SERVER=${1:-http://localhost:8000}
+
 
 parse_json() {
     local json
@@ -49,13 +51,13 @@ loop() {
         case $1 in
         list)
             shift
-            gimmeurjson http://localhost:8000/1/drivers GET "token=tid&$@"
+            gimmeurjson ${SERVER}/1/drivers GET "token=tid&$@"
             ;;
         edit)
             local id
 
             shift; id=$1; shift
-            gimmeurjson http://localhost:8000/1/drivers/${id}/edit POST "token=tid&$@"
+            gimmeurjson ${SERVER}/1/drivers/${id}/edit POST "token=tid&$@"
             ;;
         *)
             wtf
@@ -66,11 +68,11 @@ loop() {
         case $1 in
         list)
             shift
-            gimmeurjson http://localhost:8000/1/passengers GET "token=tid&$@"
+            gimmeurjson ${SERVER}/1/passengers GET "token=tid&$@"
             ;;
         view)
-            shift; id=$1
-            gimmeurjson http://localhost:8000/1/passengers/${id}/view GET "token=tid&$@"
+            shift; id=$1; shift
+            gimmeurjson ${SERVER}/1/passengers/${id}/view GET "token=tid&$@"
             ;;
         *)
             wtf
