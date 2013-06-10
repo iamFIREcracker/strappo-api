@@ -92,7 +92,7 @@ class Driver(Base):
     def __repr__(self):
         return '<Driver id=%(id)s, user_id=%(user_id)s, '\
                'license_plate=%(license_plate)s, '\
-               'telephone=%(telephone)s>' % self.__dict__
+               'telephone=%(telephone)s, active=%(active)s>' % self.__dict__
 
 
 class Passenger(Base):
