@@ -29,3 +29,12 @@ class DriversRepository(object):
             driver.license_plate = license_plate
             driver.telephone = telephone
             return driver
+
+    @staticmethod
+    def deactivate(driver_id):
+        driver = DriversRepository.get(driver_id)
+        if driver is None:
+            return None
+        else:
+            driver.active = False
+            return driver

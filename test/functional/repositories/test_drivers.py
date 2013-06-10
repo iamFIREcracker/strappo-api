@@ -117,3 +117,19 @@ class TestDriversRepository(unittest.TestCase):
         # Then
         self.assertEquals('license', driver.license_plate)
         self.assertEquals('phone', driver.telephone)
+
+    def test_deactivate_of_existing_driver_should_return_the_deactivated_driver(self):
+        # Given
+        self.session.begin(subtransactions=True)
+        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
+        self.session.add(Driver(id='did', user_id='uid', license_plate='plate'))
+        self.session.commit()
+
+        # When
+        self.session.begin(subtransactions=True)
+        self.session.add(DriversRepository.deactivate('did'))
+        self.session.commit()
+        driver = Driver.query.filter_by(id='did').first()
+
+        # Then
+        self.assertEquals(False, driver.active)
