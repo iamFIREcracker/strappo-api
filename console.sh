@@ -44,6 +44,9 @@ loop() {
     local choice
 
     read -p '> ' choice
+    [ -z "${choice}" ] && {
+        return 1
+    }
     set ${choice}
     case $1 in
     drivers)
