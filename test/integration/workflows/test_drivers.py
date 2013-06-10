@@ -8,6 +8,7 @@ from web.utils import storage
 from mock import MagicMock
 from mock import Mock
 
+from app.workflows.drivers import DeactivateDriverWorkflow
 from app.workflows.drivers import DriversWithUserIdWorkflow
 from app.workflows.drivers import EditDriverWorkflow
 
@@ -101,6 +102,39 @@ class TestEditDriverWorkflow(unittest.TestCase):
         # When
         instance.add_subscriber(subscriber)
         instance.perform(orm, logger, params, repository, 'did')
+
+        # Then
+        subscriber.success.assert_called_with()
+
+
+class TestDeactivateDriverWorkflow(unittest.TestCase):
+
+    def test_not_found_is_published_if_provided_driver_id_is_invalid(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        repository = Mock(deactivate=MagicMock(return_value=None))
+        subscriber = Mock(not_found=MagicMock())
+        instance = DeactivateDriverWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(orm, logger, repository, 'not_existing_id')
+
+        # Then
+        subscriber.not_found.assert_called_with('not_existing_id')
+
+    def test_driver_is_successfully_deactivated_if_id_is_valid(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        repository = Mock(deactivate=MagicMock())
+        subscriber = Mock(success=MagicMock())
+        instance = DeactivateDriverWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(orm, logger, repository, 'did')
 
         # Then
         subscriber.success.assert_called_with()

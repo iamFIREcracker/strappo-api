@@ -3,6 +3,7 @@
 
 
 import app.forms.drivers as driver_forms
+from app.pubsub.drivers import DriverDeactivator
 from app.pubsub.drivers import DriverWithUserIdGetter
 from app.pubsub.drivers import DriverUpdater
 from app.pubsub.drivers import DriverSerializer
@@ -65,3 +66,22 @@ class EditDriverWorkflow(Publisher):
         driver_updater.add_subscriber(logger, DriverUpdaterSubscriber())
         form_validator.perform(driver_forms.update(), params,
                                describe_invalid_form)
+
+
+class DeactivateDriverWorkflow(Publisher):
+    """Defines a workflow to _temporarily_ deactivate a driver."""
+
+    def perform(self, orm, logger, repository, driver_id):
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        driver_deactivator = DriverDeactivator()
+
+        class DriverUpdaterSubscriber(object):
+            def driver_not_found(self, driver_id):
+                outer.publish('not_found', driver_id)
+            def driver_deactivated(self, driver):
+                orm.add(driver)
+                outer.publish('success')
+
+        driver_deactivator.add_subscriber(logger, DriverUpdaterSubscriber())
+        driver_deactivator.perform(repository, driver_id)
