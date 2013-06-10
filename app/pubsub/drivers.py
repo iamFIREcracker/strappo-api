@@ -36,6 +36,22 @@ class DriverUpdater(Publisher):
             self.publish('driver_updated', driver)
 
 
+class DriverDeactivator(Publisher):
+    def perform(self, repository, driver_id):
+        """Temporarily Deactivates the driver identified by ``driver_id``.
+
+        If no driver exists identified by ``driver_id``, then a
+        'driver_not_found' message is published together with the given driver
+        ID;  on the other hand, a 'driver_deactivated' message is published with
+        the updated driver record.
+        """
+        driver = repository.deactivate(driver_id)
+        if driver is None:
+            self.publish('driver_not_found', driver_id)
+        else:
+            self.publish('driver_deactivated', driver)
+
+
 class DriverSerializer(Publisher):
     def perform(self, driver):
         """Convert the given driver into a serializable dictionary.
