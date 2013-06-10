@@ -28,7 +28,7 @@ gimmeurjson() {
 
     [ ${method} = "GET" ] && url="${url}?${data}"
 
-    curl -i -s -w'\n' "${url}" -X "${method}" -d "${data}" |\
+    curl -i -s -w'\n' --header 'Accept: application/json' "${url}" -X "${method}" -d "${data}" |\
     tr -d '\r' |\
     sed -n '1p;$p' |\
     parse_header
