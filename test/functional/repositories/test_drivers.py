@@ -118,6 +118,13 @@ class TestDriversRepository(unittest.TestCase):
         self.assertEquals('license', driver.license_plate)
         self.assertEquals('phone', driver.telephone)
 
+    def test_deactivate_of_not_existing_driver_should_return_nothing(self):
+        # When
+        driver = DriversRepository.deactivate('not_existing_id')
+
+        # Then
+        self.assertIsNone(driver)
+
     def test_deactivate_of_existing_driver_should_return_the_deactivated_driver(self):
         # Given
         self.session.begin(subtransactions=True)
