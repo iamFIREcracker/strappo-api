@@ -94,9 +94,7 @@ class TestEditDriverWorkflow(unittest.TestCase):
         logger = Mock()
         orm = Mock()
         params = storage(license_plate='new_plate', telephone='new_phone')
-        new_driver = storage(id='did', user_id='uid',
-                             license_plate='new_plate', telephone='new_phone')
-        repository = Mock(update=MagicMock(return_value=new_driver))
+        repository = Mock(update=MagicMock())
         subscriber = Mock(success=MagicMock())
         instance = EditDriverWorkflow()
 
