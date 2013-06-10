@@ -5,6 +5,7 @@ import web
 
 from app.controllers.auth import FakeLoginAuthorizedController
 from app.controllers.drivers import EditDriverController
+from app.controllers.drivers import DeactivateDriverController
 from app.controllers.drivers import DriversController
 from app.controllers.passengers import PassengersController
 from app.controllers.passengers import ViewPassengerController
@@ -14,6 +15,7 @@ from app.weblib.controllers.auth import FakeLoginController
 URLS = (
     '/1/drivers', DriversController,
     '/1/drivers/(.+)/edit', EditDriverController,
+    '/1/drivers/(.+)/deactivate', DeactivateDriverController,
     '/1/passengers', PassengersController,
     '/1/passengers/(.+)/view', ViewPassengerController,
 ) + (() if not web.config.DEV else (
