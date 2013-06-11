@@ -118,3 +118,19 @@ class TestPassengersRepository(unittest.TestCase):
         # Then
         self.assertEquals(1, len(passengers))
         self.assertEquals('pid', passengers[0].id)
+
+    def test_add_passenger_with_all_the_valid_fields_should_return_a_new_passenger(self):
+        # Given
+        self.session.begin(subtransactions=True)
+        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
+        self.session.commit()
+
+        # When
+        self.session.begin(subtransactions=True)
+        passenger = PassengersRepository.add('uid', 'origin', 'destination', 42)
+        self.session.add(passenger)
+        self.session.commit()
+        passenger = self.query.filter_by(id=passenger.id).first()
+
+        # Then
+        self.assertEquals(42, passenger.buddies)
