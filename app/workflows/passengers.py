@@ -2,10 +2,14 @@
 # -*- coding: utf-8 -*-
 
 
+import app.forms.passengers as passengers_forms
 from app.pubsub.passengers import AllPassengersGetter
 from app.pubsub.passengers import PassengerWithIdGetter
 from app.pubsub.passengers import MultiplePassengersSerializer
+from app.pubsub.passengers import PassengerCreator
 from app.pubsub.passengers import PassengerSerializer
+from app.weblib.forms import describe_invalid_form
+from app.weblib.pubsub import FormValidator
 from app.weblib.pubsub import Publisher
 from app.weblib.pubsub import LoggingSubscriber
 
@@ -34,6 +38,33 @@ class PassengersWorkflow(Publisher):
                                              PassengersSerializerSubscriber())
         passengers_getter.perform(repository)
 
+
+class AddPassengerWorkflow(Publisher):
+    """Defines a workflow to add a new passenger."""
+
+    def perform(self, orm, logger, params, repository, user_id):
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        form_validator = FormValidator()
+        passenger_creator = PassengerCreator()
+
+        class FormValidatorSubscriber(object):
+            def invalid_form(self, errors):
+                outer.publish('invalid_form', errors)
+            def valid_form(self, form):
+                passenger_creator.perform(repository, user_id, form.d.origin,
+                                          form.d.destination,
+                                          int(form.d.buddies))
+
+        class PassengerCreatorSubscriber(object):
+            def passenger_created(self, passenger):
+                orm.add(passenger)
+                outer.publish('success', passenger.id)
+
+        form_validator.add_subscriber(logger, FormValidatorSubscriber())
+        passenger_creator.add_subscriber(logger, PassengerCreatorSubscriber())
+        form_validator.perform(passengers_forms.add(), params,
+                               describe_invalid_form)
 
 
 class ViewPassengerWorkflow(Publisher):

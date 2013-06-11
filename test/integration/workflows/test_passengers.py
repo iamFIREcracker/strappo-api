@@ -8,12 +8,12 @@ from web.utils import storage
 from mock import MagicMock
 from mock import Mock
 
+from app.workflows.passengers import AddPassengerWorkflow
 from app.workflows.passengers import PassengersWorkflow
 from app.workflows.passengers import ViewPassengerWorkflow
 
 
 class TestPassengersWorkflow(unittest.TestCase):
-    
     def test_get_all_passengers_without_any_registered_one_should_return_an_empty_list(self):
         # Given
         logger = Mock()
@@ -65,8 +65,45 @@ class TestPassengersWorkflow(unittest.TestCase):
         }])
 
 
+class TestAddPassengerWorkflow(unittest.TestCase):
+    def test_cannot_add_a_new_passenger_without_specifying_required_fields(self):
+        # Given
+        orm = Mock()
+        logger = Mock()
+        params = storage(origin='heaven')
+        subscriber = Mock(invalid_form=MagicMock())
+        instance = AddPassengerWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(orm, logger, params, None, None)
+
+        # Then
+        subscriber.invalid_form.assert_called_with({
+            'destination': 'Required',
+            'buddies': 'Required'
+        })
+
+    def test_successfully_create_a_passenger_when_all_the_fields_are_valid(self):
+        # Given
+        orm = Mock()
+        logger = Mock()
+        params = storage(origin='heaven', destination='hell', buddies=4)
+        passenger = storage(id='pid', user_id='uid', origin='heaven',
+                            destination='hell', buddies=4)
+        repository = Mock(add=MagicMock(return_value=passenger))
+        subscriber = Mock(success=MagicMock())
+        instance = AddPassengerWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(orm, logger, params, repository, 'uid')
+
+        # Then
+        subscriber.success.assert_called_with('pid')
+
+
 class TestViewPassengerWorkflow(unittest.TestCase):
-    
     def test_with_invalid_id_should_publish_a_not_found(self):
         # Given
         logger = Mock()
