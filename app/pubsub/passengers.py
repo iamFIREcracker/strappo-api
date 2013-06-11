@@ -30,6 +30,17 @@ class AllPassengersGetter(Publisher):
         self.publish('passengers_found', repository.get_all())
 
 
+class PassengerCreator(Publisher):
+    def perform(self, repository, user_id, origin, destination, buddies):
+        """Creates a new passenger with the specified set of properties.
+
+        On success a 'passenger_created' message will be published toghether
+        with the created user.
+        """
+        passenger = repository.add(user_id, origin, destination, buddies)
+        self.publish('passenger_created', passenger)
+
+
 def _serialize(p):
     return dict(id=p.id, user_id=p.user_id, origin=p.origin,
                 destination=p.destination, buddies=p.buddies, name=p.user.name,
