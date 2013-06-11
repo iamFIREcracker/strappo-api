@@ -10,6 +10,13 @@ parse_json() {
     echo ${json} | python -mjson.tool | pygmentize -l javascript
 }
 
+parse_location() {
+    local location
+
+    read location
+    echo ${location}
+}
+
 parse_header() {
     local header
 
@@ -18,6 +25,9 @@ parse_header() {
         parse_json
     else 
         echo ${header}
+        if [ "${header}" == "HTTP/1.1 201 Created" ]; then
+            parse_location
+        fi
     fi
 }
 
@@ -32,7 +42,7 @@ gimmeurjson() {
 
     curl -i -s -w'\n' --header 'Accept: application/json' "${url}" -X "${method}" -d "${data}" |\
     tr -d '\r' |\
-    sed -n '1p;$p' |\
+    grep -e HTTP -e Location -e \{ |\
     parse_header
 }
 
@@ -78,6 +88,10 @@ loop() {
         list)
             shift
             gimmeurjson ${SERVER}/1/passengers GET "token=tid&$@"
+            ;;
+        add)
+            shift
+            gimmeurjson ${SERVER}/1/passengers/add POST "token=tid&$@"
             ;;
         view)
             shift; id=$1; shift
