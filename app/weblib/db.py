@@ -5,6 +5,7 @@ import uuid as _uuid
 
 import web
 from sqlalchemy import create_engine as _create_engine
+from sqlalchemy import func
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import DateTime
@@ -23,8 +24,9 @@ from sqlalchemy.ext.declarative import declarative_base as _declarative_base
 
 
 __all__ = ['backref', 'create_engine', 'create_session', 'declarative_base',
-           'init_db', 'relationship', 'uuid', 'Boolean', 'Column', 'DateTime',
-           'Enum', 'ForeignKey', 'Integer', 'String', 'Text', 'Time']
+           'func', 'init_db', 'relationship', 'uuid', 'Boolean', 'Column',
+           'DateTime', 'Enum', 'ForeignKey', 'Integer', 'String', 'Text',
+           'Time']
 
 
 def create_engine():
