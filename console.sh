@@ -59,6 +59,17 @@ loop() {
     }
     set ${choice}
     case $1 in
+    destinations)
+        shift
+        case $1 in
+        list)
+            shift
+            gimmeurjson ${SERVER}/1/destinations GET "token=tid&$@"
+            ;;
+        *)
+            wtf
+        esac
+        ;;
     drivers)
         shift
         case $1 in
