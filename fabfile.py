@@ -141,6 +141,11 @@ def dbupdate():
 
 
 @task
+def dbpopulate():
+    '''Populate the database with test fixtures.'''
+    vcmd('python -c "import app.db; app.db.populate_db()"')
+
+@task
 def papply():
     '''Apply Puppet manifest. Usable from other commands or the CLI.'''
     require('user')
