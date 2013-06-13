@@ -38,18 +38,18 @@ class DriverUpdater(Publisher):
 
 class DriverDeactivator(Publisher):
     def perform(self, repository, driver_id):
-        """Temporarily Deactivates the driver identified by ``driver_id``.
+        """Temporarily Hides the driver identified by ``driver_id``.
 
         If no driver exists identified by ``driver_id``, then a
         'driver_not_found' message is published together with the given driver
-        ID;  on the other hand, a 'driver_deactivated' message is published with
+        ID;  on the other hand, a 'driver_hid' message is published with
         the updated driver record.
         """
-        driver = repository.deactivate(driver_id)
+        driver = repository.hide(driver_id)
         if driver is None:
             self.publish('driver_not_found', driver_id)
         else:
-            self.publish('driver_deactivated', driver)
+            self.publish('driver_hid', driver)
 
 
 class DriverSerializer(Publisher):
@@ -61,4 +61,4 @@ class DriverSerializer(Publisher):
         """
         self.publish('driver_serialized',
                      dict(id=driver.id, license_plate=driver.license_plate,
-                          telephone=driver.telephone, active=driver.active))
+                          telephone=driver.telephone, hidden=driver.hidden))

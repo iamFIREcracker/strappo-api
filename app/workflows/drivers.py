@@ -68,8 +68,8 @@ class EditDriverWorkflow(Publisher):
                                describe_invalid_form)
 
 
-class DeactivateDriverWorkflow(Publisher):
-    """Defines a workflow to _temporarily_ deactivate a driver."""
+class HideDriverWorkflow(Publisher):
+    """Defines a workflow to _temporarily_ hide a driver."""
 
     def perform(self, orm, logger, repository, driver_id):
         outer = self # Handy to access ``self`` from inner classes
@@ -79,7 +79,7 @@ class DeactivateDriverWorkflow(Publisher):
         class DriverUpdaterSubscriber(object):
             def driver_not_found(self, driver_id):
                 outer.publish('not_found', driver_id)
-            def driver_deactivated(self, driver):
+            def driver_hid(self, driver):
                 orm.add(driver)
                 outer.publish('success')
 

@@ -85,14 +85,14 @@ class Driver(Base):
     user_id = Column(String, ForeignKey('user.id'))
     license_plate = Column(String)
     telephone = Column(String)
-    active = Column(Boolean, default=True)
+    hidden = Column(Boolean, default=False)
     created = Column(DateTime, default=datetime.now)
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     def __repr__(self):
         return '<Driver id=%(id)s, user_id=%(user_id)s, '\
                'license_plate=%(license_plate)s, '\
-               'telephone=%(telephone)s, active=%(active)s>' % self.__dict__
+               'telephone=%(telephone)s, hidden=%(hidden)s>' % self.__dict__
 
 
 class Passenger(Base):

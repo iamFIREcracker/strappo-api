@@ -6,7 +6,7 @@ import web
 from app.controllers.auth import FakeLoginAuthorizedController
 from app.controllers.destinations import ListDestinationsController
 from app.controllers.drivers import EditDriverController
-from app.controllers.drivers import DeactivateDriverController
+from app.controllers.drivers import HideDriverController
 from app.controllers.drivers import DriversController
 from app.controllers.passengers import AddPassengerController
 from app.controllers.passengers import PassengersController
@@ -18,7 +18,7 @@ URLS = (
     '/1/destinations', ListDestinationsController,
     '/1/drivers', DriversController,
     '/1/drivers/(.+)/edit', EditDriverController,
-    '/1/drivers/(.+)/deactivate', DeactivateDriverController,
+    '/1/drivers/(.+)/hide', HideDriverController,
     '/1/passengers', PassengersController,
     '/1/passengers/add', AddPassengerController,
     '/1/passengers/(.+)/view', ViewPassengerController,
