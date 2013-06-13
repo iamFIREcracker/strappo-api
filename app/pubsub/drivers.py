@@ -60,8 +60,5 @@ class DriverSerializer(Publisher):
         message containing the serialized object (i.e. driver dictionary).
         """
         self.publish('driver_serialized',
-                     dict(id=driver.id, user_id=driver.user_id,
-                          license_plate=driver.license_plate,
-                          telephone=driver.telephone, name=driver.user.name,
-                          avatar=driver.user.avatar,
-                          active=driver.active))
+                     dict(id=driver.id, license_plate=driver.license_plate,
+                          telephone=driver.telephone, active=driver.active))
