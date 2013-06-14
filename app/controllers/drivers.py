@@ -12,8 +12,9 @@ from app.weblib.request_decorators import api
 from app.weblib.request_decorators import authorized
 from app.weblib.utils import jsonify
 from app.workflows.drivers import EditDriverWorkflow
-from app.workflows.drivers import HideDriverWorkflow
 from app.workflows.drivers import DriversWithUserIdWorkflow
+from app.workflows.drivers import HideDriverWorkflow
+from app.workflows.drivers import UnhideDriverWorkflow
 
 
 class DriversController(ParamAuthorizableController):
@@ -80,4 +81,26 @@ class HideDriverController(ParamAuthorizableController):
         hide_driver.add_subscriber(logger, HideDriverSubscriber())
         hide_driver.perform(web.ctx.orm, web.ctx.logger, 
                                   DriversRepository, driver_id)
+        return ret.get()
+
+
+class UnhideDriverController(ParamAuthorizableController):
+    @api
+    @authorized
+    def POST(self, driver_id):
+        logger = LoggingSubscriber(web.ctx.logger)
+        unhide_driver = UnhideDriverWorkflow()
+        ret = Future()
+
+        class UnhideDriverSubscriber(object):
+            def not_found(self, driver_id):
+                web.ctx.orm.rollback()
+                raise web.notfound()
+            def success(self):
+                web.ctx.orm.commit()
+                raise app.weblib.nocontent()
+
+        unhide_driver.add_subscriber(logger, UnhideDriverSubscriber())
+        unhide_driver.perform(web.ctx.orm, web.ctx.logger, DriversRepository,
+                              driver_id)
         return ret.get()
