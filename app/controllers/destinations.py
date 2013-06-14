@@ -26,6 +26,25 @@ class ListDestinationsController(ParamAuthorizableController):
                 ret.set(jsonify(destinations=blob))
 
         list_destinations.add_subscriber(logger, ListDestinationsSubscriber())
-        list_destinations.perform(web.ctx.logger, DestinationsRepository)
+        list_destinations.perform(web.ctx.logger,
+                                  DestinationsRepository.get_all)
+        return ret.get()
+
+
+class ListPredefinedDestinationsController(ParamAuthorizableController):
+    @api
+    @authorized
+    def GET(self):
+        logger = LoggingSubscriber(web.ctx.logger)
+        list_destinations = ListDestinationsWorkflow()
+        ret = Future()
+
+        class ListDestinationsSubscriber(object):
+            def success(self, blob):
+                ret.set(jsonify(destinations=blob))
+
+        list_destinations.add_subscriber(logger, ListDestinationsSubscriber())
+        list_destinations.perform(web.ctx.logger,
+                                  DestinationsRepository.get_predefined)
         return ret.get()
 
