@@ -125,7 +125,7 @@ class TestDriversRepository(unittest.TestCase):
         # Then
         self.assertIsNone(driver)
 
-    def test_hide_of_existing_driver_should_return_the_hided_driver(self):
+    def test_hide_of_existing_driver_should_return_the_hid_driver(self):
         # Given
         self.session.begin(subtransactions=True)
         self.session.add(User(id='uid', name='Name', avatar='Avatar'))
@@ -139,7 +139,7 @@ class TestDriversRepository(unittest.TestCase):
         driver = Driver.query.filter_by(id='did').first()
 
         # Then
-        self.assertEquals(False, driver.active)
+        self.assertEquals(True, driver.hidden)
 
     def test_unhide_of_not_existing_driver_should_return_nothing(self):
         # When
@@ -148,7 +148,7 @@ class TestDriversRepository(unittest.TestCase):
         # Then
         self.assertIsNone(driver)
 
-    def test_unhide_of_existing_driver_should_return_the_hided_driver(self):
+    def test_unhide_of_existing_driver_should_return_the_hid_driver(self):
         # Given
         self.session.begin(subtransactions=True)
         self.session.add(User(id='uid', name='Name', avatar='Avatar'))
@@ -163,4 +163,4 @@ class TestDriversRepository(unittest.TestCase):
         driver = Driver.query.filter_by(id='did').first()
 
         # Then
-        self.assertEquals(True, driver.active)
+        self.assertEquals(False, driver.hidden)

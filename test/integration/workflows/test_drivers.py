@@ -15,7 +15,7 @@ from app.workflows.drivers import UnhideDriverWorkflow
 
 
 class TestDriversWithUserIdWorkflow(unittest.TestCase):
-    
+
     def test_not_found_is_published_if_invoked_with_invalid_driver_id(self):
         # Given
         logger = Mock()
@@ -34,7 +34,7 @@ class TestDriversWithUserIdWorkflow(unittest.TestCase):
         # Given
         logger = Mock()
         driver = storage(id='did', user_id='uid', license_plate='1242124',
-                         telephone='+124 453534', active=True,
+                         telephone='+124 453534', hidden=False,
                          user=storage(name='name', avatar='avatar'))
         repository = Mock(with_user_id=MagicMock(return_value=driver))
         subscriber = Mock(success=MagicMock())
@@ -46,12 +46,9 @@ class TestDriversWithUserIdWorkflow(unittest.TestCase):
 
         # Then
         subscriber.success.assert_called_with({
-            'user_id': 'uid',
-            'name': 'name',
-            'active': True,
+            'hidden': False,
             'id': 'did',
             'license_plate': '1242124',
-            'avatar': 'avatar',
             'telephone': '+124 453534',
         })
 

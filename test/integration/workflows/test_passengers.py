@@ -49,19 +49,13 @@ class TestPassengersWorkflow(unittest.TestCase):
         subscriber.success.assert_called_with([{
             'origin': 'origin1',
             'destination': 'destination1',
-            'user_id': 'uid1',
-            'name': 'Name1',
             'buddies': 1,
             'id': 'pid1',
-            'avatar': 'Avatar1'
         }, {
             'origin': 'origin2',
             'destination': 'destination2',
-            'user_id': 'uid2',
-            'name': 'Name2',
             'buddies': 2,
             'id': 'pid2',
-            'avatar': 'Avatar2'
         }])
 
 
@@ -136,9 +130,6 @@ class TestViewPassengerWorkflow(unittest.TestCase):
         subscriber.success.assert_called_with({
             'origin': 'origin',
             'destination': 'destination',
-            'user_id': 'uid',
-            'name': 'name',
             'buddies': 1,
             'id': 'pid',
-            'avatar': 'avatar'
         })
