@@ -73,6 +73,18 @@ class TestDestinationsRepository(unittest.TestCase):
         self.assertEquals(1, len(destinations))
         self.assertEquals('dest', destinations[0][0])
 
+    def test_get_predefined_should_return_hardcoded_values(self):
+        # When
+        destinations = DestinationsRepository.get_predefined()
+
+        # Then
+        self.assertEquals(5, len(destinations))
+        self.assertEquals(('Darsena', 10), destinations[0])
+        self.assertEquals(('Mojito Bar', 10), destinations[1])
+        self.assertEquals(('Cosmopolitan', 10), destinations[2])
+        self.assertEquals(('Red Lion', 10), destinations[3])
+        self.assertEquals(('Club Negroni', 10), destinations[4])
+
     def test_most_used_destinations_come_first(self):
         # Given
         self.session.begin(subtransactions=True)

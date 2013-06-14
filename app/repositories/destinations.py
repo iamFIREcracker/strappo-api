@@ -13,3 +13,11 @@ class DestinationsRepository(object):
                                        func.count().label('rating')).distinct().\
                         join(User).filter(User.deleted == False).\
                         group_by(Passenger.destination).order_by('rating DESC'))
+
+    @staticmethod
+    def get_predefined():
+        return [('Darsena', 10),
+                ('Mojito Bar', 10),
+                ('Cosmopolitan', 10),
+                ('Red Lion', 10),
+                ('Club Negroni', 10)]
