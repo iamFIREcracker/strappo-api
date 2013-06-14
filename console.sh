@@ -66,6 +66,10 @@ loop() {
             shift
             gimmeurjson ${SERVER}/1/destinations GET "token=tid&$@"
             ;;
+        predefined)
+            shift
+            gimmeurjson ${SERVER}/1/destinations/predefined GET "token=tid&$@"
+            ;;
         *)
             wtf
         esac
