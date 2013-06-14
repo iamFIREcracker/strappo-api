@@ -8,9 +8,10 @@ from web.utils import storage
 from mock import MagicMock
 from mock import Mock
 
-from app.workflows.drivers import DeactivateDriverWorkflow
+from app.workflows.drivers import HideDriverWorkflow
 from app.workflows.drivers import DriversWithUserIdWorkflow
 from app.workflows.drivers import EditDriverWorkflow
+from app.workflows.drivers import UnhideDriverWorkflow
 
 
 class TestDriversWithUserIdWorkflow(unittest.TestCase):
@@ -107,15 +108,15 @@ class TestEditDriverWorkflow(unittest.TestCase):
         subscriber.success.assert_called_with()
 
 
-class TestDeactivateDriverWorkflow(unittest.TestCase):
+class TestHideDriverWorkflow(unittest.TestCase):
 
     def test_not_found_is_published_if_provided_driver_id_is_invalid(self):
         # Given
         logger = Mock()
         orm = Mock()
-        repository = Mock(deactivate=MagicMock(return_value=None))
+        repository = Mock(hide=MagicMock(return_value=None))
         subscriber = Mock(not_found=MagicMock())
-        instance = DeactivateDriverWorkflow()
+        instance = HideDriverWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
@@ -124,13 +125,46 @@ class TestDeactivateDriverWorkflow(unittest.TestCase):
         # Then
         subscriber.not_found.assert_called_with('not_existing_id')
 
-    def test_driver_is_successfully_deactivated_if_id_is_valid(self):
+    def test_driver_is_successfully_hid_if_id_is_valid(self):
         # Given
         logger = Mock()
         orm = Mock()
-        repository = Mock(deactivate=MagicMock())
+        repository = Mock(hide=MagicMock())
         subscriber = Mock(success=MagicMock())
-        instance = DeactivateDriverWorkflow()
+        instance = HideDriverWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(orm, logger, repository, 'did')
+
+        # Then
+        subscriber.success.assert_called_with()
+
+
+class TestUnhideDriverWorkflow(unittest.TestCase):
+
+    def test_not_found_is_published_if_provided_driver_id_is_invalid(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        repository = Mock(unhide=MagicMock(return_value=None))
+        subscriber = Mock(not_found=MagicMock())
+        instance = UnhideDriverWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(orm, logger, repository, 'not_existing_id')
+
+        # Then
+        subscriber.not_found.assert_called_with('not_existing_id')
+
+    def test_driver_is_successfully_unhid_if_id_is_valid(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        repository = Mock(unhide=MagicMock())
+        subscriber = Mock(success=MagicMock())
+        instance = UnhideDriverWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
