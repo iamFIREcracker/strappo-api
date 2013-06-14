@@ -19,12 +19,12 @@ class TestListDestinationsWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(logger, repository)
+        instance.perform(logger, repository.get_all)
 
         # Then
         subscriber.success.assert_called_with([])
 
-    def test_get_all_passengers_should_return_serialized_passengers(self):
+    def test_get_all_destinations_should_return_serialized_passengers(self):
         # Given
         logger = Mock()
         destinations = [('dest1', 10), ('dest2', 5), ('dest3', 1)]
@@ -34,7 +34,7 @@ class TestListDestinationsWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(logger, repository)
+        instance.perform(logger, repository.get_all)
 
         # Then
         subscriber.success.assert_called_with([

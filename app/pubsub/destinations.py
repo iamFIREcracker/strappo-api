@@ -4,14 +4,14 @@
 from app.weblib.pubsub import Publisher
 
 
-class AllDestinationsGetter(Publisher):
-    def perform(self, repository):
+class DestinationsGetter(Publisher):
+    def perform(self, repository_method):
         """Search for all the active passenger destinations.
 
         When done, a 'destinations_found' message will be published, followed by
         the list of active destinations.
         """
-        self.publish('destinations_found', repository.get_all())
+        self.publish('destinations_found', repository_method())
 
 
 def _serialize(d):

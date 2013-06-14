@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from app.pubsub.destinations import AllDestinationsGetter
+from app.pubsub.destinations import DestinationsGetter
 from app.pubsub.destinations import MultipleDestinationsSerializer
 from app.weblib.pubsub import Publisher
 from app.weblib.pubsub import LoggingSubscriber
@@ -10,13 +10,13 @@ from app.weblib.pubsub import LoggingSubscriber
 class ListDestinationsWorkflow(Publisher):
     """Defines a workflow to retrieve the list of passengers destinations."""
 
-    def perform(self, logger, repository):
+    def perform(self, logger, repository_method):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
-        destinations_getter = AllDestinationsGetter()
+        destinations_getter = DestinationsGetter()
         destinations_serializer = MultipleDestinationsSerializer()
 
-        class AllDestinationsGetterSubscriber(object):
+        class DestinationsGetterSubscriber(object):
             def destinations_found(self, destinations):
                 destinations_serializer.perform(destinations)
 
@@ -26,7 +26,7 @@ class ListDestinationsWorkflow(Publisher):
 
 
         destinations_getter.add_subscriber(logger,
-                                           AllDestinationsGetterSubscriber())
+                                           DestinationsGetterSubscriber())
         destinations_serializer.add_subscriber(logger,
                                                DestinationsSerializerSubscriber())
-        destinations_getter.perform(repository)
+        destinations_getter.perform(repository_method)
