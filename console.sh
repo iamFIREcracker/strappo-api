@@ -83,11 +83,17 @@ loop() {
             shift; id=$1; shift
             gimmeurjson ${SERVER}/1/drivers/${id}/edit POST "token=tid&$@"
             ;;
-        deactivate)
+        hide)
             local id
 
             shift; id=$1; shift
-            gimmeurjson ${SERVER}/1/drivers/${id}/deactivate POST "token=tid&$@"
+            gimmeurjson ${SERVER}/1/drivers/${id}/hide POST "token=tid&$@"
+            ;;
+        unhide)
+            local id
+
+            shift; id=$1; shift
+            gimmeurjson ${SERVER}/1/drivers/${id}/unhide POST "token=tid&$@"
             ;;
         *)
             wtf
