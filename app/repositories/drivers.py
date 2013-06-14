@@ -38,3 +38,12 @@ class DriversRepository(object):
         else:
             driver.hidden = True
             return driver
+
+    @staticmethod
+    def unhide(driver_id):
+        driver = DriversRepository.get(driver_id)
+        if driver is None:
+            return None
+        else:
+            driver.hidden = False
+            return driver

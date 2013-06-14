@@ -118,14 +118,14 @@ class TestDriversRepository(unittest.TestCase):
         self.assertEquals('license', driver.license_plate)
         self.assertEquals('phone', driver.telephone)
 
-    def test_deactivate_of_not_existing_driver_should_return_nothing(self):
+    def test_hide_of_not_existing_driver_should_return_nothing(self):
         # When
-        driver = DriversRepository.deactivate('not_existing_id')
+        driver = DriversRepository.hide('not_existing_id')
 
         # Then
         self.assertIsNone(driver)
 
-    def test_deactivate_of_existing_driver_should_return_the_deactivated_driver(self):
+    def test_hide_of_existing_driver_should_return_the_hided_driver(self):
         # Given
         self.session.begin(subtransactions=True)
         self.session.add(User(id='uid', name='Name', avatar='Avatar'))
@@ -134,9 +134,33 @@ class TestDriversRepository(unittest.TestCase):
 
         # When
         self.session.begin(subtransactions=True)
-        self.session.add(DriversRepository.deactivate('did'))
+        self.session.add(DriversRepository.hide('did'))
         self.session.commit()
         driver = Driver.query.filter_by(id='did').first()
 
         # Then
         self.assertEquals(False, driver.active)
+
+    def test_unhide_of_not_existing_driver_should_return_nothing(self):
+        # When
+        driver = DriversRepository.unhide('not_existing_id')
+
+        # Then
+        self.assertIsNone(driver)
+
+    def test_unhide_of_existing_driver_should_return_the_hided_driver(self):
+        # Given
+        self.session.begin(subtransactions=True)
+        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
+        self.session.add(Driver(id='did', user_id='uid', license_plate='plate',
+                                hidden=True))
+        self.session.commit()
+
+        # When
+        self.session.begin(subtransactions=True)
+        self.session.add(DriversRepository.unhide('did'))
+        self.session.commit()
+        driver = Driver.query.filter_by(id='did').first()
+
+        # Then
+        self.assertEquals(True, driver.active)
