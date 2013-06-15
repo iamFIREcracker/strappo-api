@@ -105,11 +105,11 @@ class TestPassengersRepository(unittest.TestCase):
         # Then
         self.assertEquals([], passengers)
 
-    def test_get_all_active_with_active_passenger_linked_to_deleted_user_should_return_empty_list(self):
+    def test_get_all_active_with_deactivate_passenger_linked_to_deleted_user_should_return_empty_list(self):
         # Given
         self.session.begin(subtransactions=True)
         self.session.add(User(id='uid', name='Name', avatar='Avatar'))
-        self.session.add(Passenger(id='pid', user_id='uid', active=True))
+        self.session.add(Passenger(id='pid', user_id='uid', active=False))
         self.session.commit()
 
         # When
