@@ -65,6 +65,16 @@ def init_db():
     app.models.Base.session.commit()
 
 
+def clear_db():
+    import contextlib
+    import app.models
+    engine = create_engine()
+    with contextlib.closing(engine.connect()) as con:
+        trans = con.begin()
+        for table in reversed(app.models.Base.metadata.sorted_tables):
+            con.execute(table.delete())
+        trans.commit()
+
 def uuid():
     """Generates a ``uuid``."""
     return unicode(_uuid.uuid4())
