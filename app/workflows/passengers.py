@@ -3,7 +3,7 @@
 
 
 import app.forms.passengers as passengers_forms
-from app.pubsub.passengers import AllPassengersGetter
+from app.pubsub.passengers import ActivePassengersGetter
 from app.pubsub.passengers import PassengerWithIdGetter
 from app.pubsub.passengers import MultiplePassengersSerializer
 from app.pubsub.passengers import PassengerCreator
@@ -14,16 +14,16 @@ from app.weblib.pubsub import Publisher
 from app.weblib.pubsub import LoggingSubscriber
 
 
-class PassengersWorkflow(Publisher):
+class ActivePassengersWorkflow(Publisher):
     """Defines a workflow to view the list of active passengers."""
 
     def perform(self, logger, repository):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
-        passengers_getter = AllPassengersGetter()
+        passengers_getter = ActivePassengersGetter()
         passengers_serializer = MultiplePassengersSerializer()
 
-        class AllPassengersGetterSubscriber(object):
+        class ActivePassengersGetterSubscriber(object):
             def passengers_found(self, passengers):
                 passengers_serializer.perform(passengers)
 
@@ -33,7 +33,7 @@ class PassengersWorkflow(Publisher):
 
 
         passengers_getter.add_subscriber(logger,
-                                         AllPassengersGetterSubscriber())
+                                         ActivePassengersGetterSubscriber())
         passengers_serializer.add_subscriber(logger,
                                              PassengersSerializerSubscriber())
         passengers_getter.perform(repository)
@@ -76,7 +76,7 @@ class ViewPassengerWorkflow(Publisher):
         passengers_getter = PassengerWithIdGetter()
         passenger_serializer = PassengerSerializer()
 
-        class AllPassengersGetterSubscriber(object):
+        class PassengerGetterSubscriber(object):
             def passenger_not_found(self, passenger_id):
                 outer.publish('not_found', passenger_id)
             def passenger_found(self, passenger):
@@ -87,8 +87,7 @@ class ViewPassengerWorkflow(Publisher):
                 outer.publish('success', blob)
 
 
-        passengers_getter.add_subscriber(logger,
-                                         AllPassengersGetterSubscriber())
+        passengers_getter.add_subscriber(logger, PassengerGetterSubscriber())
         passenger_serializer.add_subscriber(logger,
                                             PassengersSerializerSubscriber())
         passengers_getter.perform(repository, passenger_id)

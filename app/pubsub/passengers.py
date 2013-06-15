@@ -20,14 +20,14 @@ class PassengerWithIdGetter(Publisher):
             self.publish('passenger_found', passenger)
 
 
-class AllPassengersGetter(Publisher):
+class ActivePassengersGetter(Publisher):
     def perform(self, repository):
         """Search for all the active passengers around.
 
         When done, a 'passengers_found' message will be published, followed by
         the list of active passengers.
         """
-        self.publish('passengers_found', repository.get_all())
+        self.publish('passengers_found', repository.get_all_active())
 
 
 class PassengerCreator(Publisher):

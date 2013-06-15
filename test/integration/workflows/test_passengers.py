@@ -9,17 +9,17 @@ from mock import MagicMock
 from mock import Mock
 
 from app.workflows.passengers import AddPassengerWorkflow
-from app.workflows.passengers import PassengersWorkflow
+from app.workflows.passengers import ActivePassengersWorkflow
 from app.workflows.passengers import ViewPassengerWorkflow
 
 
-class TestPassengersWorkflow(unittest.TestCase):
-    def test_get_all_passengers_without_any_registered_one_should_return_an_empty_list(self):
+class TestActivePassengersWorkflow(unittest.TestCase):
+    def test_get_all_active_passengers_without_any_registered_one_should_return_an_empty_list(self):
         # Given
         logger = Mock()
-        repository = Mock(get_all=MagicMock(return_value=[]))
+        repository = Mock(get_all_active=MagicMock(return_value=[]))
         subscriber = Mock(success=MagicMock())
-        instance = PassengersWorkflow()
+        instance = ActivePassengersWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
@@ -28,7 +28,7 @@ class TestPassengersWorkflow(unittest.TestCase):
         # Then
         subscriber.success.assert_called_with([])
 
-    def test_get_all_passengers_should_return_serialized_passengers(self):
+    def test_get_all_active_passengers_should_return_serialized_passengers(self):
         # Given
         logger = Mock()
         passengers = [storage(id='pid1', user_id='uid1', origin='origin1',
@@ -37,9 +37,9 @@ class TestPassengersWorkflow(unittest.TestCase):
                       storage(id='pid2', user_id='uid2', origin='origin2',
                               destination='destination2', buddies=2,
                               user=storage(name='Name2', avatar='Avatar2'))]
-        repository = Mock(get_all=MagicMock(return_value=passengers))
+        repository = Mock(get_all_active=MagicMock(return_value=passengers))
         subscriber = Mock(success=MagicMock())
-        instance = PassengersWorkflow()
+        instance = ActivePassengersWorkflow()
 
         # When
         instance.add_subscriber(subscriber)

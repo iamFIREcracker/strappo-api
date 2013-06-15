@@ -72,26 +72,26 @@ class TestPassengersRepository(unittest.TestCase):
         # Then
         self.assertIsNotNone(passenger)
 
-    def test_get_all_without_passengers_should_return_empty_list(self):
+    def test_get_all_active_without_passengers_should_return_empty_list(self):
         # When
-        passengers = PassengersRepository.get_all()
+        passengers = PassengersRepository.get_all_active()
 
         # Then
         self.assertEquals([], passengers)
 
-    def test_get_all_with_passenger_linked_to_invalid_user_should_return_empty_list(self):
+    def test_get_all_active_with_passenger_linked_to_invalid_user_should_return_empty_list(self):
         # Given
         self.session.begin(subtransactions=True)
         self.session.add(Passenger(id='pid', user_id='not_existing_id'))
         self.session.commit()
 
         # When
-        passengers = PassengersRepository.get_all()
+        passengers = PassengersRepository.get_all_active()
 
         # Then
         self.assertEquals([], passengers)
 
-    def test_get_all_with_passenger_linked_to_deleted_user_should_return_empty_list(self):
+    def test_get_all_active_with_passenger_linked_to_deleted_user_should_return_empty_list(self):
         # Given
         self.session.begin(subtransactions=True)
         self.session.add(User(id='uid', name='Name', avatar='Avatar',
@@ -100,12 +100,25 @@ class TestPassengersRepository(unittest.TestCase):
         self.session.commit()
 
         # When
-        passengers = PassengersRepository.get_all()
+        passengers = PassengersRepository.get_all_active()
 
         # Then
         self.assertEquals([], passengers)
 
-    def test_get_all_with_passenger_linked_to_active_user_should_return_the_passenger(self):
+    def test_get_all_active_with_active_passenger_linked_to_deleted_user_should_return_empty_list(self):
+        # Given
+        self.session.begin(subtransactions=True)
+        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
+        self.session.add(Passenger(id='pid', user_id='uid', active=True))
+        self.session.commit()
+
+        # When
+        passengers = PassengersRepository.get_all_active()
+
+        # Then
+        self.assertEquals([], passengers)
+
+    def test_get_all_active_with_passenger_linked_to_active_user_should_return_the_passenger(self):
         # Given
         self.session.begin(subtransactions=True)
         self.session.add(User(id='uid', name='Name', avatar='Avatar'))
@@ -113,7 +126,7 @@ class TestPassengersRepository(unittest.TestCase):
         self.session.commit()
 
         # When
-        passengers = PassengersRepository.get_all()
+        passengers = PassengersRepository.get_all_active()
 
         # Then
         self.assertEquals(1, len(passengers))
