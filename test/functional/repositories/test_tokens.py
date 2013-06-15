@@ -38,7 +38,7 @@ class TestTokensRepository(unittest.TestCase):
         token = TokensRepository.add('uid')
         self.session.add(token)
         self.session.commit()
-        token = self.query.filter_by(id=id).first()
+        token = self.query.filter_by(id=token.id).first()
 
         # Then
         self.assertEquals('uid', token.user_id)
