@@ -99,14 +99,12 @@ loop() {
             shift; id=$1; shift
             gimmeurjson ${SERVER}/1/drivers/${id}/unhide POST "token=tid&$@"
             ;;
-
         accept_passenger)
             local did pid
 
             shift; did=$1; shift; pid=$1; shift
             gimmeurjson ${SERVER}/1/drivers/${did}/accept/passenger/${pid} POST "token=tid&$@"
             ;;
-
         *)
             wtf
         esac
@@ -114,9 +112,9 @@ loop() {
     passengers)
         shift
         case $1 in
-        list)
+        list_active)
             shift
-            gimmeurjson ${SERVER}/1/passengers GET "token=tid&$@"
+            gimmeurjson ${SERVER}/1/passengers/active GET "token=tid&$@"
             ;;
         add)
             shift
@@ -125,6 +123,12 @@ loop() {
         view)
             shift; id=$1; shift
             gimmeurjson ${SERVER}/1/passengers/${id}/view GET "token=tid&$@"
+            ;;
+        accept_driver)
+            local did pid
+
+            shift; pid=$1; shift; did=$1; shift
+            gimmeurjson ${SERVER}/1/passengers/${pid}/accept/driver/${did} POST "token=tid&$@"
             ;;
         *)
             wtf

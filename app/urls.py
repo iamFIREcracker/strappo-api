@@ -29,6 +29,7 @@ URLS = (
     '/1/passengers/active', ActivePassengersController,
     '/1/passengers/add', AddPassengerController,
     '/1/passengers/(.+)/view', ViewPassengerController,
+    '/1/passengers/(.+)/accept/driver/(.+)', AcceptDriverController,
 ) + (() if not web.config.DEV else (
     # Develop routes
     '/login/fake', FakeLoginController,
