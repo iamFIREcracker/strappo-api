@@ -66,3 +66,20 @@ class MultiplePassengersSerializer(Publisher):
         """
         self.publish('passengers_serialized',
                      [_serialize(p) for p in passengers])
+
+
+class PassengerDeactivator(Publisher):
+    def perform(self, repository, passenger_id):
+        """Hides the passenger identified by ``passenger_id``.
+
+        If no passenger exists identified by ``passenger_id``, then
+        a 'passenger_not_found' message is published together with the given
+        passenger ID;  on the other hand, a 'passenger_hid' message is published
+        with the updated passenger record.
+        """
+        passenger = repository.deactivate(passenger_id)
+        if passenger is None:
+            self.publish('passenger_not_found', passenger_id)
+        else:
+            self.publish('passenger_hid', passenger)
+
