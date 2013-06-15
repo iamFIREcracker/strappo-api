@@ -110,3 +110,17 @@ class Passenger(Base):
                'buddies=%(buddies)d>' % self.__dict__
 
 
+class RideRequest(Base):
+    __tablename__ = 'ride_request'
+
+    id = Column(String, default=uuid, primary_key=True)
+    driver_id = Column(String, ForeignKey('driver.id'))
+    passenger_id = Column(String, ForeignKey('passenger.id'))
+    accepted = Column(Boolean, default=False)
+    created = Column(DateTime, default=datetime.now)
+    updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    def __repr__(self):
+        return '<RideRequest id=%(id)s, driver_id=%(driver_id)s, '\
+               'passenger_id=%(passenger_id)s, '\
+               'accepted=%(accepted)s>' % self.__dict__
