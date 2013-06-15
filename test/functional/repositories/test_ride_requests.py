@@ -3,6 +3,8 @@
 
 import unittest
 
+import app.weblib.db
+from app.models import Base
 from app.models import RideRequest
 from app.repositories.ride_requests import RideRequestsRepository
 
@@ -11,23 +13,18 @@ class TestRideRequestsRepository(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        # Initialize the database
-        from app.weblib.db import init_db
-        init_db()
-
-        cls.session = RideRequest.session
-        cls.query = RideRequest.query
+        app.weblib.db.init_db()
 
     def setUp(self):
-        pass
+        app.weblib.db.clear_db()
+        self.session = Base.session
+        self.query = RideRequest.query
 
     def tearDown(self):
-        RideRequest.session.rollback()
-        RideRequest.session.remove()
+        self.session.remove()
 
     def test_add_ride_request_with_all_the_valid_fields_should_return_a_new_ride_request(self):
         # When
-        self.session.begin(subtransactions=True)
         ride_request = RideRequestsRepository.add('did', 'pid')
         self.session.add(ride_request)
         self.session.commit()

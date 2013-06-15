@@ -3,6 +3,8 @@
 
 import unittest
 
+import app.weblib.db
+from app.models import Base
 from app.models import Account
 from app.models import Token
 from app.models import User
@@ -13,23 +15,18 @@ class TestUsersRepository(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        # Initialize the database
-        from app.weblib.db import init_db
-        init_db()
-
-        cls.session = User.session
-        cls.query = User.query
+        app.weblib.db.init_db()
 
     def setUp(self):
-        pass
+        app.weblib.db.clear_db()
+        self.session = Base.session
+        self.query = User.query
 
     def tearDown(self):
-        self.session.rollback()
         self.session.remove()
 
     def test_added_user_is_then_returned_inside_a_query(self):
         # When
-        self.session.begin(subtransactions=True)
         user = UsersRepository.add('Name', 'Avatar')
         self.session.add(user)
         self.session.commit()
@@ -40,7 +37,6 @@ class TestUsersRepository(unittest.TestCase):
 
     def test_refresh_account_of_not_existing_account_should_create_new_account(self):
         # When
-        self.session.begin(subtransactions=True)
         account = UsersRepository.refresh_account('not_existing_uid',
                                                   'external_id', 'facebook')
         self.session.add(account)
@@ -51,11 +47,15 @@ class TestUsersRepository(unittest.TestCase):
         self.assertEquals('external_id', account.external_id)
 
     def test_refresh_account_of_existing_account_should_create_new_account(self):
-        # When
+        # Given
         self.session.begin(subtransactions=True)
         self.session.add(User(id='uid', name='Name', avatar='Avatar'))
         self.session.add(Account(id='aid', user_id='uid', external_id='eid',
                                  type='facebook'))
+        self.session.commit()
+        self.session.remove()
+
+        # When
         account = UsersRepository.refresh_account('uid', 'eid', 'facebook')
         self.session.add(account)
         self.session.commit()
@@ -74,9 +74,9 @@ class TestUsersRepository(unittest.TestCase):
 
     def test_authorized_by_valid_token_pointing_to_invalid_user_should_return_nothing(self):
         # Given
-        self.session.begin(subtransactions=True)
         self.session.add(Token(id='tid', user_id='uid'))
         self.session.commit()
+        self.session.remove()
 
         # When
         user = UsersRepository.authorized_by('tid')
@@ -86,11 +86,11 @@ class TestUsersRepository(unittest.TestCase):
 
     def test_authorized_by_valid_token_pointing_to_deleted_user_should_return_nothing(self):
         # Given
-        self.session.begin(subtransactions=True)
         self.session.add(User(id='uid', name='Name', avatar='Avatar',
                               deleted=True))
         self.session.add(Token(id='tid', user_id='uid'))
         self.session.commit()
+        self.session.remove()
 
         # When
         user = UsersRepository.authorized_by('tid')
@@ -100,10 +100,10 @@ class TestUsersRepository(unittest.TestCase):
 
     def test_authorized_by_valid_token_should_return_the_associated_user(self):
         # Given
-        self.session.begin(subtransactions=True)
         self.session.add(User(id='uid', name='Name', avatar='Avatar'))
         self.session.add(Token(id='tid', user_id='uid'))
         self.session.commit()
+        self.session.remove()
 
         # When
         user = UsersRepository.authorized_by('tid')
@@ -120,10 +120,11 @@ class TestUsersRepository(unittest.TestCase):
 
     def test_having_account_with_invalid_account_type_should_return_nothing(self):
         # Given
-        self.session.begin(subtransactions=True)
         self.session.add(Account(id='aid', user_id='uid', external_id='eid',
                          type='facebook'))
         self.session.commit()
+        self.session.remove()
+
         # When
         user = UsersRepository.with_account('aid', 'twitter')
 
@@ -132,10 +133,11 @@ class TestUsersRepository(unittest.TestCase):
 
     def test_having_account_pointing_to_invalid_user_should_return_nothing(self):
         # Given
-        self.session.begin(subtransactions=True)
         self.session.add(Account(id='aid', user_id='uid', external_id='eid',
                          type='facebook'))
         self.session.commit()
+        self.session.remove()
+
         # When
         user = UsersRepository.with_account('aid', 'facebook')
 
@@ -145,12 +147,13 @@ class TestUsersRepository(unittest.TestCase):
 
     def test_having_account_pointing_to_a_deleted_user_should_return_nothing(self):
         # Given
-        self.session.begin(subtransactions=True)
         self.session.add(User(id='uid', name='Name', avatar='Avatar',
                               deleted=True))
         self.session.add(Account(id='aid', user_id='uid', external_id='eid',
                          type='facebook'))
         self.session.commit()
+        self.session.remove()
+
         # When
         user = UsersRepository.with_account('aid', 'facebook')
 
@@ -159,11 +162,11 @@ class TestUsersRepository(unittest.TestCase):
 
     def test_having_account_with_valid_external_id_and_account_type_should_return_the_associated_user(self):
         # Given
-        self.session.begin(subtransactions=True)
         self.session.add(User(id='uid', name='Name', avatar='Avatar'))
         self.session.add(Account(id='aid', user_id='uid', external_id='eid',
                          type='facebook'))
         self.session.commit()
+        self.session.remove()
 
         # When
         user = UsersRepository.with_account('eid', 'facebook')
