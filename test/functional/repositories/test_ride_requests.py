@@ -19,7 +19,7 @@ class TestRideRequestsRepository(unittest.TestCase):
         cls.query = RideRequest.query
 
     def setUp(self):
-        RideRequest.session.begin(subtransactions=True)
+        pass
 
     def tearDown(self):
         RideRequest.session.rollback()

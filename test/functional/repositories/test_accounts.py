@@ -20,11 +20,10 @@ class TestAccountsRepository(unittest.TestCase):
         cls.query = Account.query
 
     def setUp(self):
-        Account.session.begin(subtransactions=True)
+        pass
 
     def tearDown(self):
         Account.session.rollback()
-        Account.session.remove()
 
     @unittest.skip('For some reason this interfers with the next test...')
     def test_added_account_is_then_returned_inside_a_query(self):

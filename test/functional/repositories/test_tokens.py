@@ -20,7 +20,7 @@ class TestTokensRepository(unittest.TestCase):
         cls.query = Token.query
 
     def setUp(self):
-        Token.session.begin(subtransactions=True)
+        pass
 
     def tearDown(self):
         Token.session.rollback()

@@ -21,7 +21,7 @@ class TestUsersRepository(unittest.TestCase):
         cls.query = User.query
 
     def setUp(self):
-        self.session.begin(subtransactions=True)
+        pass
 
     def tearDown(self):
         self.session.rollback()

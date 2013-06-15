@@ -20,7 +20,7 @@ class TestDriversRepository(unittest.TestCase):
         cls.query = Driver.query
 
     def setUp(self):
-        Driver.session.begin(subtransactions=True)
+        pass
 
     def tearDown(self):
         Driver.session.rollback()

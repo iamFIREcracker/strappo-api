@@ -20,7 +20,7 @@ class TestDestinationsRepository(unittest.TestCase):
         cls.query = Passenger.query
 
     def setUp(self):
-        Passenger.session.begin(subtransactions=True)
+        pass
 
     def tearDown(self):
         Passenger.session.rollback()
