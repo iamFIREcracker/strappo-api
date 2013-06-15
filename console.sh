@@ -99,6 +99,14 @@ loop() {
             shift; id=$1; shift
             gimmeurjson ${SERVER}/1/drivers/${id}/unhide POST "token=tid&$@"
             ;;
+
+        accept_passenger)
+            local did pid
+
+            shift; did=$1; shift; pid=$1; shift
+            gimmeurjson ${SERVER}/1/drivers/${did}/accept/passenger/${pid} POST "token=tid&$@"
+            ;;
+
         *)
             wtf
         esac

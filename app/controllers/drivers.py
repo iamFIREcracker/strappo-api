@@ -6,6 +6,7 @@ import web
 import app.weblib
 from app.controllers import ParamAuthorizableController
 from app.repositories.drivers import DriversRepository
+from app.repositories.ride_requests import RideRequestsRepository
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.request_decorators import api
@@ -15,6 +16,7 @@ from app.workflows.drivers import EditDriverWorkflow
 from app.workflows.drivers import DriversWithUserIdWorkflow
 from app.workflows.drivers import HideDriverWorkflow
 from app.workflows.drivers import UnhideDriverWorkflow
+from app.workflows.ride_requests import AddRideRequestWorkflow
 
 
 class DriversController(ParamAuthorizableController):
@@ -104,3 +106,21 @@ class UnhideDriverController(ParamAuthorizableController):
         unhide_driver.perform(web.ctx.orm, web.ctx.logger, DriversRepository,
                               driver_id)
         return ret.get()
+
+
+class AcceptPassengerController(ParamAuthorizableController):
+    @api
+    @authorized
+    def POST(self, driver_id, passenger_id):
+        logger = LoggingSubscriber(web.ctx.logger)
+        add_ride_request = AddRideRequestWorkflow()
+
+        class AddRideRequestSubscriber(object):
+            def success(self):
+                web.ctx.orm.commit()
+                raise app.weblib.nocontent()
+
+        add_ride_request.add_subscriber(logger, AddRideRequestSubscriber())
+        add_ride_request.perform(web.ctx.orm, web.ctx.logger,
+                                 RideRequestsRepository, driver_id,
+                                 passenger_id)
