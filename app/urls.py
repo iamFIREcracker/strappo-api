@@ -11,6 +11,7 @@ from app.controllers.drivers import EditDriverController
 from app.controllers.drivers import DriversController
 from app.controllers.drivers import HideDriverController
 from app.controllers.drivers import UnhideDriverController
+from app.controllers.drivers import ViewDriverController
 from app.controllers.passengers import AddPassengerController
 from app.controllers.passengers import AcceptDriverController
 from app.controllers.passengers import ActivePassengersController
@@ -22,6 +23,7 @@ URLS = (
     '/1/destinations', ListDestinationsController,
     '/1/destinations/predefined', ListPredefinedDestinationsController,
     '/1/drivers', DriversController,
+    '/1/drivers/(.+)/view', ViewDriverController,
     '/1/drivers/(.+)/edit', EditDriverController,
     '/1/drivers/(.+)/hide', HideDriverController,
     '/1/drivers/(.+)/unhide', UnhideDriverController,

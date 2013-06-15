@@ -16,6 +16,7 @@ from app.workflows.drivers import EditDriverWorkflow
 from app.workflows.drivers import DriversWithUserIdWorkflow
 from app.workflows.drivers import HideDriverWorkflow
 from app.workflows.drivers import UnhideDriverWorkflow
+from app.workflows.drivers import ViewDriverWorkflow
 from app.workflows.ride_requests import AddRideRequestWorkflow
 
 
@@ -38,6 +39,26 @@ class DriversController(ParamAuthorizableController):
                         web.input(user_id=None).user_id)
         return ret.get()
 
+
+class ViewDriverController(ParamAuthorizableController):
+    @api
+    @authorized
+    def GET(self, driver_id):
+        logger = LoggingSubscriber(web.ctx.logger)
+        view_driver = ViewDriverWorkflow()
+        ret = Future()
+
+        class ViewDriverSubscriber(object):
+            def not_found(self, driver_id):
+                raise web.notfound()
+            def success(self, blob):
+                ret.set(jsonify(driver=blob))
+
+        view_driver.add_subscriber(logger, ViewDriverSubscriber())
+        view_driver.perform(web.ctx.logger, DriversRepository, driver_id)
+        return ret.get()
+
+        
 
 class EditDriverController(ParamAuthorizableController):
     @api
