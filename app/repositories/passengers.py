@@ -26,6 +26,7 @@ class PassengersRepository(object):
     def add(user_id, origin, destination, buddies):
         id = unicode(uuid.uuid4())
         passenger = Passenger(id=id, user_id=user_id, origin=origin,
-                              destination=destination, buddies=buddies)
+                              destination=destination, buddies=buddies,
+                              hidden=False)
         return passenger
 
