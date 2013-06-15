@@ -31,3 +31,12 @@ class PassengersRepository(object):
                               active=True)
         return passenger
 
+    @staticmethod
+    def deactivate(passenger_id):
+        passenger = PassengersRepository.get(passenger_id)
+        if passenger is None:
+            return None
+        else:
+            passenger.active = False
+            return passenger
+

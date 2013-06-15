@@ -3,6 +3,8 @@
 
 import unittest
 
+import app.weblib.db
+from app.models import Base
 from app.models import Passenger
 from app.models import User
 from app.repositories.passengers import PassengersRepository
@@ -12,19 +14,15 @@ class TestPassengersRepository(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        # Initialize the database
-        from app.weblib.db import init_db
-        init_db()
-
-        cls.session = Passenger.session
-        cls.query = Passenger.query
+        app.weblib.db.init_db()
 
     def setUp(self):
-        Passenger.session.begin(subtransactions=True)
+        app.weblib.db.clear_db()
+        self.session = Base.session
+        self.query = Passenger.query
 
     def tearDown(self):
-        Passenger.session.rollback()
-        Passenger.session.remove()
+        self.session.remove()
 
     def test_get_with_invalid_id_should_return_nothing(self):
         # When
@@ -35,9 +33,9 @@ class TestPassengersRepository(unittest.TestCase):
 
     def test_get_with_passenger_linked_to_invalid_user_should_return_nothing(self):
         # Given
-        self.session.begin(subtransactions=True)
         self.session.add(Passenger(id='pid', user_id='not_existing_id'))
         self.session.commit()
+        self.session.remove()
 
         # When
         passenger = PassengersRepository.get('pid')
@@ -47,11 +45,11 @@ class TestPassengersRepository(unittest.TestCase):
 
     def test_get_with_passenger_linked_to_deleted_user_should_return_nothing(self):
         # Given
-        self.session.begin(subtransactions=True)
         self.session.add(User(id='uid', name='Name', avatar='Avatar',
                               deleted=True))
         self.session.add(Passenger(id='pid', user_id='uid'))
         self.session.commit()
+        self.session.remove()
 
         # When
         passenger = PassengersRepository.get('pid')
@@ -61,10 +59,10 @@ class TestPassengersRepository(unittest.TestCase):
 
     def test_get_with_passenger_linked_to_active_user_should_return_the_passenger(self):
         # Given
-        self.session.begin(subtransactions=True)
         self.session.add(User(id='uid', name='Name', avatar='Avatar'))
         self.session.add(Passenger(id='pid', user_id='uid'))
         self.session.commit()
+        self.session.remove()
 
         # When
         passenger = PassengersRepository.get('pid')
@@ -81,9 +79,9 @@ class TestPassengersRepository(unittest.TestCase):
 
     def test_get_all_active_with_passenger_linked_to_invalid_user_should_return_empty_list(self):
         # Given
-        self.session.begin(subtransactions=True)
         self.session.add(Passenger(id='pid', user_id='not_existing_id'))
         self.session.commit()
+        self.session.remove()
 
         # When
         passengers = PassengersRepository.get_all_active()
@@ -93,11 +91,11 @@ class TestPassengersRepository(unittest.TestCase):
 
     def test_get_all_active_with_passenger_linked_to_deleted_user_should_return_empty_list(self):
         # Given
-        self.session.begin(subtransactions=True)
         self.session.add(User(id='uid', name='Name', avatar='Avatar',
                               deleted=True))
         self.session.add(Passenger(id='pid', user_id='uid'))
         self.session.commit()
+        self.session.remove()
 
         # When
         passengers = PassengersRepository.get_all_active()
@@ -107,10 +105,10 @@ class TestPassengersRepository(unittest.TestCase):
 
     def test_get_all_active_with_deactivate_passenger_linked_to_deleted_user_should_return_empty_list(self):
         # Given
-        self.session.begin(subtransactions=True)
         self.session.add(User(id='uid', name='Name', avatar='Avatar'))
         self.session.add(Passenger(id='pid', user_id='uid', active=False))
         self.session.commit()
+        self.session.remove()
 
         # When
         passengers = PassengersRepository.get_all_active()
@@ -120,10 +118,10 @@ class TestPassengersRepository(unittest.TestCase):
 
     def test_get_all_active_with_passenger_linked_to_active_user_should_return_the_passenger(self):
         # Given
-        self.session.begin(subtransactions=True)
         self.session.add(User(id='uid', name='Name', avatar='Avatar'))
         self.session.add(Passenger(id='pid', user_id='uid'))
         self.session.commit()
+        self.session.remove()
 
         # When
         passengers = PassengersRepository.get_all_active()
@@ -134,12 +132,11 @@ class TestPassengersRepository(unittest.TestCase):
 
     def test_add_passenger_with_all_the_valid_fields_should_return_a_new_passenger(self):
         # Given
-        self.session.begin(subtransactions=True)
         self.session.add(User(id='uid', name='Name', avatar='Avatar'))
         self.session.commit()
+        self.session.remove()
 
         # When
-        self.session.begin(subtransactions=True)
         passenger = PassengersRepository.add('uid', 'origin', 'destination', 42)
         self.session.add(passenger)
         self.session.commit()
@@ -147,3 +144,51 @@ class TestPassengersRepository(unittest.TestCase):
 
         # Then
         self.assertEquals(42, passenger.buddies)
+
+    def test_deactivate_passenger_with_invalid_id_should_return_nothing(self):
+        # When
+        passenger = PassengersRepository.deactivate('pid')
+
+        # Then
+        self.assertIsNone(passenger)
+
+    def test_deactivate_passenger_linked_to_invalid_user_id_should_return_nothing(self):
+        # Given
+        self.session.add(Passenger(id='pid', user_id='uid'))
+        self.session.commit()
+        self.session.remove()
+
+        # When
+        passenger = PassengersRepository.deactivate('pid')
+
+        # Then
+        self.assertIsNone(passenger)
+
+    def test_deactivate_passenger_linked_to_deleted_user_should_return_nothing(self):
+        # Given
+        self.session.add(User(id='uid', name='Name', avatar='Avatar',
+                              deleted=True))
+        self.session.add(Passenger(id='pid', user_id='uid'))
+        self.session.commit()
+        self.session.remove()
+
+        # When
+        passenger = PassengersRepository.deactivate('pid')
+
+        # Then
+        self.assertIsNone(passenger)
+
+    def test_deactivate_passenger_linked_to_active_user_should_return_deactivated_passenger(self):
+        # Given
+        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
+        self.session.add(Passenger(id='pid', user_id='uid'))
+        self.session.commit()
+        self.session.remove()
+
+        # When
+        self.session.add(PassengersRepository.deactivate('pid'))
+        self.session.commit()
+        passenger = self.query.filter_by(id='pid').first()
+
+        # Then
+        self.assertEquals(False, passenger.active)
