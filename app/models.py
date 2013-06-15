@@ -102,13 +102,13 @@ class Passenger(Base):
     user_id = Column(String, ForeignKey('user.id'))
     origin = Column(Text)
     destination = Column(Text)
-    hidden = Column(Boolean, default=False)
+    active = Column(Boolean, default=False)
     buddies = Column(Integer)
 
     def __repr__(self):
         return '<Passenger id=%(id)s, user_id=%(user_id)s, '\
                'origin=%(origin)s, destination=%(destination)s, '\
-               'buddies=%(buddies)d, hidden=%(hidden)s>' % self.__dict__
+               'buddies=%(buddies)d, active=%(active)s>' % self.__dict__
 
 
 class RideRequest(Base):
