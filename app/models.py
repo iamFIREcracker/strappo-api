@@ -102,7 +102,7 @@ class Passenger(Base):
     user_id = Column(String, ForeignKey('user.id'))
     origin = Column(Text)
     destination = Column(Text)
-    active = Column(Boolean, default=False)
+    active = Column(Boolean, default=True)
     buddies = Column(Integer)
 
     def __repr__(self):
