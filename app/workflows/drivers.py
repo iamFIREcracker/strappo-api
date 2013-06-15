@@ -8,6 +8,7 @@ from app.pubsub.drivers import DriverDeactivator
 from app.pubsub.drivers import DriverWithUserIdGetter
 from app.pubsub.drivers import DriverUpdater
 from app.pubsub.drivers import DriverSerializer
+from app.pubsub.drivers import DriverWithIdGetter
 from app.weblib.forms import describe_invalid_form
 from app.weblib.pubsub import FormValidator
 from app.weblib.pubsub import Publisher
@@ -37,6 +38,32 @@ class DriversWithUserIdWorkflow(Publisher):
         driver_getter.add_subscriber(logger, DriverWithUserIdGetterSubscriber())
         driver_serializer.add_subscriber(logger, DriverSerializerSubscriber())
         driver_getter.perform(repository, user_id)
+
+
+class ViewDriverWorkflow(Publisher):
+    """Defines a workflow to view the details of a registered driver."""
+
+    def perform(self, logger, repository, driver_id):
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        drivers_getter = DriverWithIdGetter()
+        driver_serializer = DriverSerializer()
+
+        class DriverGetterSubscriber(object):
+            def driver_not_found(self, driver_id):
+                outer.publish('not_found', driver_id)
+            def driver_found(self, driver):
+                driver_serializer.perform(driver)
+
+        class DriverSerializerSubscriber(object):
+            def driver_serialized(self, blob):
+                outer.publish('success', blob)
+
+
+        drivers_getter.add_subscriber(logger, DriverGetterSubscriber())
+        driver_serializer.add_subscriber(logger,
+                                         DriverSerializerSubscriber())
+        drivers_getter.perform(repository, driver_id)
 
 
 class EditDriverWorkflow(Publisher):

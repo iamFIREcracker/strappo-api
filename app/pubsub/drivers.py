@@ -19,6 +19,21 @@ class DriverWithUserIdGetter(Publisher):
             self.publish('driver_found', driver)
 
 
+class DriverWithIdGetter(Publisher):
+    def perform(self, repository, driver_id):
+        """Search for a driver identified by ``driver_id``.
+
+        If such driver exists, a 'driver_found' message is published containing
+        driver information;  on the other hand, if no driver exists with the
+        specified ID, a 'driver_not_found' message will be published.
+        """
+        driver = repository.get(driver_id)
+        if driver is None:
+            self.publish('driver_not_found', driver_id)
+        else:
+            self.publish('driver_found', driver)
+
+
 class DriverUpdater(Publisher):
     def perform(self, repository, driver_id, license_plate, telephone):
         """Sets the properties 'license_plate' and 'telephone' of the driver
