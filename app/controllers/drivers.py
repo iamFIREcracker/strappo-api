@@ -12,6 +12,7 @@ from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.request_decorators import api
 from app.weblib.request_decorators import authorized
 from app.weblib.utils import jsonify
+from app.workflows.drivers import AddDriverWorkflow
 from app.workflows.drivers import EditDriverWorkflow
 from app.workflows.drivers import DriversWithUserIdWorkflow
 from app.workflows.drivers import HideDriverWorkflow
@@ -40,6 +41,29 @@ class DriversController(ParamAuthorizableController):
         return ret.get()
 
 
+class AddDriverController(ParamAuthorizableController):
+    @api
+    @authorized
+    def POST(self):
+        logger = LoggingSubscriber(web.ctx.logger)
+        add_driver = AddDriverWorkflow()
+        ret = Future()
+
+        class AddDriverSubscriber(object):
+            def invalid_form(self, errors):
+                web.ctx.orm.rollback()
+                ret.set(jsonify(success=False, errors=errors))
+            def success(self, driver_id):
+                web.ctx.orm.commit()
+                url = '/1/drivers/%(id)s/view' % dict(id=driver_id)
+                raise app.weblib.created(url)
+
+        add_driver.add_subscriber(logger, AddDriverSubscriber())
+        add_driver.perform(web.ctx.orm, web.ctx.logger, web.input(),
+                           DriversRepository, self.current_user.id)
+        return ret.get()
+
+
 class ViewDriverController(ParamAuthorizableController):
     @api
     @authorized
@@ -58,7 +82,6 @@ class ViewDriverController(ParamAuthorizableController):
         view_driver.perform(web.ctx.logger, DriversRepository, driver_id)
         return ret.get()
 
-        
 
 class EditDriverController(ParamAuthorizableController):
     @api

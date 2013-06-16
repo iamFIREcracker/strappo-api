@@ -81,6 +81,10 @@ loop() {
             shift
             gimmeurjson ${SERVER}/1/drivers GET "token=tid&$@"
             ;;
+        add)
+            shift 
+            gimmeurjson ${SERVER}/1/drivers/add POST "token=tid&$@"
+            ;;
         view)
             local id
 
