@@ -8,6 +8,7 @@ from web.utils import storage
 from mock import MagicMock
 from mock import Mock
 
+from app.workflows.drivers import AddDriverWorkflow
 from app.workflows.drivers import HideDriverWorkflow
 from app.workflows.drivers import DriversWithUserIdWorkflow
 from app.workflows.drivers import EditDriverWorkflow
@@ -91,6 +92,43 @@ class TestViewDriverWorkflow(unittest.TestCase):
             'license_plate': '1242124',
             'telephone': '+124 453534',
         })
+
+
+class TestAddDriverWorkflow(unittest.TestCase):
+    def test_cannot_add_a_new_driver_without_specifying_required_fields(self):
+        # Given
+        orm = Mock()
+        logger = Mock()
+        params = storage(license_plate='plate')
+        subscriber = Mock(invalid_form=MagicMock())
+        instance = AddDriverWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(orm, logger, params, None, None)
+
+        # Then
+        subscriber.invalid_form.assert_called_with({
+            'telephone': 'Required'
+        })
+
+    def test_successfully_create_a_driver_when_all_the_fields_are_valid(self):
+        # Given
+        orm = Mock()
+        logger = Mock()
+        params = storage(license_plate='plate', telephone='phone')
+        driver = storage(id='pid', user_id='uid', license_plate='plate',
+                         telephone='phone')
+        repository = Mock(add=MagicMock(return_value=driver))
+        subscriber = Mock(success=MagicMock())
+        instance = AddDriverWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(orm, logger, params, repository, 'uid')
+
+        # Then
+        subscriber.success.assert_called_with('pid')
 
 
 

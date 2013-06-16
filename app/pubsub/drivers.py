@@ -34,6 +34,17 @@ class DriverWithIdGetter(Publisher):
             self.publish('driver_found', driver)
 
 
+class DriverCreator(Publisher):
+    def perform(self, repository, user_id, license_plate, telephone):
+        """Creates a new driver with the specified set of properties.
+
+        On success a 'driver_created' message will be published toghether
+        with the created user.
+        """
+        driver = repository.add(user_id, license_plate, telephone)
+        self.publish('driver_created', driver)
+
+
 class DriverUpdater(Publisher):
     def perform(self, repository, driver_id, license_plate, telephone):
         """Sets the properties 'license_plate' and 'telephone' of the driver

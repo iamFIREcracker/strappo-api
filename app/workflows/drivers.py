@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 
 
-import app.forms.drivers as driver_forms
+import app.forms.drivers as drivers_forms
 from app.pubsub.drivers import DriverActivator
+from app.pubsub.drivers import DriverCreator
 from app.pubsub.drivers import DriverDeactivator
 from app.pubsub.drivers import DriverWithUserIdGetter
 from app.pubsub.drivers import DriverUpdater
@@ -38,6 +39,33 @@ class DriversWithUserIdWorkflow(Publisher):
         driver_getter.add_subscriber(logger, DriverWithUserIdGetterSubscriber())
         driver_serializer.add_subscriber(logger, DriverSerializerSubscriber())
         driver_getter.perform(repository, user_id)
+
+
+class AddDriverWorkflow(Publisher):
+    """Defines a workflow to add a new driver."""
+
+    def perform(self, orm, logger, params, repository, user_id):
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        form_validator = FormValidator()
+        driver_creator = DriverCreator()
+
+        class FormValidatorSubscriber(object):
+            def invalid_form(self, errors):
+                outer.publish('invalid_form', errors)
+            def valid_form(self, form):
+                driver_creator.perform(repository, user_id,
+                                       form.d.license_plate, form.d.telephone)
+
+        class DriverCreatorSubscriber(object):
+            def driver_created(self, driver):
+                orm.add(driver)
+                outer.publish('success', driver.id)
+
+        form_validator.add_subscriber(logger, FormValidatorSubscriber())
+        driver_creator.add_subscriber(logger, DriverCreatorSubscriber())
+        form_validator.perform(drivers_forms.add(), params,
+                               describe_invalid_form)
 
 
 class ViewDriverWorkflow(Publisher):
@@ -92,7 +120,7 @@ class EditDriverWorkflow(Publisher):
 
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
         driver_updater.add_subscriber(logger, DriverUpdaterSubscriber())
-        form_validator.perform(driver_forms.update(), params,
+        form_validator.perform(drivers_forms.update(), params,
                                describe_invalid_form)
 
 
