@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import uuid
+
 from app.models import User
 from app.models import Driver
 from app.weblib.db import expunged
@@ -19,6 +21,14 @@ class DriversRepository(object):
         return Driver.query.join(User).\
                 filter(User.id == user_id).\
                 filter(User.deleted == False).first()
+
+    @staticmethod
+    def add(user_id, license_plate, telephone):
+        id = unicode(uuid.uuid4())
+        driver = Driver(id=id, user_id=user_id, license_plate=license_plate,
+                        telephone=telephone, hidden=False)
+        return driver
+
 
     @staticmethod
     def update(driver_id, license_plate, telephone):

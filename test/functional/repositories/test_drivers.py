@@ -92,6 +92,21 @@ class TestDriversRepository(unittest.TestCase):
         # Then
         self.assertIsNotNone(driver)
 
+    def test_add_driver_with_all_the_valid_fields_should_return_a_new_driver(self):
+        # Given
+        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
+        self.session.commit()
+        self.session.remove()
+
+        # When
+        driver = DriversRepository.add('uid', 'license', 'phone')
+        self.session.add(driver)
+        self.session.commit()
+        driver = self.query.filter_by(id=driver.id).first()
+
+        # Then
+        self.assertEquals('license', driver.license_plate)
+
     def test_update_of_not_existing_driver_should_return_nothing(self):
         # When
         driver = DriversRepository.update('not_existing_id', 'license', 'phone')
