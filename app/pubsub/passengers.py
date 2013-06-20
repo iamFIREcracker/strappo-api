@@ -43,7 +43,7 @@ class PassengerCreator(Publisher):
 
 def _serialize(p):
     return dict(id=p.id, origin=p.origin, destination=p.destination,
-                buddies=p.buddies)
+                buddies=p.buddies, name=p.user.name, avatar=p.user.avatar)
 
 
 class PassengerSerializer(Publisher):
