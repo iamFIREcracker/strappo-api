@@ -9,7 +9,8 @@ def populate_db():
     from app.models import Token
     from app.models import User
 
-    app.models.Base.session.add(User(id='uid', name='Name', avatar='Avatar'))
+    app.models.Base.session.add(User(id='uid', name='Name',
+                                     avatar='http://www.placehold.it/128x128/86EF00/AAAAAA&text=no+image'))
     app.models.Base.session.add(Account(id='aid', user_id='uid',
                                         external_id='eid', type='facebook'))
     app.models.Base.session.add(Token(id='tid', user_id='uid'))
@@ -18,12 +19,14 @@ def populate_db():
                                        telephone='1241241'))
 
 
-    app.models.Base.session.add(User(id='uid2', name='Name', avatar='Avatar'))
+    app.models.Base.session.add(User(id='uid2', name='Name', 
+                                     avatar='http://www.placehold.it/128x128/ED3CE1/AAAAAA&text=no+image'))
     app.models.Base.session.add(Passenger(id='pid2', user_id='uid2',
                                           origin='origin2',
                                           destination='destination2',
                                           buddies=2))
-    app.models.Base.session.add(User(id='uid3', name='Name', avatar='Avatar'))
+    app.models.Base.session.add(User(id='uid3', name='Name',
+                                     avatar='http://www.placehold.it/128x128/3C98ED/AAAAAA&text=no+image'))
     app.models.Base.session.add(Passenger(id='pid3', user_id='uid3',
                                           origin='origin3',
                                           destination='destination3',
