@@ -6,6 +6,7 @@ import web
 import app.weblib
 from app.controllers import ParamAuthorizableController
 from app.repositories.drivers import DriversRepository
+from app.repositories.passengers import PassengersRepository
 from app.repositories.ride_requests import RideRequestsRepository
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
@@ -16,6 +17,7 @@ from app.workflows.drivers import AddDriverWorkflow
 from app.workflows.drivers import EditDriverWorkflow
 from app.workflows.drivers import DriversWithUserIdWorkflow
 from app.workflows.drivers import HideDriverWorkflow
+from app.workflows.drivers import ListAcceptedPassengersWorkflow
 from app.workflows.drivers import UnhideDriverWorkflow
 from app.workflows.drivers import ViewDriverWorkflow
 from app.workflows.ride_requests import AddRideRequestWorkflow
@@ -168,3 +170,22 @@ class AcceptPassengerController(ParamAuthorizableController):
         add_ride_request.perform(web.ctx.orm, web.ctx.logger,
                                  RideRequestsRepository, driver_id,
                                  passenger_id)
+
+
+class ListAcceptedPassengersController(ParamAuthorizableController):
+    @api
+    @authorized
+    def GET(self, driver_id):
+        logger = LoggingSubscriber(web.ctx.logger)
+        accepted_passengers = ListAcceptedPassengersWorkflow()
+        ret = Future()
+
+        class ListAcceptedPassengersSubscriber(object):
+            def success(self, blob):
+                ret.set(jsonify(passengers=blob))
+
+        accepted_passengers.add_subscriber(logger,
+                                           ListAcceptedPassengersSubscriber())
+        accepted_passengers.perform(web.ctx.logger, PassengersRepository,
+                                    driver_id)
+        return ret.get()
