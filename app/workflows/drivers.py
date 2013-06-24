@@ -10,6 +10,8 @@ from app.pubsub.drivers import DriverWithUserIdGetter
 from app.pubsub.drivers import DriverUpdater
 from app.pubsub.drivers import DriverSerializer
 from app.pubsub.drivers import DriverWithIdGetter
+from app.pubsub.passengers import AcceptedPassengersGetter
+from app.pubsub.passengers import MultiplePassengersSerializer
 from app.weblib.forms import describe_invalid_form
 from app.weblib.pubsub import FormValidator
 from app.weblib.pubsub import Publisher
@@ -160,3 +162,27 @@ class UnhideDriverWorkflow(Publisher):
 
         driver_activator.add_subscriber(logger, DriverActivatorSubscriber())
         driver_activator.perform(repository, driver_id)
+
+
+class ListAcceptedPassengersWorkflow(Publisher):
+    """Defines a workflow to list all the passengers accepted by a driver."""
+
+    def perform(self, logger, repository, driver_id):
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        accepted_passengers_getter = AcceptedPassengersGetter()
+        passengers_serializer = MultiplePassengersSerializer()
+
+        class AcceptedPassengersGetterSubscriber(object):
+            def accepted_passengers_found(self, passengers):
+                passengers_serializer.perform(passengers)
+
+        class PassengersSerializerSubscriber(object):
+            def passengers_serialized(self, blob):
+                outer.publish('success', blob)
+
+        accepted_passengers_getter.\
+                add_subscriber(logger, AcceptedPassengersGetterSubscriber())
+        passengers_serializer.add_subscriber(logger,
+                                             PassengersSerializerSubscriber())
+        accepted_passengers_getter.perform(repository, driver_id)
