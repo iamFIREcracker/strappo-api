@@ -42,10 +42,10 @@ class PassengersRepository(object):
                         filter(RideRequest.accepted == True)]
 
     @staticmethod
-    def add(user_id, origin, destination, buddies):
+    def add(user_id, origin, destination, seats):
         id = unicode(uuid.uuid4())
         passenger = Passenger(id=id, user_id=user_id, origin=origin,
-                              destination=destination, buddies=buddies,
+                              destination=destination, seats=seats,
                               active=True)
         return passenger
 

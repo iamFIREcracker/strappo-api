@@ -27,13 +27,13 @@ def populate_db():
     app.models.Base.session.add(Passenger(id='pid2', user_id='uid2',
                                           origin='Caffe` Vip',
                                           destination='Mojito Bar',
-                                          buddies=1))
+                                          seats=1))
     app.models.Base.session.add(User(id='uid3', name='Alessio B.',
                                      avatar='http://www.placehold.it/128x128/3C98ED/AAAAAA&text=no+image'))
     app.models.Base.session.add(Passenger(id='pid3', user_id='uid3',
                                           origin='Club Negroni',
                                           destination='Macondo',
-                                          buddies=2))
+                                          seats=2))
 
     # One accepted passenger
     app.models.Base.session.add(User(id='uid4', name='Gabriele R.',
@@ -41,7 +41,7 @@ def populate_db():
     app.models.Base.session.add(Passenger(id='pid4', user_id='uid4',
                                           origin='Viareggio Scalo',
                                           destination='Cosmopolitan',
-                                          buddies=2))
+                                          seats=2))
     app.models.Base.session.add(RideRequest(id='rrid1', driver_id='did',
                                             passenger_id='pid4', accepted=True))
 
@@ -51,7 +51,7 @@ def populate_db():
     app.models.Base.session.add(Passenger(id='pid5', user_id='uid5',
                                           origin='Via dei Lecci 123',
                                           destination='Cosmopolitan',
-                                          buddies=2))
+                                          seats=2))
     app.models.Base.session.add(RideRequest(id='rrid2', driver_id='did',
                                             passenger_id='pid5', accepted=False))
 

@@ -103,12 +103,12 @@ class Passenger(Base):
     origin = Column(Text)
     destination = Column(Text)
     active = Column(Boolean, default=True)
-    buddies = Column(Integer)
+    seats = Column(Integer)
 
     def __repr__(self):
         return '<Passenger id=%(id)s, user_id=%(user_id)s, '\
                'origin=%(origin)s, destination=%(destination)s, '\
-               'buddies=%(buddies)d, active=%(active)s>' % self.__dict__
+               'seats=%(seats)d, active=%(active)s>' % self.__dict__
 
 
 class RideRequest(Base):

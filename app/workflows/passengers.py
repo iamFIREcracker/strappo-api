@@ -54,7 +54,7 @@ class AddPassengerWorkflow(Publisher):
             def valid_form(self, form):
                 passenger_creator.perform(repository, user_id, form.d.origin,
                                           form.d.destination,
-                                          int(form.d.buddies))
+                                          int(form.d.seats))
 
         class PassengerCreatorSubscriber(object):
             def passenger_created(self, passenger):

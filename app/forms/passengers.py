@@ -13,4 +13,4 @@ validint = form.Validator('Should be an integer', int)
 add = form.Form(form.Textbox('origin', form.notnull, description='Origin'),
                 form.Textbox('destination', form.notnull,
                              description='Destination'),
-                form.Textbox('buddies', form.notnull, description='Buddies'))
+                form.Textbox('seats', form.notnull, description='Buddies'))
