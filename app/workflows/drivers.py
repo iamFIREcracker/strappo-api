@@ -3,6 +3,7 @@
 
 
 import app.forms.drivers as drivers_forms
+from app.pubsub import DeviceTokensNotifier
 from app.pubsub.drivers import DriverActivator
 from app.pubsub.drivers import DriverCreator
 from app.pubsub.drivers import DriverDeactivator
@@ -10,6 +11,8 @@ from app.pubsub.drivers import DriverWithUserIdGetter
 from app.pubsub.drivers import DriverUpdater
 from app.pubsub.drivers import DriverSerializer
 from app.pubsub.drivers import DriverWithIdGetter
+from app.pubsub.drivers import MultipleDeviceTokensExtractor
+from app.pubsub.drivers import UnhiddenDriversGetter
 from app.pubsub.passengers import AcceptedPassengersGetter
 from app.pubsub.passengers import MultiplePassengersSerializer
 from app.weblib.forms import describe_invalid_form
@@ -186,3 +189,37 @@ class ListAcceptedPassengersWorkflow(Publisher):
         passengers_serializer.add_subscriber(logger,
                                              PassengersSerializerSubscriber())
         accepted_passengers_getter.perform(repository, driver_id)
+
+
+class NotifyDriversWorkflow(Publisher):
+    """Defines a workflow to notify all the drivers that a new passenger is
+    looking for a passage.
+    """
+
+    def perform(self, logger, repository, push_adapter, channel, payload):
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        drivers_getter = UnhiddenDriversGetter()
+        device_token_extractor = MultipleDeviceTokensExtractor()
+        device_notifier = DeviceTokensNotifier()
+
+        class DriversGetterSubscriber(object):
+            def unhidden_drivers_found(self, drivers):
+                device_token_extractor.perform(drivers)
+
+        class DeviceTokensExtractorSubscriber(object):
+            def device_tokens_extracted(self, device_tokens):
+                device_notifier.perform(push_adapter, channel, device_tokens,
+                                        payload)
+
+        class DeviceNotifierSubscriber(object):
+            def device_tokens_not_notified(self, error):
+                outer.publish('failure', error)
+            def device_tokens_notified(self):
+                outer.publish('success')
+
+        drivers_getter.add_subscriber(logger, DriversGetterSubscriber())
+        device_token_extractor.add_subscriber(logger,
+                                              DeviceTokensExtractorSubscriber())
+        device_notifier.add_subscriber(logger, DeviceNotifierSubscriber())
+        drivers_getter.perform(repository)

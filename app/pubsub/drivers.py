@@ -4,6 +4,16 @@
 from app.weblib.pubsub import Publisher
 
 
+class UnhiddenDriversGetter(Publisher):
+    def perform(self, repository):
+        """Search for all the _unhidden_ drivers.
+
+        The method will emit a 'unhidden_drivers_found' message, followed by the
+        list of found drivers.
+        """
+        self.publish('unhidden_drivers_found', repository.get_all_unhidden())
+
+
 class DriverWithUserIdGetter(Publisher):
     def perform(self, repository, user_id):
         """Search for a driver registered for the specified user ID.
@@ -104,3 +114,14 @@ class DriverSerializer(Publisher):
         self.publish('driver_serialized',
                      dict(id=driver.id, license_plate=driver.license_plate,
                           telephone=driver.telephone, hidden=driver.hidden))
+
+
+class MultipleDeviceTokensExtractor(Publisher):
+    def perform(self, drivers):
+        """Extract the device tokens associated with the input list of drivers.
+
+        At the end of the operation a 'device_tokens_extracted' message will be
+        published, together with the list of the extracted device tokens.
+        """
+        self.publish('device_tokens_extracted',
+                     [d.user.device.device_token for d in drivers])

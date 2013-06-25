@@ -13,6 +13,7 @@ from app.workflows.drivers import HideDriverWorkflow
 from app.workflows.drivers import DriversWithUserIdWorkflow
 from app.workflows.drivers import EditDriverWorkflow
 from app.workflows.drivers import ListAcceptedPassengersWorkflow
+from app.workflows.drivers import NotifyDriversWorkflow
 from app.workflows.drivers import UnhideDriverWorkflow
 from app.workflows.drivers import ViewDriverWorkflow
 
@@ -303,3 +304,40 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
             'id': 'pid2',
             'avatar': 'avatar2'
         }])
+
+
+class TestNotifyDriversWorkflow(unittest.TestCase):
+    def test_failure_message_is_published_if_something_goes_wrong_with_the_push_adapter(self):
+        # Given
+        logger = Mock()
+        drivers = [storage(user=storage(device=storage(device_token='dt1'))),
+                   storage(user=storage(device=storage(device_token='dt2')))]
+        repository = Mock(get_all_unhidden=MagicMock(return_value=drivers))
+        push_adapter = Mock(notify_tokens=MagicMock(return_value=(None,
+                                                                  'Error!')))
+        subscriber = Mock(failure=MagicMock())
+        instance = NotifyDriversWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, repository, push_adapter, None, None)
+
+        # Then
+        subscriber.failure.assert_called_with('Error!')
+
+    def test_success_message_is_published_if_the_push_adapters_accomplishes_its_duties(self):
+        # Given
+        logger = Mock()
+        drivers = [storage(user=storage(device=storage(device_token='dt1'))),
+                   storage(user=storage(device=storage(device_token='dt2')))]
+        repository = Mock(get_all_unhidden=MagicMock(return_value=drivers))
+        push_adapter = Mock(notify_tokens=MagicMock(return_value=(None, None)))
+        subscriber = Mock(success=MagicMock())
+        instance = NotifyDriversWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, repository, push_adapter, None, None)
+
+        # Then
+        subscriber.success.assert_called_with()
