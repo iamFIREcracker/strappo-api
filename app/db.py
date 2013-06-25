@@ -55,4 +55,16 @@ def populate_db():
     app.models.Base.session.add(RideRequest(id='rrid2', driver_id='did',
                                             passenger_id='pid5', accepted=False))
 
+
+    # One hidden driver
+    app.models.Base.session.add(User(id='uid6', name='Mario R.',
+                                     avatar='http://www.placehold.it/128x128/F06E08/AAAAAA&text=no+image'))
+    app.models.Base.session.add(Account(id='aid6', user_id='uid6',
+                                        external_id='eid6', type='facebook'))
+    app.models.Base.session.add(Token(id='tid6', user_id='uid6'))
+    app.models.Base.session.add(Driver(id='did', user_id='uid',
+                                       license_plate='LU127AE',
+                                       telephone='+3281234567', hidden=True))
+
+
     app.models.Base.session.commit()
