@@ -272,11 +272,11 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
         # Given
         logger = Mock()
         active_passengers = [storage(id='pid1', origin='origin1',
-                                     destination='destination1', buddies=1,
+                                     destination='destination1', seats=1,
                                      user=storage(name='name1',
                                                   avatar='avatar1')),
                              storage(id='pid2', origin='origin2',
-                                     destination='destination2', buddies=2,
+                                     destination='destination2', seats=2,
                                      user=storage(name='name2',
                                                   avatar='avatar2'))]
         repository = Mock(get_all_accepted_by_driver=MagicMock(return_value=active_passengers))
@@ -292,14 +292,14 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
             'origin': 'origin1',
             'destination': 'destination1',
             'name': 'name1',
-            'buddies': 1,
+            'seats': 1,
             'id': 'pid1',
             'avatar': 'avatar1'
         }, {
             'origin': 'origin2',
             'destination': 'destination2',
             'name': 'name2',
-            'buddies': 2,
+            'seats': 2,
             'id': 'pid2',
             'avatar': 'avatar2'
         }])

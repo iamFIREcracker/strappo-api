@@ -32,10 +32,10 @@ class TestActivePassengersWorkflow(unittest.TestCase):
         # Given
         logger = Mock()
         passengers = [storage(id='pid1', user_id='uid1', origin='origin1',
-                              destination='destination1', buddies=1,
+                              destination='destination1', seats=1,
                               user=storage(name='Name1', avatar='Avatar1')),
                       storage(id='pid2', user_id='uid2', origin='origin2',
-                              destination='destination2', buddies=2,
+                              destination='destination2', seats=2,
                               user=storage(name='Name2', avatar='Avatar2'))]
         repository = Mock(get_all_active=MagicMock(return_value=passengers))
         subscriber = Mock(success=MagicMock())
@@ -50,14 +50,14 @@ class TestActivePassengersWorkflow(unittest.TestCase):
             'origin': 'origin1',
             'destination': 'destination1',
             'name': 'Name1',
-            'buddies': 1,
+            'seats': 1,
             'id': 'pid1',
             'avatar': 'Avatar1'
         }, {
             'origin': 'origin2',
             'destination': 'destination2',
             'name': 'Name2',
-            'buddies': 2,
+            'seats': 2,
             'id': 'pid2',
             'avatar': 'Avatar2'
         }])
@@ -79,16 +79,16 @@ class TestAddPassengerWorkflow(unittest.TestCase):
         # Then
         subscriber.invalid_form.assert_called_with({
             'destination': 'Required',
-            'buddies': 'Required'
+            'seats': 'Required'
         })
 
     def test_successfully_create_a_passenger_when_all_the_fields_are_valid(self):
         # Given
         orm = Mock()
         logger = Mock()
-        params = storage(origin='heaven', destination='hell', buddies=4)
+        params = storage(origin='heaven', destination='hell', seats=4)
         passenger = storage(id='pid', user_id='uid', origin='heaven',
-                            destination='hell', buddies=4)
+                            destination='hell', seats=4)
         repository = Mock(add=MagicMock(return_value=passenger))
         subscriber = Mock(success=MagicMock())
         instance = AddPassengerWorkflow()
@@ -120,7 +120,7 @@ class TestViewPassengerWorkflow(unittest.TestCase):
         # Given
         logger = Mock()
         passenger = storage(id='pid', user_id='uid', origin='origin',
-                            destination='destination', buddies=1,
+                            destination='destination', seats=1,
                             user=storage(name='name', avatar='avatar'))
         repository = Mock(get=MagicMock(return_value=passenger))
         subscriber = Mock(success=MagicMock())
@@ -135,7 +135,7 @@ class TestViewPassengerWorkflow(unittest.TestCase):
             'origin': 'origin',
             'destination': 'destination',
             'name': 'name',
-            'buddies': 1,
+            'seats': 1,
             'id': 'pid',
             'avatar': 'avatar'
         })

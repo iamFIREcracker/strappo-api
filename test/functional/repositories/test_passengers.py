@@ -205,7 +205,7 @@ class TestPassengersRepository(unittest.TestCase):
         passenger = self.query.filter_by(id=passenger.id).first()
 
         # Then
-        self.assertEquals(42, passenger.buddies)
+        self.assertEquals(42, passenger.seats)
 
     def test_deactivate_passenger_with_invalid_id_should_return_nothing(self):
         # When
