@@ -62,9 +62,9 @@ def populate_db():
     app.models.Base.session.add(Account(id='aid6', user_id='uid6',
                                         external_id='eid6', type='facebook'))
     app.models.Base.session.add(Token(id='tid6', user_id='uid6'))
-    app.models.Base.session.add(Driver(id='did', user_id='uid',
-                                       license_plate='LU127AE',
-                                       telephone='+3281234567', hidden=True))
+    app.models.Base.session.add(Driver(id='did6', user_id='uid6',
+                                       license_plate='MI17D12',
+                                       telephone='+3287126534', hidden=True))
 
 
     app.models.Base.session.commit()
