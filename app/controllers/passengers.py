@@ -7,6 +7,7 @@ import app.weblib
 from app.controllers import ParamAuthorizableController
 from app.repositories.passengers import PassengersRepository
 from app.repositories.ride_requests import RideRequestsRepository
+from app.tasks import NotifyDriversTask
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.request_decorators import api
@@ -27,8 +28,6 @@ class ActivePassengersController(ParamAuthorizableController):
         ret = Future()
 
         class ActivePassengersSubscriber(object):
-            def not_found(self, driver_id):
-                ret.set(jsonify(passengers=[]))
             def success(self, blob):
                 ret.set(jsonify(passengers=blob))
 
@@ -56,7 +55,8 @@ class AddPassengerController(ParamAuthorizableController):
 
         add_passenger.add_subscriber(logger, AddPassengerSubscriber())
         add_passenger.perform(web.ctx.orm, web.ctx.logger, web.input(),
-                              PassengersRepository, self.current_user.id)
+                              PassengersRepository, self.current_user.id,
+                              NotifyDriversTask)
         return ret.get()
 
 

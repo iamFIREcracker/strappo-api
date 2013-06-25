@@ -74,7 +74,7 @@ class TestAddPassengerWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, params, None, None)
+        instance.perform(orm, logger, params, None, None, None)
 
         # Then
         subscriber.invalid_form.assert_called_with({
@@ -90,12 +90,14 @@ class TestAddPassengerWorkflow(unittest.TestCase):
         passenger = storage(id='pid', user_id='uid', origin='heaven',
                             destination='hell', seats=4)
         repository = Mock(add=MagicMock(return_value=passenger))
+        drivers_notifier = Mock()
         subscriber = Mock(success=MagicMock())
         instance = AddPassengerWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, params, repository, 'uid')
+        instance.perform(orm, logger, params, repository, 'uid',
+                         drivers_notifier)
 
         # Then
         subscriber.success.assert_called_with('pid')

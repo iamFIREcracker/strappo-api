@@ -12,6 +12,8 @@ from app.weblib.forms import describe_invalid_form
 from app.weblib.pubsub import FormValidator
 from app.weblib.pubsub import Publisher
 from app.weblib.pubsub import LoggingSubscriber
+from app.weblib.pubsub import TaskSubmitter
+from app.weblib.pubsub import Future
 
 
 class ActivePassengersWorkflow(Publisher):
@@ -42,11 +44,13 @@ class ActivePassengersWorkflow(Publisher):
 class AddPassengerWorkflow(Publisher):
     """Defines a workflow to add a new passenger."""
 
-    def perform(self, orm, logger, params, repository, user_id):
+    def perform(self, orm, logger, params, repository, user_id, task):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         form_validator = FormValidator()
         passenger_creator = PassengerCreator()
+        task_submitter = TaskSubmitter()
+        passenger_id = Future()
 
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
@@ -59,10 +63,16 @@ class AddPassengerWorkflow(Publisher):
         class PassengerCreatorSubscriber(object):
             def passenger_created(self, passenger):
                 orm.add(passenger)
-                outer.publish('success', passenger.id)
+                passenger_id.set(passenger.id)
+                task_submitter.perform(task, passenger_id.get())
+
+        class TaskSubmitterSubscriber(object):
+            def task_created(self, task_id):
+                outer.publish('success', passenger_id.get())
 
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
         passenger_creator.add_subscriber(logger, PassengerCreatorSubscriber())
+        task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         form_validator.perform(passengers_forms.add(), params,
                                describe_invalid_form)
 

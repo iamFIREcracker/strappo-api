@@ -127,3 +127,11 @@ class FormValidator(Publisher):
             self.publish('valid_form', form)
         else:
             self.publish('invalid_form', invalidformdescriber(form))
+
+
+class TaskSubmitter(Publisher):
+    def perform(self, task, *args, **kwargs):
+        """Spawns the given task asynchronously and publish a 'task_created'
+        message containing the ID of the just created task."""
+        task_id = task.delay(*args, **kwargs)
+        self.publish('task_created', task_id)
