@@ -50,6 +50,8 @@ class TestDriversWithUserIdWorkflow(unittest.TestCase):
 
         # Then
         subscriber.success.assert_called_with({
+            'name': 'name',
+            'avatar': 'avatar',
             'hidden': False,
             'id': 'did',
             'license_plate': '1242124',
@@ -89,6 +91,8 @@ class TestViewDriverWorkflow(unittest.TestCase):
 
         # Then
         subscriber.success.assert_called_with({
+            'name': 'name',
+            'avatar': 'avatar',
             'hidden': False,
             'id': 'did',
             'license_plate': '1242124',

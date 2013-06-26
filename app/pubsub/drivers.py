@@ -113,7 +113,8 @@ class DriverSerializer(Publisher):
         """
         self.publish('driver_serialized',
                      dict(id=driver.id, license_plate=driver.license_plate,
-                          telephone=driver.telephone, hidden=driver.hidden))
+                          telephone=driver.telephone, hidden=driver.hidden,
+                          name=driver.user.name, avatar=driver.user.avatar))
 
 
 class MultipleDeviceTokensExtractor(Publisher):
