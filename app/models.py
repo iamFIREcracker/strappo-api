@@ -42,11 +42,9 @@ class User(Base):
     device = relationship('Device', uselist=False,
                           backref=backref('user', cascade='expunge'))
     driver = relationship('Driver', uselist=False,
-                          backref=backref('user', lazy='joined',
-                                          cascade='expunge'))
+                          backref=backref('user', cascade='expunge'))
     passenger = relationship('Passenger', uselist=False,
-                             backref=backref('user', lazy='joined',
-                                             cascade='expunge'))
+                             backref=backref('user', cascade='expunge'))
 
     def __repr__(self):
         return '<User id=%(id)s, name=%(name)s, '\

@@ -7,20 +7,21 @@ from app.models import Passenger
 from app.models import RideRequest
 from app.models import User
 from app.weblib.db import expunged
+from app.weblib.db import joinedload
 
 
 class PassengersRepository(object):
     @staticmethod
     def get(id):
-        return expunged(Passenger.query.join(User).\
-                                filter(Passenger.id == id).\
-                                filter(User.deleted == False).first(),
+        return expunged(Passenger.query.options(joinedload('user')).\
+                                filter(User.deleted == False).\
+                                filter(Passenger.id == id).first(),
                         Passenger.session)
 
     @staticmethod
     def get_all_active():
         return [expunged(p, Passenger.session)
-                for p in Passenger.query.join(User).\
+                for p in Passenger.query.options(joinedload('user')).\
                         filter(User.deleted == False).\
                         filter(Passenger.active == True)]
 
@@ -35,11 +36,12 @@ class PassengersRepository(object):
         the passenger record has been added to the system.
         """
         return [expunged(p, Passenger.session)
-                for p in Passenger.query.join(User).join(RideRequest).\
+                for p in Passenger.query.options(joinedload('user')).\
+                        join(RideRequest).\
                         filter(User.deleted == False).\
-                        filter(Passenger.active == True).\
                         filter(RideRequest.driver_id == driver_id).\
-                        filter(RideRequest.accepted == True)]
+                        filter(RideRequest.accepted == True).\
+                        filter(Passenger.active == True)]
 
     @staticmethod
     def add(user_id, origin, destination, seats):
@@ -57,4 +59,3 @@ class PassengersRepository(object):
         else:
             passenger.active = False
             return passenger
-

@@ -6,14 +6,13 @@ import uuid
 from app.models import User
 from app.models import Driver
 from app.weblib.db import expunged
-
 from app.weblib.db import joinedload
 
 
 class DriversRepository(object):
     @staticmethod
     def get(driver_id):
-        return expunged(Driver.query.join(User).\
+        return expunged(Driver.query.options(joinedload('user')).\
                                 filter(Driver.id == driver_id).\
                                 filter(User.deleted == False).first(),
                         Driver.session)
@@ -22,15 +21,15 @@ class DriversRepository(object):
     def get_all_unhidden():
         return [expunged(d, Driver.session)
                 for d in Driver.query.options(joinedload('user.device')).\
-                                join(User).\
                                 filter(User.deleted == False).\
                                 filter(Driver.hidden == False)]
 
     @staticmethod
     def with_user_id(user_id):
-        return Driver.query.join(User).\
-                filter(User.id == user_id).\
-                filter(User.deleted == False).first()
+        return expunged(Driver.query.options(joinedload('user')).\
+                                filter(User.id == user_id).\
+                                filter(User.deleted == False).first(),
+                        Driver.session)
 
     @staticmethod
     def add(user_id, license_plate, telephone):
