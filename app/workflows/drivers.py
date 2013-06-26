@@ -11,7 +11,7 @@ from app.pubsub.drivers import DriverWithUserIdGetter
 from app.pubsub.drivers import DriverUpdater
 from app.pubsub.drivers import DriverSerializer
 from app.pubsub.drivers import DriverWithIdGetter
-from app.pubsub.drivers import MultipleDeviceTokensExtractor
+from app.pubsub.drivers import DriversDeviceTokenExtractor
 from app.pubsub.drivers import UnhiddenDriversGetter
 from app.pubsub.passengers import AcceptedPassengersGetter
 from app.pubsub.passengers import MultiplePassengersSerializer
@@ -39,7 +39,6 @@ class DriversWithUserIdWorkflow(Publisher):
         class DriverSerializerSubscriber(object):
             def driver_serialized(self, blob):
                 outer.publish('success', blob)
-
 
         driver_getter.add_subscriber(logger, DriverWithUserIdGetterSubscriber())
         driver_serializer.add_subscriber(logger, DriverSerializerSubscriber())
@@ -200,7 +199,7 @@ class NotifyDriversWorkflow(Publisher):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         drivers_getter = UnhiddenDriversGetter()
-        device_token_extractor = MultipleDeviceTokensExtractor()
+        device_token_extractor = DriversDeviceTokenExtractor()
         device_notifier = DeviceTokensNotifier()
 
         class DriversGetterSubscriber(object):

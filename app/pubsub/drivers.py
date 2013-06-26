@@ -117,7 +117,7 @@ class DriverSerializer(Publisher):
                           name=driver.user.name, avatar=driver.user.avatar))
 
 
-class MultipleDeviceTokensExtractor(Publisher):
+class DriversDeviceTokenExtractor(Publisher):
     def perform(self, drivers):
         """Extract the device tokens associated with the input list of drivers.
 
