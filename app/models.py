@@ -39,7 +39,8 @@ class User(Base):
     deleted = Column(Boolean, default=False, nullable=False)
     created = Column(DateTime, default=datetime.now)
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-    device = relationship('Device', uselist=False)
+    device = relationship('Device', uselist=False,
+                          backref=backref('user', cascade='expunge'))
     driver = relationship('Driver', uselist=False,
                           backref=backref('user', lazy='joined',
                                           cascade='expunge'))
