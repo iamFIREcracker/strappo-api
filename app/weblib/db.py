@@ -16,6 +16,7 @@ from sqlalchemy import String
 from sqlalchemy import Text
 from sqlalchemy import Time
 from sqlalchemy.orm import backref
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import sessionmaker
@@ -24,9 +25,9 @@ from sqlalchemy.ext.declarative import declarative_base as _declarative_base
 
 
 __all__ = ['backref', 'create_engine', 'create_session', 'declarative_base',
-           'func', 'init_db', 'relationship', 'uuid', 'Boolean', 'Column',
-           'DateTime', 'Enum', 'ForeignKey', 'Integer', 'String', 'Text',
-           'Time']
+           'func', 'init_db', 'joinedload', 'relationship', 'uuid', 'Boolean',
+           'Column', 'DateTime', 'Enum', 'ForeignKey', 'Integer', 'String',
+           'Text', 'Time']
 
 
 def create_engine():
