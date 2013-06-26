@@ -18,12 +18,13 @@ class TestAddRideRequestWorkflow(unittest.TestCase):
         logger = Mock()
         orm = Mock()
         repository = Mock(add=MagicMock())
+        task = Mock()
         subscriber = Mock(success=MagicMock())
         instance = AddRideRequestWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, repository, 'did', 'pid')
+        instance.perform(orm, logger, repository, 'did', 'pid', task)
 
         # Then
         subscriber.success.assert_called_with()

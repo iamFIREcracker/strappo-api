@@ -6,22 +6,29 @@ from app.pubsub.ride_requests import RideRequestCreator
 from app.pubsub.ride_requests import RideRequestAcceptor
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.pubsub import Publisher
+from app.weblib.pubsub import TaskSubmitter
 
 
 class AddRideRequestWorkflow(Publisher):
     """Defines a workflow to create a new ride request."""
 
-    def perform(self, orm, logger, repository, driver_id, passenger_id):
+    def perform(self, orm, logger, repository, driver_id, passenger_id, task):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         request_creator = RideRequestCreator()
+        task_submitter = TaskSubmitter()
 
         class RideRequestCreatorSubscriber(object):
             def ride_request_created(self, request):
                 orm.add(request)
+                task_submitter.perform(task, request.passenger_id)
+
+        class TaskSubmitterSubscriber(object):
+            def task_created(self, task_id):
                 outer.publish('success')
 
         request_creator.add_subscriber(logger, RideRequestCreatorSubscriber())
+        task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         request_creator.perform(repository, driver_id, passenger_id)
 
 

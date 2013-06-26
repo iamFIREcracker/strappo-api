@@ -8,6 +8,7 @@ from app.controllers import ParamAuthorizableController
 from app.repositories.drivers import DriversRepository
 from app.repositories.passengers import PassengersRepository
 from app.repositories.ride_requests import RideRequestsRepository
+from app.tasks import NotifyPassengerTask
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.request_decorators import api
@@ -169,7 +170,7 @@ class AcceptPassengerController(ParamAuthorizableController):
         add_ride_request.add_subscriber(logger, AddRideRequestSubscriber())
         add_ride_request.perform(web.ctx.orm, web.ctx.logger,
                                  RideRequestsRepository, driver_id,
-                                 passenger_id)
+                                 passenger_id, NotifyPassengerTask)
 
 
 class ListAcceptedPassengersController(ParamAuthorizableController):
