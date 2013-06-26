@@ -18,8 +18,12 @@ class TitaniumPushNotificationsAdapter(object):
                                      channel=channel,
                                      to_tokens=','.join(tokens),
                                      payload=payload))
-        req = urllib2.request(self.NOTIFY_TOKENS_URL, data)
-        response = urllib2.urlopen(req)
+        req = urllib2.Request(self.NOTIFY_TOKENS_URL, data)
+        try:
+            response = urllib2.urlopen(req)
+        except urllib2.HTTPError as e:
+            return (None, ('Unable to contact the server',
+                           self.NOTIFY_TOKENS_URL, data))
         try:
             payload = json.load(response)
             if payload['meta']['status'] == 'ok':
