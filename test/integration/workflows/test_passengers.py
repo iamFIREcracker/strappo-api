@@ -11,6 +11,7 @@ from mock import Mock
 from app.workflows.passengers import AddPassengerWorkflow
 from app.workflows.passengers import ActivePassengersWorkflow
 from app.workflows.passengers import ViewPassengerWorkflow
+from app.workflows.passengers import NotifyPassengerWorkflow
 
 
 class TestActivePassengersWorkflow(unittest.TestCase):
@@ -141,3 +142,52 @@ class TestViewPassengerWorkflow(unittest.TestCase):
             'id': 'pid',
             'avatar': 'avatar'
         })
+
+
+class TestNotifyPassengerWorkflow(unittest.TestCase):
+    def test_cannot_notify_passenger_providing_an_invalid_id(self):
+        # Given
+        logger = Mock()
+        repository = Mock(get=MagicMock(return_value=None))
+        subscriber = Mock(passenger_not_found=MagicMock())
+        instance = NotifyPassengerWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, repository, 'invalid_id', None, None, None)
+
+        # Then
+        subscriber.passenger_not_found.assert_called_with('invalid_id')
+
+    def test_failure_message_is_published_if_something_goes_wrong_with_the_push_adapter(self):
+        # Given
+        logger = Mock()
+        passenger = storage(user=storage(device=storage(device_token='dt1')))
+        repository = Mock(get=MagicMock(return_value=passenger))
+        push_adapter = Mock(notify_tokens=MagicMock(return_value=(None,
+                                                                  'Error!')))
+        subscriber = Mock(failure=MagicMock())
+        instance = NotifyPassengerWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, repository, 'pid', push_adapter, None, None)
+
+        # Then
+        subscriber.failure.assert_called_with('Error!')
+
+    def test_success_message_is_published_if_the_push_adapters_accomplishes_its_duties(self):
+        # Given
+        logger = Mock()
+        passenger = storage(user=storage(device=storage(device_token='dt1')))
+        repository = Mock(get=MagicMock(return_value=passenger))
+        push_adapter = Mock(notify_tokens=MagicMock(return_value=(None, None)))
+        subscriber = Mock(success=MagicMock())
+        instance = NotifyPassengerWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, repository, 'pid', push_adapter, None, None)
+
+        # Then
+        subscriber.success.assert_called_with()

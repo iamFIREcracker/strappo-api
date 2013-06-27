@@ -3,10 +3,12 @@
 
 
 import app.forms.passengers as passengers_forms
+from app.pubsub import DeviceTokensNotifier
 from app.pubsub.passengers import ActivePassengersGetter
 from app.pubsub.passengers import PassengerWithIdGetter
 from app.pubsub.passengers import MultiplePassengersSerializer
 from app.pubsub.passengers import PassengerCreator
+from app.pubsub.passengers import PassengerDeviceTokenExtractor
 from app.pubsub.passengers import PassengerSerializer
 from app.weblib.forms import describe_invalid_form
 from app.weblib.pubsub import FormValidator
@@ -101,3 +103,40 @@ class ViewPassengerWorkflow(Publisher):
         passenger_serializer.add_subscriber(logger,
                                             PassengersSerializerSubscriber())
         passengers_getter.perform(repository, passenger_id)
+
+
+class NotifyPassengerWorkflow(Publisher):
+    """Defines a workflow to notify a passenger that a driver has offered 
+    a ride request.
+    """
+
+    def perform(self, logger, repository, passenger_id, push_adapter, channel,
+                payload):
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        passenger_getter = PassengerWithIdGetter()
+        device_token_extractor = PassengerDeviceTokenExtractor()
+        device_notifier = DeviceTokensNotifier()
+
+        class PassengerGetterSubscriber(object):
+            def passenger_not_found(self, passenger_id):
+                outer.publish('passenger_not_found', passenger_id)
+            def passenger_found(self, passenger):
+                device_token_extractor.perform(passenger)
+
+        class DeviceTokensExtractorSubscriber(object):
+            def device_token_extracted(self, device_token):
+                device_notifier.perform(push_adapter, channel, [device_token],
+                                        payload)
+
+        class DeviceNotifierSubscriber(object):
+            def device_tokens_not_notified(self, error):
+                outer.publish('failure', error)
+            def device_tokens_notified(self):
+                outer.publish('success')
+
+        passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
+        device_token_extractor.add_subscriber(logger,
+                                              DeviceTokensExtractorSubscriber())
+        device_notifier.add_subscriber(logger, DeviceNotifierSubscriber())
+        passenger_getter.perform(repository, passenger_id)

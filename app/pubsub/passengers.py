@@ -93,3 +93,14 @@ class PassengerDeactivator(Publisher):
             self.publish('passenger_not_found', passenger_id)
         else:
             self.publish('passenger_hid', passenger)
+
+
+class PassengerDeviceTokenExtractor(Publisher):
+    def perform(self, passenger):
+        """Extract the device tokens associated with given passenger.
+
+        At the end of the operation a 'device_token_extracted' message will be
+        published, together with the extracted device token.
+        """
+        self.publish('device_token_extracted',
+                     passenger.user.device.device_token)

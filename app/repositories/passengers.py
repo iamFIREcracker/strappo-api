@@ -8,12 +8,13 @@ from app.models import RideRequest
 from app.models import User
 from app.weblib.db import expunged
 from app.weblib.db import joinedload
+from app.weblib.db import joinedload_all
 
 
 class PassengersRepository(object):
     @staticmethod
     def get(id):
-        return expunged(Passenger.query.options(joinedload('user')).\
+        return expunged(Passenger.query.options(joinedload_all('user.device')).\
                                 filter(User.deleted == False).\
                                 filter(Passenger.id == id).first(),
                         Passenger.session)
