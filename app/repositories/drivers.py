@@ -7,6 +7,7 @@ from app.models import User
 from app.models import Driver
 from app.weblib.db import expunged
 from app.weblib.db import joinedload
+from app.weblib.db import joinedload_all
 
 
 class DriversRepository(object):
@@ -20,7 +21,7 @@ class DriversRepository(object):
     @staticmethod
     def get_all_unhidden():
         return [expunged(d, Driver.session)
-                for d in Driver.query.options(joinedload('user.device')).\
+                for d in Driver.query.options(joinedload_all('user.device')).\
                                 filter(User.deleted == False).\
                                 filter(Driver.hidden == False)]
 
