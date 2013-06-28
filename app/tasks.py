@@ -29,8 +29,8 @@ def NotifyDriversTask(passenger_id):
 
     notify_drivers.add_subscriber(logging_subscriber,
                                     NotifyDriversSubscriber())
-    notify_drivers.perform(logger, DriversRepository, push_adapter,
-                           'drivers', passenger_id) # XXX TBD payload
+    notify_drivers.perform(logger, DriversRepository, push_adapter, 'drivers',
+                           'A new passenger is waiting for you!') # XXX TBD payload
     return ret.get()
 
 
@@ -53,5 +53,6 @@ def NotifyPassengerTask(passenger_id):
     notify_passenger.add_subscriber(logging_subscriber,
                                     NotifyPassengerSubscriber())
     notify_passenger.perform(logger, PassengersRepository, passenger_id,
-                             push_adapter, 'passengers', passenger_id) # XXX TBD payload
+                             push_adapter, 'passengers',
+                             'A driver has offered to give you a ride') # XXX TBD payload
     return ret.get()
