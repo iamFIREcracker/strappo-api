@@ -15,7 +15,7 @@ def populate_db():
     app.models.Base.session.add(User(id='uid', name='Matteo L.',
                                      avatar='http://www.placehold.it/128x128/86EF00/AAAAAA&text=no+image'))
     app.models.Base.session.add(Device(id='deid', user_id='uid',
-                                       device_token='dtid'))
+                                       device_token='6382c63bcf164e72095a7c063195842e065152c5c8019e844d28e9bd7c22a1c4'))
     app.models.Base.session.add(Account(id='aid', user_id='uid',
                                         external_id='eid', type='facebook'))
     app.models.Base.session.add(Token(id='tid', user_id='uid'))
