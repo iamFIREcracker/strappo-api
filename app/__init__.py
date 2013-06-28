@@ -21,7 +21,7 @@ web.config.DATABASE_URL = config.DATABASE_URL
 
 web.config.DISABLE_HTTP_ACCEPT_CHECK = config.DISABLE_HTTP_ACCEPT_CHECK
 
-web.config.TITANIUM_KEY = 'XXX'
+web.config.TITANIUM_KEY = config.TITANIUM_KEY
 
 
 def app_factory():
