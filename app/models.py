@@ -102,6 +102,8 @@ class Driver(Base):
     hidden = Column(Boolean, default=False)
     created = Column(DateTime, default=datetime.now)
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    drive_requests = relationship('DriveRequest', uselist=True,
+                          backref=backref('driver', cascade='expunge'))
 
     def __repr__(self):
         return '<Driver id=%(id)s, user_id=%(user_id)s, '\
@@ -118,6 +120,10 @@ class Passenger(Base):
     destination = Column(Text)
     active = Column(Boolean, default=True)
     seats = Column(Integer)
+    created = Column(DateTime, default=datetime.now)
+    updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    drive_requests = relationship('DriveRequest', uselist=True,
+                          backref=backref('passenger', cascade='expunge'))
 
     def __repr__(self):
         return '<Passenger id=%(id)s, user_id=%(user_id)s, '\

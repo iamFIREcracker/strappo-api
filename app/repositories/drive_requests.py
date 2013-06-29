@@ -3,11 +3,23 @@
 
 import uuid
 
+from app.models import User
 from app.models import DriveRequest
 from app.weblib.db import expunged
+from app.weblib.db import joinedload_all
 
 
 class DriveRequestsRepository(object):
+    @staticmethod
+    def get_all_active_by_driver(driver_id):
+        options = [joinedload_all('driver.user'),
+                   joinedload_all('passenger.user')]
+        return [expunged(dr, DriveRequest.session)
+                for dr in DriveRequest.query.options(*options).\
+                        filter(User.deleted == False).\
+                        filter(DriveRequest.driver_id == driver_id).\
+                        filter(DriveRequest.active == True)]
+
     @staticmethod
     def add(driver_id, passenger_id):
         id = unicode(uuid.uuid4())
