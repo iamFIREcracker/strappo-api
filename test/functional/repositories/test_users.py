@@ -25,6 +25,40 @@ class TestUsersRepository(unittest.TestCase):
     def tearDown(self):
         self.session.remove()
 
+    def test_get_with_invalid_id_should_return_nothing(self):
+        # When
+        user = UsersRepository.get('not_existing_id')
+
+        # Then
+        self.assertIsNone(user)
+
+    def test_get_with_id_of_deleted_user_should_return_nothing(self):
+        # Given
+        self.session.add(User(id='uid', name='Name', avatar='Avatar',
+                              deleted=True))
+        self.session.commit()
+        self.session.remove()
+
+        # When
+        user = UsersRepository.get('uid')
+
+        # Then
+        self.assertIsNone(user)
+
+    def test_get_with_id_of_active_user_should_return_it(self):
+        # Given
+        self.session.add(User(id='uid', name='Name', avatar='Avatar',
+                              deleted=False))
+        self.session.commit()
+        self.session.remove()
+
+        # When
+        user = UsersRepository.get('uid')
+
+        # Then
+        self.assertIsNotNone(user)
+
+
     def test_added_user_is_then_returned_inside_a_query(self):
         # When
         user = UsersRepository.add('Name', 'Avatar')
