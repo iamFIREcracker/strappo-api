@@ -6,12 +6,41 @@ from app.pubsub.users import AccountRefresher
 from app.pubsub.users import AlreadyRegisteredVerifier
 from app.pubsub.users import TokenRefresher
 from app.pubsub.users import UserCreator
+from app.pubsub.users import UserWithIdGetter
+from app.pubsub.users import UserSerializer
 from app.weblib.forms import describe_invalid_form
 from app.weblib.pubsub import FormValidator
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.pubsub import Publisher
 from app.weblib.pubsub.auth import InSessionVerifier
+
+
+
+class ViewUserWorkflow(Publisher):
+    """Defines a workflow to view the details of an active user."""
+
+    def perform(self, logger, repository, user_id):
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        users_getter = UserWithIdGetter()
+        user_serializer = UserSerializer()
+
+        class UserGetterSubscriber(object):
+            def user_not_found(self, user_id):
+                outer.publish('not_found', user_id)
+            def user_found(self, user):
+                user_serializer.perform(user)
+
+        class UsersSerializerSubscriber(object):
+            def user_serialized(self, blob):
+                outer.publish('success', blob)
+
+
+        users_getter.add_subscriber(logger, UserGetterSubscriber())
+        user_serializer.add_subscriber(logger,
+                                            UsersSerializerSubscriber())
+        users_getter.perform(repository, user_id)
 
 
 class LoginAuthorizedWorkflow(Publisher):

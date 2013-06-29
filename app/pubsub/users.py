@@ -5,6 +5,21 @@
 from app.weblib.pubsub import Publisher
 
 
+class UserWithIdGetter(Publisher):
+    def perform(self, repository, user_id):
+        """Get the user identified by ``user_id``.
+
+        If such user exists, a 'user_found' message is published containing the
+        user details;  on the other hand, if no user exists with the specified
+        ID, a 'user_not_found' message will be published
+        """
+        user = repository.get(user_id)
+        if user is None:
+            self.publish('user_not_found', user_id)
+        else:
+            self.publish('user_found', user)
+
+
 class AlreadyRegisteredVerifier(Publisher):
     def perform(self, repository, externalid, accounttype):
         """Checks whether a user identified by the given ID has already an
