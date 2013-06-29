@@ -7,7 +7,7 @@ def populate_db():
     from app.models import Device
     from app.models import Driver
     from app.models import Passenger
-    from app.models import RideRequest
+    from app.models import DriveRequest
     from app.models import Token
     from app.models import User
 
@@ -51,7 +51,7 @@ def populate_db():
                                           origin='Viareggio Scalo',
                                           destination='Cosmopolitan',
                                           seats=2, active=False))
-    app.models.Base.session.add(RideRequest(id='rrid1', driver_id='did',
+    app.models.Base.session.add(DriveRequest(id='rrid1', driver_id='did',
                                             passenger_id='pid4', accepted=True))
 
     # And one waiting for passenger confirmation
@@ -63,7 +63,7 @@ def populate_db():
                                           origin='Via dei Lecci 123',
                                           destination='Cosmopolitan',
                                           seats=2))
-    app.models.Base.session.add(RideRequest(id='rrid2', driver_id='did',
+    app.models.Base.session.add(DriveRequest(id='rrid2', driver_id='did',
                                             passenger_id='pid5', accepted=False))
 
 

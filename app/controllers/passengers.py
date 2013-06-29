@@ -6,7 +6,7 @@ import web
 import app.weblib
 from app.controllers import ParamAuthorizableController
 from app.repositories.passengers import PassengersRepository
-from app.repositories.ride_requests import RideRequestsRepository
+from app.repositories.drive_requests import DriveRequestsRepository
 from app.tasks import NotifyDriversTask
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
@@ -16,7 +16,7 @@ from app.weblib.utils import jsonify
 from app.workflows.passengers import AddPassengerWorkflow
 from app.workflows.passengers import ActivePassengersWorkflow
 from app.workflows.passengers import ViewPassengerWorkflow
-from app.workflows.ride_requests import AcceptRideRequestWorkflow
+from app.workflows.drive_requests import AcceptDriveRequestWorkflow
 
 
 class ActivePassengersController(ParamAuthorizableController):
@@ -85,17 +85,17 @@ class AcceptDriverController(ParamAuthorizableController):
     @authorized
     def POST(self, passenger_id, driver_id):
         logger = LoggingSubscriber(web.ctx.logger)
-        accept_ride_request = AcceptRideRequestWorkflow()
+        accept_drive_request = AcceptDriveRequestWorkflow()
 
-        class AcceptRideRequestSubscriber(object):
+        class AcceptDriveRequestSubscriber(object):
             def not_found(self):
                 raise web.notfound()
             def success(self):
                 web.ctx.orm.commit()
                 raise app.weblib.nocontent()
 
-        accept_ride_request.add_subscriber(logger,
-                                           AcceptRideRequestSubscriber())
-        accept_ride_request.perform(web.ctx.orm, web.ctx.logger,
-                                    RideRequestsRepository, driver_id,
+        accept_drive_request.add_subscriber(logger,
+                                           AcceptDriveRequestSubscriber())
+        accept_drive_request.perform(web.ctx.orm, web.ctx.logger,
+                                    DriveRequestsRepository, driver_id,
                                     passenger_id, PassengersRepository)

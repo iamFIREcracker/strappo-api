@@ -7,20 +7,20 @@ from mock import MagicMock
 from mock import Mock
 from web.utils import storage
 
-from app.workflows.ride_requests import AcceptRideRequestWorkflow
-from app.workflows.ride_requests import AddRideRequestWorkflow
+from app.workflows.drive_requests import AcceptDriveRequestWorkflow
+from app.workflows.drive_requests import AddDriveRequestWorkflow
 
 
-class TestAddRideRequestWorkflow(unittest.TestCase):
+class TestAddDriveRequestWorkflow(unittest.TestCase):
 
-    def test_ride_request_is_successfully_created_when_workflow_is_executed(self):
+    def test_drive_request_is_successfully_created_when_workflow_is_executed(self):
         # Given
         logger = Mock()
         orm = Mock()
         repository = Mock(add=MagicMock())
         task = Mock()
         subscriber = Mock(success=MagicMock())
-        instance = AddRideRequestWorkflow()
+        instance = AddDriveRequestWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
@@ -30,19 +30,19 @@ class TestAddRideRequestWorkflow(unittest.TestCase):
         subscriber.success.assert_called_with()
 
 
-class TestAcceptRideRequestWorkflow(unittest.TestCase):
+class TestAcceptDriveRequestWorkflow(unittest.TestCase):
 
-    def test_not_found_is_published_if_no_ride_requests_exists_associated_with_given_ids(self):
+    def test_not_found_is_published_if_no_drive_requests_exists_associated_with_given_ids(self):
         # Given
         logger = Mock()
         orm = Mock()
-        ride_requests_repository = Mock(accept=MagicMock(return_value=None))
+        drive_requests_repository = Mock(accept=MagicMock(return_value=None))
         subscriber = Mock(not_found=MagicMock())
-        instance = AcceptRideRequestWorkflow()
+        instance = AcceptDriveRequestWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, ride_requests_repository, 'invalid_did',
+        instance.perform(orm, logger, drive_requests_repository, 'invalid_did',
                          'invalid_pid', None)
 
         # Then
@@ -53,14 +53,14 @@ class TestAcceptRideRequestWorkflow(unittest.TestCase):
         logger = Mock()
         orm = Mock()
         request = storage(id='rid', driver_id='did', passenger_id='pid')
-        ride_requests_repository = Mock(accept=MagicMock(return_value=request))
+        drive_requests_repository = Mock(accept=MagicMock(return_value=request))
         passengers_repository = Mock(deactivate=MagicMock(return_value=None))
         subscriber = Mock(not_found=MagicMock())
-        instance = AcceptRideRequestWorkflow()
+        instance = AcceptDriveRequestWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, ride_requests_repository, 'did', 'pid',
+        instance.perform(orm, logger, drive_requests_repository, 'did', 'pid',
                          passengers_repository)
 
         # Then
@@ -71,14 +71,14 @@ class TestAcceptRideRequestWorkflow(unittest.TestCase):
         logger = Mock()
         orm = Mock()
         request = storage(id='rid', driver_id='did', passenger_id='pid')
-        ride_requests_repository = Mock(accept=MagicMock(return_value=request))
+        drive_requests_repository = Mock(accept=MagicMock(return_value=request))
         passengers_repository = Mock(deactivate=MagicMock())
         subscriber = Mock(success=MagicMock())
-        instance = AcceptRideRequestWorkflow()
+        instance = AcceptDriveRequestWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, ride_requests_repository, 'did', 'pid',
+        instance.perform(orm, logger, drive_requests_repository, 'did', 'pid',
                          passengers_repository)
 
         # Then

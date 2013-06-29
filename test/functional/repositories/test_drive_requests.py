@@ -5,11 +5,11 @@ import unittest
 
 import app.weblib.db
 from app.models import Base
-from app.models import RideRequest
-from app.repositories.ride_requests import RideRequestsRepository
+from app.models import DriveRequest
+from app.repositories.drive_requests import DriveRequestsRepository
 
 
-class TestRideRequestsRepository(unittest.TestCase):
+class TestDriveRequestsRepository(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
@@ -18,14 +18,14 @@ class TestRideRequestsRepository(unittest.TestCase):
     def setUp(self):
         app.weblib.db.clear_db()
         self.session = Base.session
-        self.query = RideRequest.query
+        self.query = DriveRequest.query
 
     def tearDown(self):
         self.session.remove()
 
-    def test_add_ride_request_with_all_the_valid_fields_should_return_a_new_ride_request(self):
+    def test_add_drive_request_with_all_the_valid_fields_should_return_a_new_drive_request(self):
         # When
-        request = RideRequestsRepository.add('did', 'pid')
+        request = DriveRequestsRepository.add('did', 'pid')
         self.session.add(request)
         self.session.commit()
         request = self.query.filter_by(id=request.id).first()
@@ -35,69 +35,69 @@ class TestRideRequestsRepository(unittest.TestCase):
         self.assertEquals('pid', request.passenger_id)
         self.assertEquals(False, request.accepted)
 
-    def test_cannot_accept_a_ride_request_passing_wrong_driver_id(self):
+    def test_cannot_accept_a_drive_request_passing_wrong_driver_id(self):
         # Given
-        self.session.add(RideRequest(id='rrid', driver_id='did',
+        self.session.add(DriveRequest(id='rrid', driver_id='did',
                                      passenger_id='pid'))
         self.session.commit()
         self.session.remove()
 
         # When
-        request = RideRequestsRepository.accept('invalid_id', 'pid')
+        request = DriveRequestsRepository.accept('invalid_id', 'pid')
 
         # Then
         self.assertIsNone(request)
 
-    def test_cannot_accept_a_ride_request_passing_wrong_passenger_id(self):
+    def test_cannot_accept_a_drive_request_passing_wrong_passenger_id(self):
         # Given
-        self.session.add(RideRequest(id='rrid', driver_id='did',
+        self.session.add(DriveRequest(id='rrid', driver_id='did',
                                      passenger_id='pid'))
         self.session.commit()
         self.session.remove()
 
         # When
-        request = RideRequestsRepository.accept('did', 'invalid_id')
+        request = DriveRequestsRepository.accept('did', 'invalid_id')
 
         # Then
         self.assertIsNone(request)
 
-    def test_cannot_accept_a_ride_request_already_accepted(self):
+    def test_cannot_accept_a_drive_request_already_accepted(self):
         # Given
-        self.session.add(RideRequest(id='rrid', driver_id='did',
+        self.session.add(DriveRequest(id='rrid', driver_id='did',
                                      passenger_id='pid', accepted=True))
         self.session.commit()
         self.session.remove()
 
         # When
-        request = RideRequestsRepository.accept('did', 'pid')
+        request = DriveRequestsRepository.accept('did', 'pid')
 
         # Then
         self.assertIsNone(request)
 
-    def test_cannot_accept_an_inactive_ride_request(self):
+    def test_cannot_accept_an_inactive_drive_request(self):
         # Given
-        self.session.add(RideRequest(id='rrid', driver_id='did',
+        self.session.add(DriveRequest(id='rrid', driver_id='did',
                                      passenger_id='pid', accepted=False,
                                      active=False))
         self.session.commit()
         self.session.remove()
 
         # When
-        request = RideRequestsRepository.accept('did', 'pid')
+        request = DriveRequestsRepository.accept('did', 'pid')
 
         # Then
         self.assertIsNone(request)
 
-    def test_accept_a_ride_request_should_set_the_accepted_property(self):
+    def test_accept_a_drive_request_should_set_the_accepted_property(self):
         # Given
-        self.session.add(RideRequest(id='rrid', driver_id='did',
+        self.session.add(DriveRequest(id='rrid', driver_id='did',
                                      passenger_id='pid', accepted=False,
                                      active=True))
         self.session.commit()
         self.session.remove()
 
         # When
-        self.session.add(RideRequestsRepository.accept('did', 'pid'))
+        self.session.add(DriveRequestsRepository.accept('did', 'pid'))
         self.session.commit()
         request = self.query.filter_by(id='rrid').first()
 

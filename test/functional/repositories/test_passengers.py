@@ -6,7 +6,7 @@ import unittest
 import app.weblib.db
 from app.models import Base
 from app.models import Passenger
-from app.models import RideRequest
+from app.models import DriveRequest
 from app.models import User
 from app.repositories.passengers import PassengersRepository
 
@@ -135,7 +135,7 @@ class TestPassengersRepository(unittest.TestCase):
         # Given
         self.session.add(User(id='uid', name='Name', avatar='Avatar', deleted=True))
         self.session.add(Passenger(id='pid', user_id='uid', active=True))
-        self.session.add(RideRequest(id='rrid', driver_id='did',
+        self.session.add(DriveRequest(id='rrid', driver_id='did',
                                      passenger_id='pid', accepted=True))
         self.session.commit()
         self.session.remove()
@@ -146,12 +146,13 @@ class TestPassengersRepository(unittest.TestCase):
         # Then
         self.assertEquals([], passengers)
 
-    def test_get_all_accepted_by_driver_does_not_return_passengers_not_active(self):
+    def test_get_all_accepted_by_driver_does_not_return_drive_requests_not_active(self):
         # Given
         self.session.add(User(id='uid', name='Name', avatar='Avatar'))
-        self.session.add(Passenger(id='pid', user_id='uid', active=False))
-        self.session.add(RideRequest(id='rrid', driver_id='did',
-                                     passenger_id='pid', accepted=True))
+        self.session.add(Passenger(id='pid', user_id='uid', active=True))
+        self.session.add(DriveRequest(id='rrid', driver_id='did',
+                                     passenger_id='pid', accepted=True,
+                                     active=False))
         self.session.commit()
         self.session.remove()
 
@@ -165,7 +166,7 @@ class TestPassengersRepository(unittest.TestCase):
         # Given
         self.session.add(User(id='uid', name='Name', avatar='Avatar'))
         self.session.add(Passenger(id='pid', user_id='uid', active=True))
-        self.session.add(RideRequest(id='rrid', driver_id='did',
+        self.session.add(DriveRequest(id='rrid', driver_id='did',
                                      passenger_id='pid', accepted=False))
         self.session.commit()
         self.session.remove()
@@ -180,7 +181,7 @@ class TestPassengersRepository(unittest.TestCase):
         # Given
         self.session.add(User(id='uid', name='Name', avatar='Avatar'))
         self.session.add(Passenger(id='pid', user_id='uid', active=True))
-        self.session.add(RideRequest(id='rrid', driver_id='did',
+        self.session.add(DriveRequest(id='rrid', driver_id='did',
                                      passenger_id='pid', accepted=True))
         self.session.commit()
         self.session.remove()

@@ -7,7 +7,7 @@ import app.weblib
 from app.controllers import ParamAuthorizableController
 from app.repositories.drivers import DriversRepository
 from app.repositories.passengers import PassengersRepository
-from app.repositories.ride_requests import RideRequestsRepository
+from app.repositories.drive_requests import DriveRequestsRepository
 from app.tasks import NotifyPassengerTask
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
@@ -21,7 +21,7 @@ from app.workflows.drivers import HideDriverWorkflow
 from app.workflows.drivers import ListAcceptedPassengersWorkflow
 from app.workflows.drivers import UnhideDriverWorkflow
 from app.workflows.drivers import ViewDriverWorkflow
-from app.workflows.ride_requests import AddRideRequestWorkflow
+from app.workflows.drive_requests import AddDriveRequestWorkflow
 
 
 class DriversController(ParamAuthorizableController):
@@ -160,16 +160,16 @@ class AcceptPassengerController(ParamAuthorizableController):
     @authorized
     def POST(self, driver_id, passenger_id):
         logger = LoggingSubscriber(web.ctx.logger)
-        add_ride_request = AddRideRequestWorkflow()
+        add_drive_request = AddDriveRequestWorkflow()
 
-        class AddRideRequestSubscriber(object):
+        class AddDriveRequestSubscriber(object):
             def success(self):
                 web.ctx.orm.commit()
                 raise app.weblib.nocontent()
 
-        add_ride_request.add_subscriber(logger, AddRideRequestSubscriber())
-        add_ride_request.perform(web.ctx.orm, web.ctx.logger,
-                                 RideRequestsRepository, driver_id,
+        add_drive_request.add_subscriber(logger, AddDriveRequestSubscriber())
+        add_drive_request.perform(web.ctx.orm, web.ctx.logger,
+                                 DriveRequestsRepository, driver_id,
                                  passenger_id, NotifyPassengerTask)
 
 
