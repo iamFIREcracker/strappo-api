@@ -2,7 +2,9 @@ syntax: glob
 
 *sqlite
 *pyc
+*bak
 .vagrant
+.ropeproject/*
 build/*
 cscope*
 dist/*
