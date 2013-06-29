@@ -4,6 +4,18 @@
 from app.weblib.pubsub import Publisher
 
 
+class ActiveDriveRequestsWithDriverIdGetter(Publisher):
+    def perform(self, repository, driver_id):
+        """Search for all the active drive requests associated with the given
+        driver ID.
+
+        When done, a 'drive_requests_found' message will be published,
+        followed by the list of drive requests.
+        """
+        self.publish('drive_requests_found',
+                     repository.get_all_active_by_driver(driver_id))
+
+
 class DriveRequestCreator(Publisher):
     def perform(self, repository, driver_id, passenger_id):
         """Creates a ride request from driver identified by ``driver_id`` and
@@ -30,3 +42,29 @@ class DriveRequestAcceptor(Publisher):
             self.publish('drive_request_not_found', driver_id, passenger_id)
         else:
             self.publish('drive_request_accepted', request)
+
+
+def serialize(request):
+    if request is None:
+        return None
+    return dict(id=request.id, accepted=request.accepted)
+
+
+def _serialize(request):
+    from app.pubsub.users import serialize as serialize_user
+    from app.pubsub.passengers import serialize as serialize_passenger
+    d = serialize(request)
+    d.update(passenger=serialize_passenger(request.passenger))
+    d['passenger'].update(user=serialize_user(request.passenger.user))
+    return d
+
+
+class MultipleDriveRequestsSerializer(Publisher):
+    def perform(self, requests):
+        """Convert a list of drive requests into serializable dictionaries.
+
+        At the end of the operation, the method will emit a
+        'drive_requests_serialized' message containing serialized objects.
+        """
+        self.publish('drive_requests_serialized', 
+                     [_serialize(r) for r in requests])

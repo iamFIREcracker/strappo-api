@@ -2,11 +2,38 @@
 # -*- coding: utf-8 -*-
 
 from app.pubsub.passengers import PassengerDeactivator
+from app.pubsub.drive_requests import ActiveDriveRequestsWithDriverIdGetter
 from app.pubsub.drive_requests import DriveRequestCreator
 from app.pubsub.drive_requests import DriveRequestAcceptor
+from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.pubsub import Publisher
 from app.weblib.pubsub import TaskSubmitter
+
+
+class ListActiveDriveRequestsWorkflow(Publisher):
+    """Defines a workflow to list all the active drive requests associated
+    with a specific driver ID."""
+
+    def perform(self, logger, repository, driver_id):
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        active_requests_getter = ActiveDriveRequestsWithDriverIdGetter()
+        requests_serializer = MultipleDriveRequestsSerializer()
+
+        class ActiveDriveRequestsGetterSubscriber(object):
+            def drive_requests_found(self, requests):
+                requests_serializer.perform(requests)
+
+        class DriveRequestsSerializerSubscriber(object):
+            def drive_requests_serialized(self, blob):
+                outer.publish('success', blob)
+
+        active_requests_getter.\
+                add_subscriber(logger, ActiveDriveRequestsGetterSubscriber())
+        requests_serializer.add_subscriber(logger,
+                                           DriveRequestsSerializerSubscriber())
+        active_requests_getter.perform(repository, driver_id)
 
 
 class AddDriveRequestWorkflow(Publisher):
