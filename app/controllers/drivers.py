@@ -6,7 +6,6 @@ import web
 import app.weblib
 from app.controllers import ParamAuthorizableController
 from app.repositories.drivers import DriversRepository
-from app.repositories.passengers import PassengersRepository
 from app.repositories.drive_requests import DriveRequestsRepository
 from app.tasks import NotifyPassengerTask
 from app.weblib.pubsub import Future
@@ -17,7 +16,6 @@ from app.weblib.utils import jsonify
 from app.workflows.drivers import AddDriverWorkflow
 from app.workflows.drivers import EditDriverWorkflow
 from app.workflows.drivers import HideDriverWorkflow
-from app.workflows.drivers import ListAcceptedPassengersWorkflow
 from app.workflows.drivers import UnhideDriverWorkflow
 from app.workflows.drivers import ViewDriverWorkflow
 from app.workflows.drive_requests import AddDriveRequestWorkflow
@@ -150,22 +148,3 @@ class AcceptPassengerController(ParamAuthorizableController):
         add_drive_request.perform(web.ctx.orm, web.ctx.logger,
                                  DriveRequestsRepository, driver_id,
                                  passenger_id, NotifyPassengerTask)
-
-
-class ListAcceptedPassengersController(ParamAuthorizableController):
-    @api
-    @authorized
-    def GET(self, driver_id):
-        logger = LoggingSubscriber(web.ctx.logger)
-        accepted_passengers = ListAcceptedPassengersWorkflow()
-        ret = Future()
-
-        class ListAcceptedPassengersSubscriber(object):
-            def success(self, blob):
-                ret.set(jsonify(passengers=blob))
-
-        accepted_passengers.add_subscriber(logger,
-                                           ListAcceptedPassengersSubscriber())
-        accepted_passengers.perform(web.ctx.logger, PassengersRepository,
-                                    driver_id)
-        return ret.get()

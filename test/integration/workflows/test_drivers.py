@@ -11,7 +11,6 @@ from mock import Mock
 from app.workflows.drivers import AddDriverWorkflow
 from app.workflows.drivers import HideDriverWorkflow
 from app.workflows.drivers import EditDriverWorkflow
-from app.workflows.drivers import ListAcceptedPassengersWorkflow
 from app.workflows.drivers import NotifyDriversWorkflow
 from app.workflows.drivers import UnhideDriverWorkflow
 from app.workflows.drivers import ViewDriverWorkflow
@@ -216,67 +215,6 @@ class TestUnhideDriverWorkflow(unittest.TestCase):
 
         # Then
         subscriber.success.assert_called_with()
-
-
-class TestListAcceptedPassengersWorkflow(unittest.TestCase):
-
-    def test_success_message_with_no_passengers_if_driver_id_is_invalid(self):
-        # Given
-        logger = Mock()
-        repository = Mock(get_all_accepted_by_driver=MagicMock(return_value=[]))
-        subscriber = Mock(success=MagicMock())
-        instance = ListAcceptedPassengersWorkflow()
-
-        # When
-        instance.add_subscriber(subscriber)
-        instance.perform(logger, repository, 'invalid_id')
-
-        # Then
-        subscriber.success.assert_called_with([])
-
-    def test_success_message_with_accepted_passengers_if_driver_id_is_valid(self):
-        # Given
-        logger = Mock()
-        active_passengers = [storage(id='pid1', origin='origin1',
-                                     destination='destination1', seats=1,
-                                     user=storage(name='name1',
-                                                  avatar='avatar1',
-                                                  id='uid1')),
-                             storage(id='pid2', origin='origin2',
-                                     destination='destination2', seats=2,
-                                     user=storage(name='name2',
-                                                  avatar='avatar2',
-                                                  id='uid2'))]
-        repository = Mock(get_all_accepted_by_driver=MagicMock(return_value=active_passengers))
-        subscriber = Mock(success=MagicMock())
-        instance = ListAcceptedPassengersWorkflow()
-
-        # When
-        instance.add_subscriber(subscriber)
-        instance.perform(logger, repository, 'did')
-
-        # Then
-        subscriber.success.assert_called_with([{
-            'origin': 'origin1',
-            'destination': 'destination1',
-            'seats': 1,
-            'id': 'pid1',
-            'user': {
-                'id': 'uid1',
-                'name': 'name1',
-                'avatar': 'avatar1'
-            }
-        }, {
-            'origin': 'origin2',
-            'destination': 'destination2',
-            'seats': 2,
-            'id': 'pid2',
-            'user': {
-                'id': 'uid2',
-                'name': 'name2',
-                'avatar': 'avatar2'
-            }
-        }])
 
 
 class TestNotifyDriversWorkflow(unittest.TestCase):

@@ -30,17 +30,6 @@ class ActivePassengersGetter(Publisher):
         self.publish('passengers_found', repository.get_all_active())
 
 
-class AcceptedPassengersGetter(Publisher):
-    def perform(self, repository, driver_id):
-        """Search for all passengers accepted by a driver.
-
-        When done, a 'accepted_passengers_found' message will be published,
-        followed by the list of accepted passengers.
-        """
-        self.publish('accepted_passengers_found',
-                     repository.get_all_accepted_by_driver(driver_id))
-
-
 class PassengerCreator(Publisher):
     def perform(self, repository, user_id, origin, destination, seats):
         """Creates a new passenger with the specified set of properties.

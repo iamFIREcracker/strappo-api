@@ -6,7 +6,6 @@ import unittest
 import app.weblib.db
 from app.models import Base
 from app.models import Passenger
-from app.models import DriveRequest
 from app.models import User
 from app.repositories.passengers import PassengersRepository
 
@@ -126,68 +125,6 @@ class TestPassengersRepository(unittest.TestCase):
 
         # When
         passengers = PassengersRepository.get_all_active()
-
-        # Then
-        self.assertEquals(1, len(passengers))
-        self.assertEquals('pid', passengers[0].id)
-
-    def test_get_all_accepted_by_driver_does_not_return_passengers_linked_to_deleted_users(self):
-        # Given
-        self.session.add(User(id='uid', name='Name', avatar='Avatar', deleted=True))
-        self.session.add(Passenger(id='pid', user_id='uid', active=True))
-        self.session.add(DriveRequest(id='rrid', driver_id='did',
-                                     passenger_id='pid', accepted=True))
-        self.session.commit()
-        self.session.remove()
-
-        # When
-        passengers = PassengersRepository.get_all_accepted_by_driver('did')
-
-        # Then
-        self.assertEquals([], passengers)
-
-    def test_get_all_accepted_by_driver_does_not_return_drive_requests_not_active(self):
-        # Given
-        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
-        self.session.add(Passenger(id='pid', user_id='uid', active=True))
-        self.session.add(DriveRequest(id='rrid', driver_id='did',
-                                     passenger_id='pid', accepted=True,
-                                     active=False))
-        self.session.commit()
-        self.session.remove()
-
-        # When
-        passengers = PassengersRepository.get_all_accepted_by_driver('did')
-
-        # Then
-        self.assertEquals([], passengers)
-
-    def test_get_all_accepted_by_driver_does_not_return_passengers_not_accepted(self):
-        # Given
-        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
-        self.session.add(Passenger(id='pid', user_id='uid', active=True))
-        self.session.add(DriveRequest(id='rrid', driver_id='did',
-                                     passenger_id='pid', accepted=False))
-        self.session.commit()
-        self.session.remove()
-
-        # When
-        passengers = PassengersRepository.get_all_accepted_by_driver('did')
-
-        # Then
-        self.assertEquals([], passengers)
-
-    def test_get_all_accepted_by_driver(self):
-        # Given
-        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
-        self.session.add(Passenger(id='pid', user_id='uid', active=True))
-        self.session.add(DriveRequest(id='rrid', driver_id='did',
-                                     passenger_id='pid', accepted=True))
-        self.session.commit()
-        self.session.remove()
-
-        # When
-        passengers = PassengersRepository.get_all_accepted_by_driver('did')
 
         # Then
         self.assertEquals(1, len(passengers))

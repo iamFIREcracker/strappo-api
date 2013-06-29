@@ -4,7 +4,6 @@
 import uuid
 
 from app.models import Passenger
-from app.models import DriveRequest
 from app.models import User
 from app.weblib.db import expunged
 from app.weblib.db import joinedload
@@ -25,24 +24,6 @@ class PassengersRepository(object):
                 for p in Passenger.query.options(joinedload('user')).\
                         filter(User.deleted == False).\
                         filter(Passenger.active == True)]
-
-    @staticmethod
-    def get_all_accepted_by_driver(driver_id):
-        """Returns all the _accepted_ passengers, currently in _active_ state.
-
-        A passenger is considered _accepted_ if a ``DriveRequest`` exists with
-        'accepted' equal to ``True`` and 'passenger_id' equal to the passenger
-        ID;  on the other hand, a passenger is marked as active if its 'active'
-        property is equal to ``True`` (i.e. it is still the same day in which
-        the passenger record has been added to the system.
-        """
-        return [expunged(p, Passenger.session)
-                for p in Passenger.query.options(joinedload('user')).\
-                        join(DriveRequest).\
-                        filter(User.deleted == False).\
-                        filter(DriveRequest.driver_id == driver_id).\
-                        filter(DriveRequest.accepted == True).\
-                        filter(DriveRequest.active == True)]
 
     @staticmethod
     def add(user_id, origin, destination, seats):
