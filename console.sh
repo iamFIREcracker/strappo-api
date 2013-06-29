@@ -137,6 +137,8 @@ loop() {
             gimmeurjson ${SERVER}/1/passengers/add POST "token=tid&$@"
             ;;
         view)
+            local id
+
             shift; id=$1; shift
             gimmeurjson ${SERVER}/1/passengers/${id}/view GET "token=tid&$@"
             ;;
@@ -145,6 +147,19 @@ loop() {
 
             shift; pid=$1; shift; did=$1; shift
             gimmeurjson ${SERVER}/1/passengers/${pid}/accept/driver/${did} POST "token=tid&$@"
+            ;;
+        *)
+            wtf
+        esac
+        ;;
+    users)
+        shift
+        case $1 in
+        view)
+            local id
+
+            shift; id=$1; shift
+            gimmeurjson ${SERVER}/1/users/${id}/view GET "token=tid&$@"
             ;;
         *)
             wtf
