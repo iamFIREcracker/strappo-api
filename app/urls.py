@@ -9,7 +9,6 @@ from app.controllers.destinations import ListPredefinedDestinationsController
 from app.controllers.drivers import AcceptPassengerController
 from app.controllers.drivers import AddDriverController
 from app.controllers.drivers import EditDriverController
-from app.controllers.drivers import DriversController
 from app.controllers.drivers import HideDriverController
 from app.controllers.drivers import ListAcceptedPassengersController
 from app.controllers.drivers import UnhideDriverController
@@ -25,7 +24,6 @@ from app.weblib.controllers.auth import FakeLoginController
 URLS = (
     '/1/destinations', ListDestinationsController,
     '/1/destinations/predefined', ListPredefinedDestinationsController,
-    '/1/drivers', DriversController,
     '/1/drivers/add', AddDriverController,
     '/1/drivers/(.+)/view', ViewDriverController,
     '/1/drivers/(.+)/edit', EditDriverController,

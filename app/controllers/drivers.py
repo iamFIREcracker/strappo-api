@@ -16,32 +16,11 @@ from app.weblib.request_decorators import authorized
 from app.weblib.utils import jsonify
 from app.workflows.drivers import AddDriverWorkflow
 from app.workflows.drivers import EditDriverWorkflow
-from app.workflows.drivers import DriversWithUserIdWorkflow
 from app.workflows.drivers import HideDriverWorkflow
 from app.workflows.drivers import ListAcceptedPassengersWorkflow
 from app.workflows.drivers import UnhideDriverWorkflow
 from app.workflows.drivers import ViewDriverWorkflow
 from app.workflows.drive_requests import AddDriveRequestWorkflow
-
-
-class DriversController(ParamAuthorizableController):
-    @api
-    @authorized
-    def GET(self):
-        logger = LoggingSubscriber(web.ctx.logger)
-        drivers = DriversWithUserIdWorkflow()
-        ret = Future()
-
-        class DriversWithUserIdSubscriber(object):
-            def not_found(self, driver_id):
-                ret.set(jsonify(drivers=[]))
-            def success(self, blob):
-                ret.set(jsonify(drivers=[blob]))
-
-        drivers.add_subscriber(logger, DriversWithUserIdSubscriber())
-        drivers.perform(web.ctx.logger, DriversRepository,
-                        web.input(user_id=None).user_id)
-        return ret.get()
 
 
 class AddDriverController(ParamAuthorizableController):

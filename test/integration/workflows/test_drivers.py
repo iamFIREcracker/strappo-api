@@ -10,56 +10,11 @@ from mock import Mock
 
 from app.workflows.drivers import AddDriverWorkflow
 from app.workflows.drivers import HideDriverWorkflow
-from app.workflows.drivers import DriversWithUserIdWorkflow
 from app.workflows.drivers import EditDriverWorkflow
 from app.workflows.drivers import ListAcceptedPassengersWorkflow
 from app.workflows.drivers import NotifyDriversWorkflow
 from app.workflows.drivers import UnhideDriverWorkflow
 from app.workflows.drivers import ViewDriverWorkflow
-
-
-class TestDriversWithUserIdWorkflow(unittest.TestCase):
-
-    def test_not_found_is_published_if_invoked_with_invalid_driver_id(self):
-        # Given
-        logger = Mock()
-        repository = Mock(with_user_id=MagicMock(return_value=None))
-        subscriber = Mock(not_found=MagicMock())
-        instance = DriversWithUserIdWorkflow()
-
-        # When
-        instance.add_subscriber(subscriber)
-        instance.perform(logger, repository, 'not_existing_id')
-
-        # Then
-        subscriber.not_found.assert_called_with('not_existing_id')
-
-    def test_serialized_driver_is_published_if_invoked_with_existing_driver_id(self):
-        # Given
-        logger = Mock()
-        driver = storage(id='did', user_id='uid', license_plate='1242124',
-                         telephone='+124 453534', hidden=False,
-                         user=storage(name='name', avatar='avatar', id='uid'))
-        repository = Mock(with_user_id=MagicMock(return_value=driver))
-        subscriber = Mock(success=MagicMock())
-        instance = DriversWithUserIdWorkflow()
-
-        # When
-        instance.add_subscriber(subscriber)
-        instance.perform(logger, repository, 'did')
-
-        # Then
-        subscriber.success.assert_called_with({
-            'hidden': False,
-            'id': 'did',
-            'license_plate': '1242124',
-            'telephone': '+124 453534',
-            'user': {
-                'id': 'uid',
-                'name': 'name',
-                'avatar': 'avatar',
-            }
-        })
 
 
 class TestViewDriverWorkflow(unittest.TestCase):

@@ -14,21 +14,6 @@ class UnhiddenDriversGetter(Publisher):
         self.publish('unhidden_drivers_found', repository.get_all_unhidden())
 
 
-class DriverWithUserIdGetter(Publisher):
-    def perform(self, repository, user_id):
-        """Search for a driver registered for the specified user ID.
-
-        If such driver exists, a 'driver_found' message is published containing
-        driver information;  on the other hand, if no driver exists with the
-        specified ID, a 'driver_not_found' message will be published.
-        """
-        driver = repository.with_user_id(user_id)
-        if driver is None:
-            self.publish('driver_not_found', user_id)
-        else:
-            self.publish('driver_found', driver)
-
-
 class DriverWithIdGetter(Publisher):
     def perform(self, repository, driver_id):
         """Search for a driver identified by ``driver_id``.
