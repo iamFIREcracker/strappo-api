@@ -43,14 +43,14 @@ def populate_db():
                                           seats=2))
 
     # One accepted passenger
-    app.models.Base.session.add(User(id='uid4', name='Gabriele R.',
+    app.models.Base.session.add(User(id='uid4', name='Gabriele G.',
                                      avatar='http://www.placehold.it/128x128/C389DE/AAAAAA&text=no+image'))
     app.models.Base.session.add(Device(id='deid4', user_id='uid4',
                                        device_token='dtid2'))
     app.models.Base.session.add(Passenger(id='pid4', user_id='uid4',
                                           origin='Viareggio Scalo',
                                           destination='Cosmopolitan',
-                                          seats=2))
+                                          seats=2, active=False))
     app.models.Base.session.add(RideRequest(id='rrid1', driver_id='did',
                                             passenger_id='pid4', accepted=True))
 
