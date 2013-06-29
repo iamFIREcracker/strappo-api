@@ -121,6 +121,17 @@ loop() {
             wtf
         esac
         ;;
+    drive_requests)
+        shift
+        case $1 in
+        list_active)
+            shift
+            gimmeurjson ${SERVER}/1/drive_requests/active GET "token=tid&$@"
+            ;;
+        *)
+            wtf
+        esac
+        ;;
     passengers)
         shift
         case $1 in
