@@ -69,7 +69,21 @@ class TestRideRequestsRepository(unittest.TestCase):
         self.session.remove()
 
         # When
-        request = RideRequestsRepository.accept('did', 'invalid_id')
+        request = RideRequestsRepository.accept('did', 'pid')
+
+        # Then
+        self.assertIsNone(request)
+
+    def test_cannot_accept_an_inactive_ride_request(self):
+        # Given
+        self.session.add(RideRequest(id='rrid', driver_id='did',
+                                     passenger_id='pid', accepted=False,
+                                     active=False))
+        self.session.commit()
+        self.session.remove()
+
+        # When
+        request = RideRequestsRepository.accept('did', 'pid')
 
         # Then
         self.assertIsNone(request)
@@ -77,7 +91,8 @@ class TestRideRequestsRepository(unittest.TestCase):
     def test_accept_a_ride_request_should_set_the_accepted_property(self):
         # Given
         self.session.add(RideRequest(id='rrid', driver_id='did',
-                                     passenger_id='pid'))
+                                     passenger_id='pid', accepted=False,
+                                     active=True))
         self.session.commit()
         self.session.remove()
 

@@ -13,7 +13,7 @@ class RideRequestsRepository(object):
         id = unicode(uuid.uuid4())
         ride_request = RideRequest(id=id, driver_id=driver_id,
                                    passenger_id=passenger_id,
-                                   accepted=False)
+                                   accepted=False, active=True)
         return ride_request
 
     @staticmethod
@@ -21,7 +21,8 @@ class RideRequestsRepository(object):
         request = expunged(RideRequest.query.\
                                 filter_by(driver_id=driver_id).\
                                 filter_by(passenger_id=passenger_id).\
-                                filter_by(accepted=False).first(),
+                                filter_by(accepted=False).\
+                                filter_by(active=True).first(),
                            RideRequest.session)
         if request:
             request.accepted = True

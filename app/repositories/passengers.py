@@ -42,7 +42,7 @@ class PassengersRepository(object):
                         filter(User.deleted == False).\
                         filter(RideRequest.driver_id == driver_id).\
                         filter(RideRequest.accepted == True).\
-                        filter(Passenger.active == True)]
+                        filter(RideRequest.active == True)]
 
     @staticmethod
     def add(user_id, origin, destination, seats):

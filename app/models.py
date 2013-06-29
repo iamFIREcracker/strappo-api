@@ -132,6 +132,7 @@ class RideRequest(Base):
     driver_id = Column(String, ForeignKey('driver.id'))
     passenger_id = Column(String, ForeignKey('passenger.id'))
     accepted = Column(Boolean, default=False)
+    active = Column(Boolean, default=True)
     created = Column(DateTime, default=datetime.now)
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
