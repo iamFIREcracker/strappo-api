@@ -65,17 +65,18 @@ class ViewPassengerController(ParamAuthorizableController):
     @authorized
     def GET(self, passenger_id):
         logger = LoggingSubscriber(web.ctx.logger)
-        view_driver = ViewPassengerWorkflow()
+        view_passenger = ViewPassengerWorkflow()
         ret = Future()
 
         class ViewPassengerSubscriber(object):
-            def not_found(self, driver_id):
+            def not_found(self, passenger_id):
                 raise web.notfound()
             def success(self, blob):
                 ret.set(jsonify(passenger=blob))
 
-        view_driver.add_subscriber(logger, ViewPassengerSubscriber())
-        view_driver.perform(web.ctx.logger, PassengersRepository, passenger_id)
+        view_passenger.add_subscriber(logger, ViewPassengerSubscriber())
+        view_passenger.perform(web.ctx.logger, PassengersRepository,
+                               passenger_id)
         return ret.get()
 
 
