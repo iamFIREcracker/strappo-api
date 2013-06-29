@@ -52,9 +52,18 @@ class PassengerCreator(Publisher):
         self.publish('passenger_created', passenger)
 
 
-def _serialize(p):
-    return dict(id=p.id, origin=p.origin, destination=p.destination,
-                seats=p.seats, name=p.user.name, avatar=p.user.avatar)
+def serialize(passenger):
+    if passenger is None:
+        return None
+    return dict(id=passenger.id, origin=passenger.origin,
+                destination=passenger.destination, seats=passenger.seats)
+
+
+def _serialize(passenger):
+    from app.pubsub.users import serialize as serialize_user
+    d = serialize(passenger)
+    d.update(user=serialize_user(passenger.user))
+    return d
 
 
 class PassengerSerializer(Publisher):

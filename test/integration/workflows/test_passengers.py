@@ -34,10 +34,12 @@ class TestActivePassengersWorkflow(unittest.TestCase):
         logger = Mock()
         passengers = [storage(id='pid1', user_id='uid1', origin='origin1',
                               destination='destination1', seats=1,
-                              user=storage(name='Name1', avatar='Avatar1')),
+                              user=storage(name='Name1', avatar='Avatar1',
+                                           id='uid1')),
                       storage(id='pid2', user_id='uid2', origin='origin2',
                               destination='destination2', seats=2,
-                              user=storage(name='Name2', avatar='Avatar2'))]
+                              user=storage(name='Name2', avatar='Avatar2',
+                                           id='uid2'))]
         repository = Mock(get_all_active=MagicMock(return_value=passengers))
         subscriber = Mock(success=MagicMock())
         instance = ActivePassengersWorkflow()
@@ -50,17 +52,23 @@ class TestActivePassengersWorkflow(unittest.TestCase):
         subscriber.success.assert_called_with([{
             'origin': 'origin1',
             'destination': 'destination1',
-            'name': 'Name1',
             'seats': 1,
             'id': 'pid1',
-            'avatar': 'Avatar1'
+            'user': {
+                'id': 'uid1',
+                'name': 'Name1',
+                'avatar': 'Avatar1'
+            }
         }, {
             'origin': 'origin2',
             'destination': 'destination2',
-            'name': 'Name2',
             'seats': 2,
             'id': 'pid2',
-            'avatar': 'Avatar2'
+            'user': {
+                'id': 'uid2',
+                'name': 'Name2',
+                'avatar': 'Avatar2'
+            }
         }])
 
 
@@ -124,7 +132,8 @@ class TestViewPassengerWorkflow(unittest.TestCase):
         logger = Mock()
         passenger = storage(id='pid', user_id='uid', origin='origin',
                             destination='destination', seats=1,
-                            user=storage(name='name', avatar='avatar'))
+                            user=storage(id='uid', name='name',
+                                         avatar='avatar'))
         repository = Mock(get=MagicMock(return_value=passenger))
         subscriber = Mock(success=MagicMock())
         instance = ViewPassengerWorkflow()
@@ -137,10 +146,13 @@ class TestViewPassengerWorkflow(unittest.TestCase):
         subscriber.success.assert_called_with({
             'origin': 'origin',
             'destination': 'destination',
-            'name': 'name',
             'seats': 1,
             'id': 'pid',
-            'avatar': 'avatar'
+            'user': {
+                'id': 'uid',
+                'name': 'name',
+                'avatar': 'avatar'
+            }
         })
 
 

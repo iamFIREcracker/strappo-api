@@ -39,7 +39,7 @@ class TestDriversWithUserIdWorkflow(unittest.TestCase):
         logger = Mock()
         driver = storage(id='did', user_id='uid', license_plate='1242124',
                          telephone='+124 453534', hidden=False,
-                         user=storage(name='name', avatar='avatar'))
+                         user=storage(name='name', avatar='avatar', id='uid'))
         repository = Mock(with_user_id=MagicMock(return_value=driver))
         subscriber = Mock(success=MagicMock())
         instance = DriversWithUserIdWorkflow()
@@ -50,12 +50,15 @@ class TestDriversWithUserIdWorkflow(unittest.TestCase):
 
         # Then
         subscriber.success.assert_called_with({
-            'name': 'name',
-            'avatar': 'avatar',
             'hidden': False,
             'id': 'did',
             'license_plate': '1242124',
             'telephone': '+124 453534',
+            'user': {
+                'id': 'uid',
+                'name': 'name',
+                'avatar': 'avatar',
+            }
         })
 
 
@@ -80,7 +83,7 @@ class TestViewDriverWorkflow(unittest.TestCase):
         logger = Mock()
         driver = storage(id='did', user_id='uid', license_plate='1242124',
                          telephone='+124 453534', hidden=False,
-                         user=storage(name='name', avatar='avatar'))
+                         user=storage(name='name', avatar='avatar', id='uid'))
         repository = Mock(get=MagicMock(return_value=driver))
         subscriber = Mock(success=MagicMock())
         instance = ViewDriverWorkflow()
@@ -91,12 +94,15 @@ class TestViewDriverWorkflow(unittest.TestCase):
 
         # Then
         subscriber.success.assert_called_with({
-            'name': 'name',
-            'avatar': 'avatar',
             'hidden': False,
             'id': 'did',
             'license_plate': '1242124',
             'telephone': '+124 453534',
+            'user': {
+                'id': 'uid',
+                'name': 'name',
+                'avatar': 'avatar',
+            }
         })
 
 
@@ -279,11 +285,13 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
         active_passengers = [storage(id='pid1', origin='origin1',
                                      destination='destination1', seats=1,
                                      user=storage(name='name1',
-                                                  avatar='avatar1')),
+                                                  avatar='avatar1',
+                                                  id='uid1')),
                              storage(id='pid2', origin='origin2',
                                      destination='destination2', seats=2,
                                      user=storage(name='name2',
-                                                  avatar='avatar2'))]
+                                                  avatar='avatar2',
+                                                  id='uid2'))]
         repository = Mock(get_all_accepted_by_driver=MagicMock(return_value=active_passengers))
         subscriber = Mock(success=MagicMock())
         instance = ListAcceptedPassengersWorkflow()
@@ -296,17 +304,23 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
         subscriber.success.assert_called_with([{
             'origin': 'origin1',
             'destination': 'destination1',
-            'name': 'name1',
             'seats': 1,
             'id': 'pid1',
-            'avatar': 'avatar1'
+            'user': {
+                'id': 'uid1',
+                'name': 'name1',
+                'avatar': 'avatar1'
+            }
         }, {
             'origin': 'origin2',
             'destination': 'destination2',
-            'name': 'name2',
             'seats': 2,
             'id': 'pid2',
-            'avatar': 'avatar2'
+            'user': {
+                'id': 'uid2',
+                'name': 'name2',
+                'avatar': 'avatar2'
+            }
         }])
 
 

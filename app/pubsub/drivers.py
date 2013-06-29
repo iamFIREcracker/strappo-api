@@ -104,6 +104,13 @@ class DriverActivator(Publisher):
             self.publish('driver_unhid', driver)
 
 
+def serialize(driver):
+    if driver is None:
+        return None
+    return dict(id=driver.id, license_plate=driver.license_plate,
+            telephone=driver.telephone, hidden=driver.hidden)
+
+
 class DriverSerializer(Publisher):
     def perform(self, driver):
         """Convert the given driver into a serializable dictionary.
@@ -111,10 +118,10 @@ class DriverSerializer(Publisher):
         At the end of the operation the method will emit a 'driver_serialized'
         message containing the serialized object (i.e. driver dictionary).
         """
-        self.publish('driver_serialized',
-                     dict(id=driver.id, license_plate=driver.license_plate,
-                          telephone=driver.telephone, hidden=driver.hidden,
-                          name=driver.user.name, avatar=driver.user.avatar))
+        from app.pubsub.users import serialize as serialize_user
+        d = serialize(driver)
+        d.update(user=serialize_user(driver.user))
+        self.publish('driver_serialized', d)
 
 
 class DriversDeviceTokenExtractor(Publisher):
