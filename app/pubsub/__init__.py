@@ -4,17 +4,17 @@
 from app.weblib.pubsub import Publisher
 
 
-class DeviceTokensNotifier(Publisher):
-    def perform(self, push_adapter, channel, device_tokens, payload):
-        """Invoke the ``notify_tokens`` method of the push notifications adapter
-        and publish result messages accordingly.
+class ACSUserIdsNotifier(Publisher):
+    def perform(self, push_adapter, channel, user_ids, payload):
+        """Invoke the ``notify`` method of the push notifications adapter
+        and then publish result messages accordingly.
 
-        On success, a 'device_tokens_not_notified' message is published, while
-        if something bad happens, a 'device_tokens_not_notified' message will be
+        On success, a 'acs_user_ids_notified' message is published, while
+        if something bad happens, a 'acs_user_ids_not_notified' message will be
         sent back to subscribers.
         """
-        (_, error) = push_adapter.notify_tokens(channel, device_tokens, payload)
+        (_, error) = push_adapter.notify(channel, user_ids, payload)
         if error:
-            self.publish('device_tokens_not_notified', error)
+            self.publish('acs_user_ids_not_notified', error)
         else:
-            self.publish('device_tokens_notified')
+            self.publish('acs_user_ids_notified')

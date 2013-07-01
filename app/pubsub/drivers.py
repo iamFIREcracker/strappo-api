@@ -109,12 +109,12 @@ class DriverSerializer(Publisher):
         self.publish('driver_serialized', d)
 
 
-class DriversDeviceTokenExtractor(Publisher):
+class DriversACSUserIdExtractor(Publisher):
     def perform(self, drivers):
-        """Extract the device tokens associated with the input list of drivers.
+        """Extract ACS user IDs associated with the input list of drivers.
 
-        At the end of the operation a 'device_tokens_extracted' message will be
-        published, together with the list of the extracted device tokens.
+        At the end of the operation a 'acs_user_ids_extracted' message will be
+        published, together with the list of the extracted ACS user ids.
         """
-        self.publish('device_tokens_extracted',
-                     [d.user.device.device_token for d in drivers])
+        self.publish('acs_user_ids_extracted',
+                     [d.user.acs_id for d in drivers])

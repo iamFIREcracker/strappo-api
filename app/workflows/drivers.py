@@ -3,14 +3,14 @@
 
 
 import app.forms.drivers as drivers_forms
-from app.pubsub import DeviceTokensNotifier
+from app.pubsub import ACSUserIdsNotifier
 from app.pubsub.drivers import DriverActivator
 from app.pubsub.drivers import DriverCreator
 from app.pubsub.drivers import DriverDeactivator
 from app.pubsub.drivers import DriverUpdater
 from app.pubsub.drivers import DriverSerializer
 from app.pubsub.drivers import DriverWithIdGetter
-from app.pubsub.drivers import DriversDeviceTokenExtractor
+from app.pubsub.drivers import DriversACSUserIdExtractor
 from app.pubsub.drivers import UnhiddenDriversGetter
 from app.weblib.forms import describe_invalid_form
 from app.weblib.pubsub import FormValidator
@@ -148,26 +148,25 @@ class NotifyDriversWorkflow(Publisher):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         drivers_getter = UnhiddenDriversGetter()
-        device_token_extractor = DriversDeviceTokenExtractor()
-        device_notifier = DeviceTokensNotifier()
+        acs_ids_extractor = DriversACSUserIdExtractor()
+        acs_notifier = ACSUserIdsNotifier()
 
         class DriversGetterSubscriber(object):
             def unhidden_drivers_found(self, drivers):
-                device_token_extractor.perform(drivers)
+                acs_ids_extractor.perform(drivers)
 
-        class DeviceTokensExtractorSubscriber(object):
-            def device_tokens_extracted(self, device_tokens):
-                device_notifier.perform(push_adapter, channel, device_tokens,
-                                        payload)
+        class ACSUserIdsExtractorSubscriber(object):
+            def acs_user_ids_extracted(self, user_ids):
+                acs_notifier.perform(push_adapter, channel, user_ids, payload)
 
-        class DeviceNotifierSubscriber(object):
-            def device_tokens_not_notified(self, error):
+        class ACSNotifierSubscriber(object):
+            def acs_user_ids_not_notified(self, error):
                 outer.publish('failure', error)
-            def device_tokens_notified(self):
+            def acs_user_ids_notified(self):
                 outer.publish('success')
 
         drivers_getter.add_subscriber(logger, DriversGetterSubscriber())
-        device_token_extractor.add_subscriber(logger,
-                                              DeviceTokensExtractorSubscriber())
-        device_notifier.add_subscriber(logger, DeviceNotifierSubscriber())
+        acs_ids_extractor.add_subscriber(logger,
+                                         ACSUserIdsExtractorSubscriber())
+        acs_notifier.add_subscriber(logger, ACSNotifierSubscriber())
         drivers_getter.perform(repository)

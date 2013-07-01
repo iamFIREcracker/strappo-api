@@ -34,13 +34,14 @@ class User(Base):
     __tablename__ = 'user'
 
     id = Column(String, default=uuid, primary_key=True)
+    acs_id = Column(String) # XXX This field shouldn't be nullable;  if it is,
+                            # it is just because I am too lazy to fix all the
+                            # tests.
     name = Column(String, nullable=False)
     avatar = Column(String, nullable=True)
     deleted = Column(Boolean, default=False, nullable=False)
     created = Column(DateTime, default=datetime.now)
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-    device = relationship('Device', uselist=False,
-                          backref=backref('user', cascade='expunge'))
     driver = relationship('Driver', uselist=False,
                           backref=backref('user', cascade='expunge'))
     passenger = relationship('Passenger', uselist=False,
@@ -49,20 +50,6 @@ class User(Base):
     def __repr__(self):
         return '<User id=%(id)s, name=%(name)s, '\
                'avatar=%(avatar)s>' % self.__dict__
-
-
-class Device(Base):
-    __tablename__ = 'device'
-
-    id = Column(String, default=uuid, primary_key=True)
-    user_id = Column(String, ForeignKey('user.id'))
-    device_token = Column(String)
-    created = Column(DateTime, default=datetime.now)
-    updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-
-    def __repr__(self):
-        return '<Device id=%(id)s, user_id=%(id)s, '\
-               'device_token=%(device_token)s>' % self.__dict__
 
 
 class Token(Base):

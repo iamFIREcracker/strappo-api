@@ -221,11 +221,10 @@ class TestNotifyDriversWorkflow(unittest.TestCase):
     def test_failure_message_is_published_if_something_goes_wrong_with_the_push_adapter(self):
         # Given
         logger = Mock()
-        drivers = [storage(user=storage(device=storage(device_token='dt1'))),
-                   storage(user=storage(device=storage(device_token='dt2')))]
+        drivers = [storage(user=storage(acs_id='acsid1')),
+                   storage(user=storage(acs_id='acsid2'))]
         repository = Mock(get_all_unhidden=MagicMock(return_value=drivers))
-        push_adapter = Mock(notify_tokens=MagicMock(return_value=(None,
-                                                                  'Error!')))
+        push_adapter = Mock(notify=MagicMock(return_value=(None, 'Error!')))
         subscriber = Mock(failure=MagicMock())
         instance = NotifyDriversWorkflow()
 
@@ -239,10 +238,10 @@ class TestNotifyDriversWorkflow(unittest.TestCase):
     def test_success_message_is_published_if_the_push_adapters_accomplishes_its_duties(self):
         # Given
         logger = Mock()
-        drivers = [storage(user=storage(device=storage(device_token='dt1'))),
-                   storage(user=storage(device=storage(device_token='dt2')))]
+        drivers = [storage(user=storage(acs_id='acsid1')),
+                   storage(user=storage(acs_id='acsid2'))]
         repository = Mock(get_all_unhidden=MagicMock(return_value=drivers))
-        push_adapter = Mock(notify_tokens=MagicMock(return_value=(None, None)))
+        push_adapter = Mock(notify=MagicMock(return_value=(None, None)))
         subscriber = Mock(success=MagicMock())
         instance = NotifyDriversWorkflow()
 

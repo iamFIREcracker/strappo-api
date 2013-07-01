@@ -93,12 +93,11 @@ class PassengerDeactivator(Publisher):
             self.publish('passenger_hid', passenger)
 
 
-class PassengerDeviceTokenExtractor(Publisher):
+class PassengerACSUserIdExtractor(Publisher):
     def perform(self, passenger):
-        """Extract the device tokens associated with given passenger.
+        """Extract ACS user ID associated with the given passenger.
 
-        At the end of the operation a 'device_token_extracted' message will be
-        published, together with the extracted device token.
+        At the end of the operation a 'acs_user_id_extracted' message will be
+        published, together with the ACS user id of the passenger.
         """
-        self.publish('device_token_extracted',
-                     passenger.user.device.device_token)
+        self.publish('acs_user_id_extracted', passenger.user.acs_id)

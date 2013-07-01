@@ -174,10 +174,9 @@ class TestNotifyPassengerWorkflow(unittest.TestCase):
     def test_failure_message_is_published_if_something_goes_wrong_with_the_push_adapter(self):
         # Given
         logger = Mock()
-        passenger = storage(user=storage(device=storage(device_token='dt1')))
+        passenger = storage(user=storage(acs_id='acsid1'))
         repository = Mock(get=MagicMock(return_value=passenger))
-        push_adapter = Mock(notify_tokens=MagicMock(return_value=(None,
-                                                                  'Error!')))
+        push_adapter = Mock(notify=MagicMock(return_value=(None, 'Error!')))
         subscriber = Mock(failure=MagicMock())
         instance = NotifyPassengerWorkflow()
 
@@ -191,9 +190,9 @@ class TestNotifyPassengerWorkflow(unittest.TestCase):
     def test_success_message_is_published_if_the_push_adapters_accomplishes_its_duties(self):
         # Given
         logger = Mock()
-        passenger = storage(user=storage(device=storage(device_token='dt1')))
+        passenger = storage(user=storage(acs_id='acsid1'))
         repository = Mock(get=MagicMock(return_value=passenger))
-        push_adapter = Mock(notify_tokens=MagicMock(return_value=(None, None)))
+        push_adapter = Mock(notify=MagicMock(return_value=(None, None)))
         subscriber = Mock(success=MagicMock())
         instance = NotifyPassengerWorkflow()
 

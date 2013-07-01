@@ -10,12 +10,12 @@ import web
 class TitaniumPushNotificationsAdapter(object):
     """Defines an adapter of the Titanium push notification system."""
 
-    NOTIFY_TOKENS_URL = 'https://api.cloud.appcelerator.com/v1/push_notification/notify_tokens.json?key=%(key)s'
+    NOTIFY_URL = 'https://api.cloud.appcelerator.com/v1/push_notification/notify.json?key=%(key)s'
 
-    def notify_tokens(self, channel, tokens, payload):
+    def notify(self, channel, ids, payload):
         url = self.NOTIFY_TOKENS_URL % dict(key=web.config.TITANIUM_KEY)
         data = urllib.urlencode(dict(channel=channel,
-                                     to_tokens=','.join(tokens),
+                                     to_ids=','.join(tokens),
                                      payload=payload))
         try:
             response = urllib2.urlopen(url, data)
