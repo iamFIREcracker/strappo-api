@@ -51,11 +51,14 @@ def serialize(request):
 
 
 def _serialize(request):
-    from app.pubsub.users import serialize as serialize_user
+    from app.pubsub.drivers import serialize as serialize_driver
     from app.pubsub.passengers import serialize as serialize_passenger
+    from app.pubsub.users import serialize as serialize_user
     d = serialize(request)
     d.update(passenger=serialize_passenger(request.passenger))
     d['passenger'].update(user=serialize_user(request.passenger.user))
+    d.update(driver=serialize_driver(request.driver))
+    d['driver'].update(user=serialize_user(request.driver.user))
     return d
 
 
