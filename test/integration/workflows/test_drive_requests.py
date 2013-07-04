@@ -122,6 +122,114 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
             }
         }])
 
+    def test_success_message_with_no_drive_request_if_passenger_id_is_invalid(self):
+        # Given
+        logger = Mock()
+        repository = Mock(get_all_active_by_passenger=MagicMock(return_value=[]))
+        subscriber = Mock(success=MagicMock())
+        instance = ListActiveDriveRequestsWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, repository, storage(passenger_id=None))
+
+        # Then
+        subscriber.success.assert_called_with([])
+
+    def test_success_message_with_drive_requests_if_passenger_id_is_valid(self):
+        # Given
+        logger = Mock()
+        active_requests = [storage(id='rid1', accepted=True,
+                                   driver=storage(id='did1',
+                                                  license_plate='plate1',
+                                                  telephone='phone1',
+                                                  hidden=False,
+                                                  user=storage(name='name1',
+                                                               avatar='avatar1',
+                                                               id='uid1')),
+                                   passenger=storage(id='pid',
+                                                     origin='origin',
+                                                     destination='destination',
+                                                     seats=1,
+                                                     user=storage(name='name',
+                                                                  avatar='avatar',
+                                                                  id='uid'))),
+                            storage(id='rid2', accepted=False,
+                                   driver=storage(id='did2',
+                                                  license_plate='plate2',
+                                                  telephone='phone2',
+                                                  hidden=False,
+                                                  user=storage(id='uid2',
+                                                               name='name2',
+                                                               avatar='avatar2')),
+                                    passenger=storage(id='pid',
+                                                      origin='origin',
+                                                      destination='destination',
+                                                      seats=2,
+                                                      user=storage(id='uid',
+                                                                   name='name',
+                                                                   avatar='avatar')))]
+        repository = Mock(get_all_active_by_passenger=MagicMock(return_value=active_requests))
+        subscriber = Mock(success=MagicMock())
+        instance = ListActiveDriveRequestsWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, repository, storage(passenger_id='pid'))
+
+        # Then
+        subscriber.success.assert_called_with([{
+            'id': 'rid1',
+            'accepted': True,
+            'driver': {
+                'license_plate': 'plate1',
+                'hidden': False,
+                'id': 'did1',
+                'telephone': 'phone1',
+                'user': {
+                    'id': 'uid1',
+                    'name': 'name1',
+                    'avatar': 'avatar1'
+                }
+            },
+            'passenger': {
+                'origin': 'origin',
+                'destination': 'destination',
+                'seats': 1,
+                'id': 'pid',
+                'user': {
+                    'id': 'uid',
+                    'name': 'name',
+                    'avatar': 'avatar'
+                }
+            }
+        }, {
+            'id': 'rid2',
+            'accepted': False,
+            'driver': {
+                'id': 'did2',
+                'license_plate': 'plate2',
+                'telephone': 'phone2',
+                'hidden': False,
+                'user': {
+                    'id': 'uid2',
+                    'name': 'name2',
+                    'avatar': 'avatar2'
+                }
+            },
+            'passenger': {
+                'id': 'pid',
+                'origin': 'origin',
+                'destination': 'destination',
+                'seats': 2,
+                'user': {
+                    'id': 'uid',
+                    'name': 'name',
+                    'avatar': 'avatar'
+                }
+            }
+        }])
+
 
 class TestAddDriveRequestWorkflow(unittest.TestCase):
 

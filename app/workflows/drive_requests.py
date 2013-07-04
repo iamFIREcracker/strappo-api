@@ -4,6 +4,7 @@
 from app.pubsub.passengers import PassengerDeactivator
 from app.pubsub.drive_requests import ActiveDriveRequestsFilterExtractor
 from app.pubsub.drive_requests import ActiveDriveRequestsWithDriverIdGetter
+from app.pubsub.drive_requests import ActiveDriveRequestsWithPassengerIdGetter
 from app.pubsub.drive_requests import DriveRequestCreator
 from app.pubsub.drive_requests import DriveRequestAcceptor
 from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
@@ -20,12 +21,17 @@ class ListActiveDriveRequestsWorkflow(Publisher):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         filter_extractor = ActiveDriveRequestsFilterExtractor()
-        active_requests_getter = ActiveDriveRequestsWithDriverIdGetter()
+        with_driver_id_requests_getter = ActiveDriveRequestsWithDriverIdGetter()
+        with_passenger_id_requests_getter = \
+                ActiveDriveRequestsWithPassengerIdGetter()
         requests_serializer = MultipleDriveRequestsSerializer()
 
         class FilterExtractorSubscriber(object):
             def by_driver_id_filter(self, driver_id):
-                active_requests_getter.perform(repository, driver_id)
+                with_driver_id_requests_getter.perform(repository, driver_id)
+            def by_passenger_id_filter(self, passenger_id):
+                with_passenger_id_requests_getter.perform(repository,
+                                                          passenger_id)
 
         class ActiveDriveRequestsGetterSubscriber(object):
             def drive_requests_found(self, requests):
@@ -36,7 +42,9 @@ class ListActiveDriveRequestsWorkflow(Publisher):
                 outer.publish('success', blob)
 
         filter_extractor.add_subscriber(logger, FilterExtractorSubscriber())
-        active_requests_getter.\
+        with_driver_id_requests_getter.\
+                add_subscriber(logger, ActiveDriveRequestsGetterSubscriber())
+        with_passenger_id_requests_getter.\
                 add_subscriber(logger, ActiveDriveRequestsGetterSubscriber())
         requests_serializer.add_subscriber(logger,
                                            DriveRequestsSerializerSubscriber())

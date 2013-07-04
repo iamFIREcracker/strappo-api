@@ -9,7 +9,11 @@ class ActiveDriveRequestsFilterExtractor(Publisher):
         """Decides which search criteria should be used to filter active drive
         requests.
         """
-        self.publish('by_driver_id_filter', params.driver_id)
+        if 'passenger_id' in params:
+            self.publish('by_passenger_id_filter', params.passenger_id)
+        else:
+            self.publish('by_driver_id_filter', params.driver_id)
+
 
 class ActiveDriveRequestsWithDriverIdGetter(Publisher):
     def perform(self, repository, driver_id):
@@ -21,6 +25,18 @@ class ActiveDriveRequestsWithDriverIdGetter(Publisher):
         """
         self.publish('drive_requests_found',
                      repository.get_all_active_by_driver(driver_id))
+
+
+class ActiveDriveRequestsWithPassengerIdGetter(Publisher):
+    def perform(self, repository, passenger_id):
+        """Search for all the active drive requests associated with the given
+        passenger ID.
+
+        When done, a 'drive_requests_found' message will be published,
+        followed by the list of drive requests.
+        """
+        self.publish('drive_requests_found',
+                     repository.get_all_active_by_passenger(passenger_id))
 
 
 class DriveRequestCreator(Publisher):
