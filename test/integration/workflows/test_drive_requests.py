@@ -23,7 +23,7 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(logger, repository, 'invalid_id')
+        instance.perform(logger, repository, storage(driver_id=None))
 
         # Then
         subscriber.success.assert_called_with([])
@@ -32,6 +32,13 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
         # Given
         logger = Mock()
         active_requests = [storage(id='rid1', accepted=True,
+                                   driver=storage(id='did',
+                                                  license_plate='plate',
+                                                  telephone='phone',
+                                                  hidden=False,
+                                                  user=storage(name='name',
+                                                               avatar='avatar',
+                                                               id='uid')),
                                    passenger=storage(id='pid1',
                                                      origin='origin1',
                                                      destination='destination1',
@@ -40,25 +47,43 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
                                                                   avatar='avatar1',
                                                                   id='uid1'))),
                             storage(id='rid2', accepted=False,
-                                   passenger=storage(id='pid2',
-                                                     origin='origin2',
-                                                     destination='destination2',
-                                                     seats=2,
-                                                     user=storage(name='name2',
-                                                                  avatar='avatar2',
-                                                                  id='uid2')))]
+                                   driver=storage(id='did',
+                                                  license_plate='plate',
+                                                  telephone='phone',
+                                                  hidden=False,
+                                                  user=storage(name='name',
+                                                               avatar='avatar',
+                                                               id='uid')),
+                                    passenger=storage(id='pid2',
+                                                      origin='origin2',
+                                                      destination='destination2',
+                                                      seats=2,
+                                                      user=storage(name='name2',
+                                                                   avatar='avatar2',
+                                                                   id='uid2')))]
         repository = Mock(get_all_active_by_driver=MagicMock(return_value=active_requests))
         subscriber = Mock(success=MagicMock())
         instance = ListActiveDriveRequestsWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(logger, repository, 'did')
+        instance.perform(logger, repository, storage(driver_id='did'))
 
         # Then
         subscriber.success.assert_called_with([{
             'id': 'rid1',
             'accepted': True,
+            'driver': {
+                'license_plate': 'plate',
+                'hidden': False,
+                'id': 'did',
+                'telephone': 'phone',
+                'user': {
+                    'id': 'uid',
+                    'name': 'name',
+                    'avatar': 'avatar'
+                }
+            },
             'passenger': {
                 'origin': 'origin1',
                 'destination': 'destination1',
@@ -73,6 +98,17 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
         }, {
             'id': 'rid2',
             'accepted': False,
+            'driver': {
+                'license_plate': 'plate',
+                'hidden': False,
+                'id': 'did',
+                'telephone': 'phone',
+                'user': {
+                    'id': 'uid',
+                    'name': 'name',
+                    'avatar': 'avatar'
+                }
+            },
             'passenger': {
                 'origin': 'origin2',
                 'destination': 'destination2',

@@ -4,6 +4,13 @@
 from app.weblib.pubsub import Publisher
 
 
+class ActiveDriveRequestsFilterExtractor(Publisher):
+    def perform(self, params):
+        """Decides which search criteria should be used to filter active drive
+        requests.
+        """
+        self.publish('by_driver_id_filter', params.driver_id)
+
 class ActiveDriveRequestsWithDriverIdGetter(Publisher):
     def perform(self, repository, driver_id):
         """Search for all the active drive requests associated with the given

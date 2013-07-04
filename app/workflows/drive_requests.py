@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from app.pubsub.passengers import PassengerDeactivator
+from app.pubsub.drive_requests import ActiveDriveRequestsFilterExtractor
 from app.pubsub.drive_requests import ActiveDriveRequestsWithDriverIdGetter
 from app.pubsub.drive_requests import DriveRequestCreator
 from app.pubsub.drive_requests import DriveRequestAcceptor
@@ -15,11 +16,16 @@ class ListActiveDriveRequestsWorkflow(Publisher):
     """Defines a workflow to list all the active drive requests associated
     with a specific driver ID."""
 
-    def perform(self, logger, repository, driver_id):
+    def perform(self, logger, repository, params):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
+        filter_extractor = ActiveDriveRequestsFilterExtractor()
         active_requests_getter = ActiveDriveRequestsWithDriverIdGetter()
         requests_serializer = MultipleDriveRequestsSerializer()
+
+        class FilterExtractorSubscriber(object):
+            def by_driver_id_filter(self, driver_id):
+                active_requests_getter.perform(repository, driver_id)
 
         class ActiveDriveRequestsGetterSubscriber(object):
             def drive_requests_found(self, requests):
@@ -29,11 +35,12 @@ class ListActiveDriveRequestsWorkflow(Publisher):
             def drive_requests_serialized(self, blob):
                 outer.publish('success', blob)
 
+        filter_extractor.add_subscriber(logger, FilterExtractorSubscriber())
         active_requests_getter.\
                 add_subscriber(logger, ActiveDriveRequestsGetterSubscriber())
         requests_serializer.add_subscriber(logger,
                                            DriveRequestsSerializerSubscriber())
-        active_requests_getter.perform(repository, driver_id)
+        filter_extractor.perform(params)
 
 
 class AddDriveRequestWorkflow(Publisher):
