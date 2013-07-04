@@ -28,5 +28,5 @@ class ListActiveDriveRequestsController(ParamAuthorizableController):
         accepted_requests.add_subscriber(logger,
                                          ListActiveDriveRequestsSubscriber())
         accepted_requests.perform(web.ctx.logger, DriveRequestsRepository,
-                                  web.input(driver_id=None))
+                                  web.input(driver_id=None, passenger_id=None))
         return ret.get()
