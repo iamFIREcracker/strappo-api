@@ -21,6 +21,16 @@ class DriveRequestsRepository(object):
                         filter(DriveRequest.active == True)]
 
     @staticmethod
+    def get_all_active_by_passenger(passenger_id):
+        options = [joinedload_all('driver.user'),
+                   joinedload_all('passenger.user')]
+        return [expunged(dr, DriveRequest.session)
+                for dr in DriveRequest.query.options(*options).\
+                        filter(User.deleted == False).\
+                        filter(DriveRequest.passenger_id == passenger_id).\
+                        filter(DriveRequest.active == True)]
+
+    @staticmethod
     def add(driver_id, passenger_id):
         id = unicode(uuid.uuid4())
         drive_request = DriveRequest(id=id, driver_id=driver_id,
