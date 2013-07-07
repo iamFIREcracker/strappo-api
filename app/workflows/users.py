@@ -1,19 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from web.utils import storage
+
 import app.forms.users as user_forms
-from app.pubsub.users import AccountRefresher
 from app.pubsub.users import AlreadyRegisteredVerifier
 from app.pubsub.users import TokenRefresher
+from app.pubsub.users import TokenSerializer
 from app.pubsub.users import UserCreator
 from app.pubsub.users import UserWithIdGetter
 from app.pubsub.users import UserSerializer
 from app.weblib.forms import describe_invalid_form
+from app.weblib.pubsub import FacebookProfileGetter
 from app.weblib.pubsub import FormValidator
-from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.pubsub import Publisher
-from app.weblib.pubsub.auth import InSessionVerifier
 
 
 
@@ -43,67 +44,63 @@ class ViewUserWorkflow(Publisher):
         users_getter.perform(repository, user_id)
 
 
-class LoginAuthorizedWorkflow(Publisher):
-    """Defines a workflow managing the user post-authorization process."""
+class LoginUserWorkflow(Publisher):
+    """Defines a workflow managing the user login process."""
 
-    def perform(self, orm, logger, session, session_key, params_extractor,
-                repository, account_type):
+    def perform(self, orm, logger, repository, acs_id, facebook_adapter,
+                facebook_token):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
-        session_verifier = InSessionVerifier()
         already_registered = AlreadyRegisteredVerifier()
+        profile_getter = FacebookProfileGetter()
         form_validator = FormValidator()
         user_creator = UserCreator()
-        account_refresher = AccountRefresher()
         token_refresher = TokenRefresher()
-        params = Future()
-        future_user_id = Future()
-
-        class InSessionVerifierSubscriber(object):
-            def session_lacks(self, key):
-                outer.publish('not_authorized')
-            def session_contains(self, key, value):
-                params.set(params_extractor(value))
-                already_registered.perform(repository, params.get().externalid,
-                                           account_type)
+        token_serializer = TokenSerializer()
 
         class AlreadyRegisteredVerifierSubscriber(object):
-            def not_registered(self, external_id, account_type):
-                form_validator.perform(user_forms.add(), params.get(),
-                                       describe_invalid_form)
+            def not_registered(self, acs_id):
+                profile_getter.perform(facebook_adapter, facebook_token)
             def already_registered(self, user_id):
-                future_user_id.set(user_id)
                 token_refresher.perform(repository, user_id)
+
+        class ProfileGetterSubscriber(object):
+            def profile_not_found(self, error):
+                outer.publish('internal_error')
+            def profile_found(self, profile):
+                params = storage(acs_id=acs_id,
+                                 name=profile['name'],
+                                 avatar=profile['avatar'])
+                form_validator.perform(user_forms.add(), params,
+                                       describe_invalid_form)
 
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
                 outer.publish('invalid_form',
                               dict(success=False, errors=errors))
             def valid_form(self, form):
-                user_creator.perform(repository, form.d.name, form.d.avatar)
+                user_creator.perform(repository, form.d.acs_id, form.d.name,
+                                     form.d.avatar)
 
         class UserCreatorSubscriber(object):
             def user_created(self, user):
                 orm.add(user)
-                future_user_id.set(user.id)
-                account_refresher.perform(repository, user.id,
-                                          params.get().externalid, account_type)
-
-        class AccountRefresherSubscriber(object):
-            def account_refreshed(self, account):
-                orm.add(account)
-                token_refresher.perform(repository, future_user_id.get())
+                token_refresher.perform(repository, user.id)
 
         class TokenRefresherSubscriber(object):
             def token_refreshed(self, token):
                 orm.add(token)
-                outer.publish('success', token)
+                token_serializer.perform(token)
 
-        session_verifier.add_subscriber(logger, InSessionVerifierSubscriber())
+        class TokenSerializerSubscriber(object):
+            def token_serialized(self, blob):
+                outer.publish('success', blob)
+
         already_registered.add_subscriber(logger,
                                           AlreadyRegisteredVerifierSubscriber())
+        profile_getter.add_subscriber(logger, ProfileGetterSubscriber())
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
         user_creator.add_subscriber(logger, UserCreatorSubscriber())
-        account_refresher.add_subscriber(logger, AccountRefresherSubscriber())
         token_refresher.add_subscriber(logger, TokenRefresherSubscriber())
-        session_verifier.perform(session, session_key)
+        token_serializer.add_subscriber(logger, TokenSerializerSubscriber())
+        already_registered.perform(repository, acs_id)

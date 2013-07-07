@@ -168,6 +168,10 @@ loop() {
             shift; id=$1; shift
             gimmeurjson ${SERVER}/1/users/${id}/view GET "token=tid&$@"
             ;;
+        login)
+            shift
+            gimmeurjson ${SERVER}/1/users/login POST "$@"
+            ;;
         *)
             wtf
         esac

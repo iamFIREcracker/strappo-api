@@ -135,3 +135,20 @@ class TaskSubmitter(Publisher):
         message containing the ID of the just created task."""
         task_id = task.delay(*args, **kwargs)
         self.publish('task_created', task_id)
+
+
+class FacebookProfileGetter(Publisher):
+    def perform(self, adapter, access_token):
+        """Gets the profile information of the user identified by the specified
+        access token.
+
+        If something goes wrong while trying to access the profile info, a
+        'profile_not_found' message will be published with the error cause;
+        on the other hand, a 'profile_found' message containing the profile
+        information will be sent back to subscribers."""
+        (data, error) = adapter.profile(access_token)
+        if error is not None:
+            self.publish('profile_not_found', error)
+        else:
+            data['avatar'] = adapter.avatar(data['id'])
+            self.publish('profile_found', data)

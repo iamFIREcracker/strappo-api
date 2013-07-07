@@ -21,20 +21,19 @@ class UserWithIdGetter(Publisher):
 
 
 class AlreadyRegisteredVerifier(Publisher):
-    def perform(self, repository, externalid, accounttype):
-        """Checks whether a user identified by the given ID has already an
-        associated external account of the specified type.
+    def perform(self, repository, acs_id):
+        """Checks whether the system already contains a user with the specified
+        ACS ID.
 
         Generates an 'already_registered' message followed by the ID of the
-        registered user if a user with the specified account already extist.
-        Otherwise a 'not_registered' message together with the external id and
-        account type.
+        registered user if a user with the specified ACS ID already extists.
+        Otherwise a 'not_registered' message together with the ACS ID.
         """
-        user = repository.with_account(externalid, accounttype)
+        user = repository.with_acs_id(acs_id)
         if user is not None:
             self.publish('already_registered', user.id)
         else:
-            self.publish('not_registered', externalid, accounttype)
+            self.publish('not_registered', acs_id)
 
 
 class AccountRefresher(Publisher):
@@ -59,14 +58,26 @@ class TokenRefresher(Publisher):
         self.publish('token_refreshed', token)
 
 
+class TokenSerializer(Publisher):
+    def perform(self, token):
+        """Convert the given token into a serializable dictionary.
+
+        At the end of the operation the method will emit a
+        'token_serialized' message containing the serialized object (i.e.
+        token dictionary).
+        """
+        self.publish('token_serialized', dict(id=token.id,
+                                              user_id=token.user_id))
+
+
 class UserCreator(Publisher):
-    def perform(self, repository, name, avatar):
+    def perform(self, repository, acs_id, name, avatar):
         """Creates a new user with the specified set of properties.
 
         On success a 'user_created' message will be published toghether
         with the created user.
         """
-        user = repository.add(name, avatar)
+        user = repository.add(acs_id, name, avatar)
         self.publish('user_created', user)
 
 

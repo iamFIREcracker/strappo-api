@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import web
-
-from app.controllers.auth import FakeLoginAuthorizedController
 from app.controllers.destinations import ListDestinationsController
 from app.controllers.destinations import ListPredefinedDestinationsController
 from app.controllers.drivers import AcceptPassengerController
@@ -17,8 +14,8 @@ from app.controllers.passengers import AddPassengerController
 from app.controllers.passengers import AcceptDriverController
 from app.controllers.passengers import ActivePassengersController
 from app.controllers.passengers import ViewPassengerController
+from app.controllers.users import LoginUserController
 from app.controllers.users import ViewUserController
-from app.weblib.controllers.auth import FakeLoginController
 
 
 URLS = (
@@ -35,9 +32,6 @@ URLS = (
     '/1/passengers/add', AddPassengerController,
     '/1/passengers/(.+)/view', ViewPassengerController,
     '/1/passengers/(.+)/accept/driver/(.+)', AcceptDriverController,
-    '/1/users/(.+)/view', ViewUserController
-) + (() if not web.config.DEV else (
-    # Develop routes
-    '/login/fake', FakeLoginController,
-    '/login/fake/authorized', FakeLoginAuthorizedController
-))
+    '/1/users/(.+)/view', ViewUserController,
+    '/1/users/login', LoginUserController
+)

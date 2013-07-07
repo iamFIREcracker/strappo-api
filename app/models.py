@@ -48,7 +48,7 @@ class User(Base):
                              backref=backref('user', cascade='expunge'))
 
     def __repr__(self):
-        return '<User id=%(id)s, name=%(name)s, '\
+        return '<User id=%(id)s, acs_id=%(acs_id)s, name=%(name)s, '\
                'avatar=%(avatar)s>' % self.__dict__
 
 
@@ -62,21 +62,6 @@ class Token(Base):
 
     def __repr__(self):
         return '<Token id=%(id)s, user_id=%(user_id)s>' % self.__dict__
-
-
-class Account(Base):
-    __tablename__ = 'account'
-
-    id = Column(String, default=uuid, primary_key=True)
-    user_id = Column(String, ForeignKey('user.id'))
-    external_id = Column(String, nullable=False)
-    type = Column(Enum('fake', 'facebook', name='account_type'), nullable=False)
-    created = Column(DateTime, default=datetime.now)
-    updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-
-    def __repr__(self):
-        return '<Account id=%(id)s, user_id=%(user_id)s, '\
-               'external_id=%(external_id)s, type=%(type)s>' % self.__dict__
 
 
 class Driver(Base):

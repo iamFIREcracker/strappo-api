@@ -3,7 +3,6 @@
 
 def populate_db():
     import app.models
-    from app.models import Account
     from app.models import Driver
     from app.models import Passenger
     from app.models import DriveRequest
@@ -11,10 +10,10 @@ def populate_db():
     from app.models import User
 
     # One logged driver
-    app.models.Base.session.add(User(id='uid', name='Matteo L.',
+    app.models.Base.session.add(User(id='uid',
+                                     acs_id='51cb576d67e9560ad3096636',
+                                     name='Matteo L.',
                                      avatar='http://www.placehold.it/128x128/86EF00/AAAAAA&text=no+image'))
-    app.models.Base.session.add(Account(id='aid', user_id='uid',
-                                        external_id='eid', type='facebook'))
     app.models.Base.session.add(Token(id='tid', user_id='uid'))
     app.models.Base.session.add(Driver(id='did', user_id='uid',
                                        license_plate='LU127AE',
@@ -59,8 +58,6 @@ def populate_db():
     # One hidden driver
     app.models.Base.session.add(User(id='uid6', name='Mario R.',
                                      avatar='http://www.placehold.it/128x128/F06E08/AAAAAA&text=no+image'))
-    app.models.Base.session.add(Account(id='aid6', user_id='uid6',
-                                        external_id='eid6', type='facebook'))
     app.models.Base.session.add(Token(id='tid6', user_id='uid6'))
     app.models.Base.session.add(Driver(id='did6', user_id='uid6',
                                        license_plate='MI17D12',

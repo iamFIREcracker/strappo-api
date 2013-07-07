@@ -11,7 +11,9 @@ validurl = form.Validator('Should be a valid URL.',
                           lambda v: v.startswith('http://'))
 
 
-add = form.Form(form.Textbox('name', form.notnull, description='Name',
+add = form.Form(
+                form.Hidden('acs_id', form.notnull, description='ACS Id'),
+                form.Textbox('name', form.notnull, description='Name',
                              placeholder='John Smith'),
                 form.Textbox('avatar', validurl, description='Avatar',
                              placeholder='http://...'))
