@@ -43,6 +43,17 @@ def dev():
     env.repo_branch = 'develop'
 
 
+@task
+def staging():
+    env.user = 'app'
+    env.hosts = ['192.241.139.130']
+
+    env.site_path = '/srv/www/poolit'
+    env.venv_path = '/srv/www/poolit/venv'
+    env.site_url  = 'http://localhost:8080/hello'
+    env.repo_branch = 'develop'
+
+
 
 def _happy():
     print(green('\nLooks good from here!\n'))
