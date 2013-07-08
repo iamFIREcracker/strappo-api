@@ -94,7 +94,7 @@ class AcceptDriveRequestWorkflow(Publisher):
                 passenger_deactivator.perform(passengers_repository,
                                               request.passenger_id)
 
-        class PassengerDeactivatorRequestSubscriber(object):
+        class PassengerDeactivatorSubscriber(object):
             def passenger_not_found(self, passenger_id):
                 outer.publish('not_found')
             def passenger_hid(self, passenger):
@@ -102,8 +102,8 @@ class AcceptDriveRequestWorkflow(Publisher):
                 outer.publish('success')
 
         request_acceptor.add_subscriber(logger, DriveRequestAcceptorSubscriber())
-        passenger_deactivator.\
-                add_subscriber(logger, PassengerDeactivatorRequestSubscriber())
+        passenger_deactivator.add_subscriber(logger,
+                                             PassengerDeactivatorSubscriber())
         request_acceptor.perform(drive_requests_repository, driver_id,
                                  passenger_id)
 
