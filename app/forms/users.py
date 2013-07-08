@@ -8,7 +8,8 @@ __all__ = ['add']
 
 
 validurl = form.Validator('Should be a valid URL.',
-                          lambda v: v.startswith('http://'))
+                           lambda v: v.startswith('http://') or \
+                                     v.startswith('https://'))
 
 
 add = form.Form(
