@@ -78,7 +78,7 @@ class MultiplePassengersSerializer(Publisher):
 
 
 class PassengerDeactivator(Publisher):
-    def perform(self, repository, passenger_id):
+    def perform(self, repository, passenger_id): # XXX accept the passenger instead of the repository and the passenger_id
         """Hides the passenger identified by ``passenger_id``.
 
         If no passenger exists identified by ``passenger_id``, then
