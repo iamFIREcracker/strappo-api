@@ -3,16 +3,16 @@
 
 from app.celery import celery
 
+from app.repositories.drivers import DriversRepository
+from app.repositories.passengers import PassengersRepository
+from app.weblib.adapters.push.titanium import TitaniumPushNotificationsAdapter
 from app.weblib.db import create_session
 from app.weblib.logging import create_logger
 from app.weblib.pubsub import Future
-from app.repositories.drivers import DriversRepository
-from app.repositories.passengers import PassengersRepository
 from app.weblib.pubsub import LoggingSubscriber
-from app.weblib.adapters.push.titanium import TitaniumPushNotificationsAdapter
 from app.workflows.drivers import NotifyDriversWorkflow
-from app.workflows.passengers import NotifyPassengerWorkflow
 from app.workflows.passengers import DeactivateActivePassengersWorkflow
+from app.workflows.passengers import NotifyPassengerWorkflow
 
 
 @celery.task
