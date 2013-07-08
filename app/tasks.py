@@ -3,6 +3,7 @@
 
 from app.celery import celery
 
+from app.repositories.drive_requests import DriveRequestsRepository
 from app.repositories.drivers import DriversRepository
 from app.repositories.passengers import PassengersRepository
 from app.weblib.adapters.push.titanium import TitaniumPushNotificationsAdapter
@@ -10,6 +11,7 @@ from app.weblib.db import create_session
 from app.weblib.logging import create_logger
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
+from app.workflows.drive_requests import DeactivateActiveDriveRequestsWorkflow
 from app.workflows.drivers import NotifyDriversWorkflow
 from app.workflows.passengers import DeactivateActivePassengersWorkflow
 from app.workflows.passengers import NotifyPassengerWorkflow
@@ -77,3 +79,21 @@ def DeactivateActivePassengers():
                                          DeactivatePassengersSubscriber())
     deactivate_passengers.perform(logger, orm, PassengersRepository)
     return ret.get()
+
+
+@celery.task
+def DeactivateActiveDriveRequests():
+    logger = create_logger()
+    orm = create_session()
+    logging_subscriber = LoggingSubscriber(logger)
+    deactivate_drive_requests = DeactivateActiveDriveRequestsWorkflow()
+    ret = Future()
+
+    class DeactivateDriveRequestsSubscriber(object):
+        def success(self, drive_requests):
+            orm.commit()
+            ret.set(drive_requests)
+
+    deactivate_drive_requests.add_subscriber(logging_subscriber,
+                                             DeactivateDriveRequestsSubscriber())
+    deactivate_drive_requests.perform(logger, orm, DriveRequestsRepository)
