@@ -70,6 +70,7 @@ def DeactivateActivePassengers():
 
     class DeactivatePassengersSubscriber(object):
         def success(self, passengers):
+            orm.commit()
             ret.set(passengers)
 
     deactivate_passengers.add_subscriber(logging_subscriber,
