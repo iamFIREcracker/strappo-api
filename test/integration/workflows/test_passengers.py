@@ -10,8 +10,9 @@ from mock import Mock
 
 from app.workflows.passengers import AddPassengerWorkflow
 from app.workflows.passengers import ActivePassengersWorkflow
-from app.workflows.passengers import ViewPassengerWorkflow
+from app.workflows.passengers import DeactivateActivePassengersWorkflow
 from app.workflows.passengers import NotifyPassengerWorkflow
+from app.workflows.passengers import ViewPassengerWorkflow
 
 
 class TestActivePassengersWorkflow(unittest.TestCase):
@@ -202,3 +203,40 @@ class TestNotifyPassengerWorkflow(unittest.TestCase):
 
         # Then
         subscriber.success.assert_called_with()
+
+
+class TestDeactivateActivePassengersWorkflow(unittest.TestCase):
+    def test_no_passenger_is_deactivated_if_no_passenger_is_active(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        repository = Mock(get_all_active=MagicMock(return_value=[]))
+        subscriber = Mock(success=MagicMock())
+        instance = DeactivateActivePassengersWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, orm, repository)
+
+        # Then
+        subscriber.success.assert_called_with([])
+
+    def test_active_passengers_get_properly_hidden(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        passengers = [storage(id='p1', active=True),
+                      storage(id='p2', active=True)]
+        repository = Mock(get_all_active=MagicMock(return_value=passengers))
+        subscriber = Mock(success=MagicMock())
+        instance = DeactivateActivePassengersWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, orm, repository)
+
+        # Then
+        subscriber.success.assert_called_with([
+            storage(id='p1', active=False),
+            storage(id='p2', active=False)
+        ])

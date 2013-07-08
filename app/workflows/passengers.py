@@ -6,6 +6,7 @@ import app.forms.passengers as passengers_forms
 from app.pubsub import ACSUserIdsNotifier
 from app.pubsub.passengers import ActivePassengersGetter
 from app.pubsub.passengers import PassengerWithIdGetter
+from app.pubsub.passengers import MultiplePassengersDeactivator
 from app.pubsub.passengers import MultiplePassengersSerializer
 from app.pubsub.passengers import PassengerACSUserIdExtractor
 from app.pubsub.passengers import PassengerCreator
@@ -139,3 +140,28 @@ class NotifyPassengerWorkflow(Publisher):
                                         ACSUserIdExtractorSubscriber())
         acs_notifier.add_subscriber(logger, ACSNotifierSubscriber())
         passenger_getter.perform(repository, passenger_id)
+
+
+class DeactivateActivePassengersWorkflow(Publisher):
+    """Defines a workflow to deactivate all the active passengers."""
+
+    def perform(self, logger, orm, repository):
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        passengers_getter = ActivePassengersGetter()
+        passengers_deactivator = MultiplePassengersDeactivator()
+
+        class ActivePassengersGetterSubscriber(object):
+            def passengers_found(self, passengers):
+                passengers_deactivator.perform(passengers)
+
+        class PassengersDeactivatorSubscriber(object):
+            def passengers_hid(self, passengers):
+                orm.add_all(passengers)
+                outer.publish('success', passengers)
+
+        passengers_getter.add_subscriber(logger,
+                                         ActivePassengersGetterSubscriber())
+        passengers_deactivator.add_subscriber(logger,
+                                              PassengersDeactivatorSubscriber())
+        passengers_getter.perform(repository)

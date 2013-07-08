@@ -93,6 +93,21 @@ class PassengerDeactivator(Publisher):
             self.publish('passenger_hid', passenger)
 
 
+def deactivate(p):
+    p.active = False
+    return p
+
+
+class MultiplePassengersDeactivator(Publisher):
+    def perform(self, passengers):
+        """Hides the list of provided passengers.
+
+        At the end of the operation, a 'passengers_hid' message will be
+        published, toghether with the list of modified passengers.
+        """
+        self.publish('passengers_hid', [deactivate(p) for p in passengers])
+
+
 class PassengerACSUserIdExtractor(Publisher):
     def perform(self, passenger):
         """Extract ACS user ID associated with the given passenger.
