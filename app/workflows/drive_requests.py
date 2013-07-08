@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from app.pubsub.passengers import PassengerDeactivator
 from app.pubsub.drive_requests import ActiveDriveRequestsFilterExtractor
+from app.pubsub.drive_requests import ActiveDriveRequestsGetter
 from app.pubsub.drive_requests import ActiveDriveRequestsWithDriverIdGetter
 from app.pubsub.drive_requests import ActiveDriveRequestsWithPassengerIdGetter
-from app.pubsub.drive_requests import DriveRequestCreator
 from app.pubsub.drive_requests import DriveRequestAcceptor
+from app.pubsub.drive_requests import DriveRequestCreator
+from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
+from app.pubsub.passengers import PassengerDeactivator
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.pubsub import Publisher
 from app.weblib.pubsub import TaskSubmitter
@@ -104,3 +106,27 @@ class AcceptDriveRequestWorkflow(Publisher):
                 add_subscriber(logger, PassengerDeactivatorRequestSubscriber())
         request_acceptor.perform(drive_requests_repository, driver_id,
                                  passenger_id)
+
+
+class DeactivateActiveDriveRequestsWorkflow(Publisher):
+    """Defines a workflow to mark all active drive requests as hidden"""
+
+    def perform(self, logger, orm, repository):
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        requests_getter = ActiveDriveRequestsGetter()
+        requests_deactivator = MultipleDriveRequestsDeactivator()
+
+        class DriveRequestsGetterSubscriber(object):
+            def drive_requests_found(self, requests):
+                requests_deactivator.perform(requests)
+
+        class DriveRequestsDeactivatorSubscriber(object):
+            def drive_requests_hid(self, requests):
+                orm.add_all(requests)
+                outer.publish('success', requests)
+
+        requests_getter.add_subscriber(logger, DriveRequestsGetterSubscriber())
+        requests_deactivator.add_subscriber(logger,
+                                            DriveRequestsDeactivatorSubscriber())
+        requests_getter.perform(repository)

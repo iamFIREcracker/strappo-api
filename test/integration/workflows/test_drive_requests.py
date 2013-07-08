@@ -9,6 +9,7 @@ from web.utils import storage
 
 from app.workflows.drive_requests import AcceptDriveRequestWorkflow
 from app.workflows.drive_requests import AddDriveRequestWorkflow
+from app.workflows.drive_requests import DeactivateActiveDriveRequestsWorkflow
 from app.workflows.drive_requests import ListActiveDriveRequestsWorkflow
 
 
@@ -304,3 +305,38 @@ class TestAcceptDriveRequestWorkflow(unittest.TestCase):
         # Then
         subscriber.success.assert_called_with()
 
+
+class TestDeactivateActiveDriveRequestsWorkflow(unittest.TestCase):
+    def test_no_drive_request_is_deactivated_if_no_drive_request_is_active(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        repository = Mock(get_all_active=MagicMock(return_value=[]))
+        subscriber = Mock(success=MagicMock())
+        instance = DeactivateActiveDriveRequestsWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, orm, repository)
+
+        # Then
+        subscriber.success.assert_called_with([])
+
+    def test_active_drive_requests_get_properly_hidden(self):
+        logger = Mock()
+        orm = Mock()
+        drive_requests = [storage(id='r1', active=True),
+                          storage(id='r2', active=True)]
+        repository = Mock(get_all_active=MagicMock(return_value=drive_requests))
+        subscriber = Mock(success=MagicMock())
+        instance = DeactivateActiveDriveRequestsWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, orm, repository)
+
+        # Then
+        subscriber.success.assert_called_with([
+            storage(id='r1', active=False),
+            storage(id='r2', active=False)
+        ])

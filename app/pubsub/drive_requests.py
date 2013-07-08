@@ -39,6 +39,16 @@ class ActiveDriveRequestsWithPassengerIdGetter(Publisher):
                      repository.get_all_active_by_passenger(passenger_id))
 
 
+class ActiveDriveRequestsGetter(Publisher):
+    def perform(self, repository):
+        """Search for all the active drive request.
+
+        When done, a 'drive_requests_found' message will be published, toghether
+        with the list of active drive requests records.
+        """
+        self.publish('drive_requests_found', repository.get_all_active())
+
+
 class DriveRequestCreator(Publisher):
     def perform(self, repository, driver_id, passenger_id):
         """Creates a ride request from driver identified by ``driver_id`` and
@@ -94,3 +104,19 @@ class MultipleDriveRequestsSerializer(Publisher):
         """
         self.publish('drive_requests_serialized', 
                      [_serialize(r) for r in requests])
+
+
+def deactivate(r):
+    r.active = False
+    return r
+
+
+class MultipleDriveRequestsDeactivator(Publisher):
+    def perform(self, requests):
+        """Sets the 'active' property of the input list of drive requests
+        to ``False`` (i.e. hides them).
+
+        When done, a 'drive_requests_hid' message will be published, toghether
+        with the list list of amended drive requests records.
+        """
+        self.publish('drive_requests_hid', [deactivate(r) for r in requests])
