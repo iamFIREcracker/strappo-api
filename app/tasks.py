@@ -3,6 +3,7 @@
 
 from app.celery import celery
 
+from app.weblib.db import create_session
 from app.weblib.logging import create_logger
 from app.weblib.pubsub import Future
 from app.repositories.drivers import DriversRepository
@@ -11,6 +12,7 @@ from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.adapters.push.titanium import TitaniumPushNotificationsAdapter
 from app.workflows.drivers import NotifyDriversWorkflow
 from app.workflows.passengers import NotifyPassengerWorkflow
+from app.workflows.passengers import DeactivateActivePassengersWorkflow
 
 
 @celery.task
@@ -55,4 +57,22 @@ def NotifyPassengerTask(passenger_id):
     notify_passenger.perform(logger, PassengersRepository, passenger_id,
                              push_adapter, 'passengers',
                              'A driver has offered to give you a ride') # XXX TBD payload
+    return ret.get()
+
+
+@celery.task
+def DeactivateActivePassengers():
+    logger = create_logger()
+    orm = create_session()
+    logging_subscriber = LoggingSubscriber(logger)
+    deactivate_passengers = DeactivateActivePassengersWorkflow()
+    ret = Future()
+
+    class DeactivatePassengersSubscriber(object):
+        def success(self, passengers):
+            ret.set(passengers)
+
+    deactivate_passengers.add_subscriber(logging_subscriber,
+                                         DeactivatePassengersSubscriber())
+    deactivate_passengers.perform(logger, orm, PassengersRepository)
     return ret.get()
