@@ -11,6 +11,13 @@ from app.weblib.db import joinedload_all
 
 class DriveRequestsRepository(object):
     @staticmethod
+    def get_all_active():
+        return [expunged(dr, DriveRequest.session)
+                for dr in DriveRequest.query.\
+                        filter(User.deleted == False).\
+                        filter(DriveRequest.active == True)]
+
+    @staticmethod
     def get_all_active_by_driver(driver_id):
         options = [joinedload_all('driver.user'),
                    joinedload_all('passenger.user')]
