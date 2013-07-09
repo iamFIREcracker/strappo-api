@@ -67,6 +67,49 @@ class TestDriversRepository(unittest.TestCase):
         self.assertEquals(1, len(drivers))
         self.assertEquals('did', drivers[0].id)
 
+    def test_get_all_hidden_drivers_should_not_return_deleted_users(self):
+        # Given
+        self.session.add(User(id='uid', name='Name', avatar='Avatar',
+                              deleted=True))
+        self.session.add(Driver(id='did', user_id='uid'))
+        self.session.commit()
+        self.session.remove()
+
+        # When
+        drivers = DriversRepository.get_all_hidden()
+
+        # Then
+        self.assertEquals([], drivers)
+
+    def test_get_all_hidden_drivers_should_not_return_unhidden_drivers(self):
+        # Given
+        self.session.add(User(id='uid', name='Name', avatar='Avatar',
+                              deleted=False))
+        self.session.add(Driver(id='did', user_id='uid', hidden=False))
+        self.session.commit()
+        self.session.remove()
+
+        # When
+        drivers = DriversRepository.get_all_hidden()
+
+        # Then
+        self.assertEquals([], drivers)
+
+    def test_get_all_hidden_drivers(self):
+        # Given
+        self.session.add(User(id='uid', name='Name', avatar='Avatar',
+                              deleted=False))
+        self.session.add(Driver(id='did', user_id='uid', hidden=True))
+        self.session.commit()
+        self.session.remove()
+
+        # When
+        drivers = DriversRepository.get_all_hidden()
+
+        # Then
+        self.assertEquals(1, len(drivers))
+        self.assertEquals('did', drivers[0].id)
+
     def test_get_with_invalid_id_should_return_nothing(self):
         # When
         driver = DriversRepository.get('not_existing_id')

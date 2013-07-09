@@ -25,6 +25,13 @@ class DriversRepository(object):
                                 filter(Driver.hidden == False)]
 
     @staticmethod
+    def get_all_hidden():
+        return [expunged(d, Driver.session)
+                for d in Driver.query.options(joinedload('user')).\
+                                filter(User.deleted == False).\
+                                filter(Driver.hidden == True)]
+
+    @staticmethod
     def with_user_id(user_id):
         return expunged(Driver.query.options(joinedload('user')).\
                                 filter(User.id == user_id).\
