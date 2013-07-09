@@ -13,6 +13,7 @@ from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
 from app.workflows.drive_requests import DeactivateActiveDriveRequestsWorkflow
 from app.workflows.drivers import NotifyDriversWorkflow
+from app.workflows.drivers import UnhideHiddenDriversWorkflow
 from app.workflows.passengers import DeactivateActivePassengersWorkflow
 from app.workflows.passengers import NotifyPassengerWorkflow
 
@@ -97,3 +98,21 @@ def DeactivateActiveDriveRequests():
     deactivate_drive_requests.add_subscriber(logging_subscriber,
                                              DeactivateDriveRequestsSubscriber())
     deactivate_drive_requests.perform(logger, orm, DriveRequestsRepository)
+    return ret.get()
+
+
+@celery.task
+def UnhideHiddenDrivers():
+    logger = create_logger()
+    orm = create_session()
+    logging_subscriber = LoggingSubscriber(logger)
+    unhide_drivers = UnhideHiddenDriversWorkflow()
+    ret = Future()
+
+    class UnhideDriversSubscriber(object):
+        def success(self, drivers):
+            orm.commit()
+            ret.set(drivers)
+
+    unhide_drivers.add_subscriber(logger, UnhideDriversSubscriber())
+    unhide_drivers.perform(logger, orm, DriversRepository)
