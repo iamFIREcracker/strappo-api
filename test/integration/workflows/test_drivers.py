@@ -9,10 +9,11 @@ from mock import MagicMock
 from mock import Mock
 
 from app.workflows.drivers import AddDriverWorkflow
-from app.workflows.drivers import HideDriverWorkflow
 from app.workflows.drivers import EditDriverWorkflow
+from app.workflows.drivers import HideDriverWorkflow
 from app.workflows.drivers import NotifyDriversWorkflow
 from app.workflows.drivers import UnhideDriverWorkflow
+from app.workflows.drivers import UnhideHiddenDriversWorkflow
 from app.workflows.drivers import ViewDriverWorkflow
 
 
@@ -251,3 +252,39 @@ class TestNotifyDriversWorkflow(unittest.TestCase):
 
         # Then
         subscriber.success.assert_called_with()
+
+
+class TestUnhideHiddenDriversWorkflow(unittest.TestCase):
+    def test_no_driver_is_unhid_if_no_driver_is_hidden(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        repository = Mock(get_all_hidden=MagicMock(return_value=[]))
+        subscriber = Mock(success=MagicMock())
+        instance = UnhideHiddenDriversWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, orm, repository)
+
+        # Then
+        subscriber.success.assert_called_with([])
+
+    def test_hidden_drivers_get_properly_unhid(self):
+        logger = Mock()
+        orm = Mock()
+        drivers = [storage(id='d1', hidden=True),
+                   storage(id='d2', hidden=True)]
+        repository = Mock(get_all_hidden=MagicMock(return_value=drivers))
+        subscriber = Mock(success=MagicMock())
+        instance = UnhideHiddenDriversWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, orm, repository)
+
+        # Then
+        subscriber.success.assert_called_with([
+            storage(id='d1', hidden=False),
+            storage(id='d2', hidden=False)
+        ])

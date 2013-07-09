@@ -14,6 +14,16 @@ class UnhiddenDriversGetter(Publisher):
         self.publish('unhidden_drivers_found', repository.get_all_unhidden())
 
 
+class HiddenDriversGetter(Publisher):
+    def perform(self, repository):
+        """Search for all the _hidden_ drivers.
+
+        The method will emit a 'hidden_drivers_found' message, followed by the
+        list of found drivers.
+        """
+        self.publish('hidden_drivers_found', repository.get_all_hidden())
+
+
 class DriverWithIdGetter(Publisher):
     def perform(self, repository, driver_id):
         """Search for a driver identified by ``driver_id``.
@@ -87,6 +97,19 @@ class DriverActivator(Publisher): # XXX Use multiple drivers unhider
             self.publish('driver_not_found', driver_id)
         else:
             self.publish('driver_unhid', driver)
+
+
+class MultipleDriversUnhider(Publisher):
+    def perform(self, drivers):
+        """Sets the 'hidden' property of the given list of drivers to ``False``.
+
+        On success, the 'drivers_unhid' message will be published toghether with
+        with the list of unhidden drivers.
+        """
+        def unhide(driver):
+            driver.hidden = False
+            return driver
+        self.publish('drivers_unhid', [unhide(d) for d in drivers])
 
 
 def serialize(driver):
