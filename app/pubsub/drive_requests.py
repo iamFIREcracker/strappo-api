@@ -106,11 +106,6 @@ class MultipleDriveRequestsSerializer(Publisher):
                      [_serialize(r) for r in requests])
 
 
-def deactivate(r):
-    r.active = False
-    return r
-
-
 class MultipleDriveRequestsDeactivator(Publisher):
     def perform(self, requests):
         """Sets the 'active' property of the input list of drive requests
@@ -119,4 +114,8 @@ class MultipleDriveRequestsDeactivator(Publisher):
         When done, a 'drive_requests_hid' message will be published, toghether
         with the list list of amended drive requests records.
         """
+        def deactivate(request):
+            request.active = False
+            return request
+
         self.publish('drive_requests_hid', [deactivate(r) for r in requests])
