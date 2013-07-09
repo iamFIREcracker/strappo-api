@@ -38,7 +38,7 @@ class TestDriversRepository(unittest.TestCase):
         # Then
         self.assertEquals([], drivers)
 
-    def test_get_all_unhidden_drivers_should_not_return_unhidden_drivers(self):
+    def test_get_all_unhidden_drivers_should_not_return_hidden_drivers(self):
         # Given
         self.session.add(User(id='uid', name='Name', avatar='Avatar',
                               deleted=False))
