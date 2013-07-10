@@ -45,7 +45,9 @@ class User(Base):
     driver = relationship('Driver', uselist=False,
                           backref=backref('user', cascade='expunge'))
     passenger = relationship('Passenger', uselist=False,
-                             backref=backref('user', cascade='expunge'))
+                             backref=backref('user', cascade='expunge'),
+                             primaryjoin="and_(User.id == Passenger.user_id,"
+                                              "Passenger.active == True)")
 
     def __repr__(self):
         return '<User id=%(id)s, acs_id=%(acs_id)s, name=%(name)s, '\

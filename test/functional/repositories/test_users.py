@@ -5,6 +5,8 @@ import unittest
 
 import app.weblib.db
 from app.models import Base
+from app.models import Driver
+from app.models import Passenger
 from app.models import Token
 from app.models import User
 from app.repositories.users import UsersRepository
@@ -56,7 +58,69 @@ class TestUsersRepository(unittest.TestCase):
 
         # Then
         self.assertIsNotNone(user)
+        self.assertIsNone(user.driver)
+        self.assertIsNone(user.passenger)
 
+    def test_get_with_active_user_should_return_the_user_and_the_linked_driver(self):
+        # Given
+        self.session.add(User(id='uid', name='Name', avatar='Avatar',
+                              deleted=False))
+        self.session.add(Driver(id='did', user_id='uid'))
+        self.session.commit()
+        self.session.remove()
+
+        # When
+        user = UsersRepository.get('uid')
+
+        # Then
+        self.assertIsNotNone(user)
+        self.assertEqual('did', user.driver.id)
+
+    def test_get_with_active_user_should_return_the_user_and_not_the_linked_inactive_passenger(self):
+        # Given
+        self.session.add(User(id='uid', name='Name', avatar='Avatar',
+                              deleted=False))
+        self.session.add(Passenger(id='pid', user_id='uid', active=False))
+        self.session.commit()
+        self.session.remove()
+
+        # When
+        user = UsersRepository.get('uid')
+
+        # Then
+        self.assertIsNotNone(user)
+        self.assertIsNone(user.passenger)
+
+    def test_get_with_active_user_should_return_the_user_and_the_linked_active_passenger(self):
+        # Given
+        self.session.add(User(id='uid', name='Name', avatar='Avatar',
+                              deleted=False))
+        self.session.add(Passenger(id='pid', user_id='uid', active=True))
+        self.session.commit()
+        self.session.remove()
+
+        # When
+        user = UsersRepository.get('uid')
+
+        # Then
+        self.assertIsNotNone(user)
+        self.assertEqual('pid', user.passenger.id)
+
+    def test_get_with_active_user_should_return_the_user_and_only_the_linked_active_passenger(self):
+        # Given
+        self.session.add(User(id='uid', name='Name', avatar='Avatar',
+                              deleted=False))
+        self.session.add(Passenger(id='pid1', user_id='uid', active=False))
+        self.session.add(Passenger(id='pid2', user_id='uid', active=True))
+        self.session.commit()
+        self.session.remove()
+
+        # When
+        user = UsersRepository.get('uid')
+
+        # Then
+        self.assertIsNotNone(user)
+        self.assertEqual('pid2', user.passenger.id)
 
     def test_added_user_is_then_returned_inside_a_query(self):
         # When
