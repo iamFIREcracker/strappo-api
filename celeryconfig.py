@@ -8,18 +8,17 @@ CELERY_IMPORTS = ('app.tasks',)
 BROKER_URL = 'redis://localhost:6379/0'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 
-CELERY_TIMEZONE = 'Europe/Rome'
 CELERYBEAT_SCHEDULE = {
     'deactivate-passengers-every-morning': {
         'task': 'app.tasks.DeactivateActivePassengers',
-        'schedule': crontab(hour=7, minute=0)
+        'schedule': crontab(hour=5, minute=0)
     },
     'deactivate-drive-requests-every-morning': {
         'task': 'app.tasks.DeactivateActiveDriveRequests',
-        'schedule': crontab(hour=7, minute=5)
+        'schedule': crontab(hour=5, minute=5)
     },
     'unhide-hidden-drivers-every-morning': {
         'task': 'app.tasks.UnhideHiddenDrivers',
-        'schedule': crontab(hour=7, minute=10)
+        'schedule': crontab(hour=5, minute=10)
     }
 }
