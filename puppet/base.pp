@@ -28,3 +28,8 @@ supervisor::celery {'supervisor-celery':
   appname => $appname,
   user => $user,
 }
+
+supervisor::celery_beat {'supervisor-celery_beat':
+  appname => $appname,
+  user => $user,
+}

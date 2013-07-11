@@ -31,3 +31,14 @@ define supervisor::celery( $appname, $user ) {
   }
 }
 
+define supervisor::celery_beat( $appname, $user ) {
+  file { "/etc/supervisor/conf.d/celery_beat.conf":
+    ensure  => present,
+    owner   => root,
+    group   => root,
+    mode    => '644',
+    content => template("supervisor/celery_beat.tpl"),
+    require => Package[supervisor],
+    notify  => Service[supervisor],
+  }
+}
