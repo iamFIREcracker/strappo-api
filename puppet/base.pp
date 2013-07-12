@@ -29,7 +29,7 @@ supervisor::celery {'supervisor-celery':
   user => $user,
 }
 
-supervisor::celery_beat {'supervisor-celery_beat':
+supervisor::celerybeat {'supervisor-celerybeat':
   appname => $appname,
   user => $user,
 }
