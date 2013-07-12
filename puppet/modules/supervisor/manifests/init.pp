@@ -7,7 +7,7 @@ class supervisor {
   }
 }
 
-define supervisor::app( $appname, $user ) {
+define supervisor::gunicorn( $appname, $user ) {
   file { "/etc/supervisor/conf.d/gunicorn.conf":
     ensure  => present,
     owner   => root,

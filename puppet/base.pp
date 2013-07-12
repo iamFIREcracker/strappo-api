@@ -19,7 +19,7 @@ nginx::site {'gunicorn':
   appname => $appname,
 }
 
-supervisor::app {'supervisor-gunicorn':
+supervisor::gunicorn {'supervisor-gunicorn':
   appname => $appname,
   user => $user,
 }
