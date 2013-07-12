@@ -51,7 +51,7 @@ def staging():
     env.site_path = '/srv/www/poolit'
     env.venv_path = '/srv/www/poolit/venv'
     env.site_url  = 'http://localhost:8080/hello'
-    env.repo_branch = 'develop'
+    env.repo_branch = 'staging'
 
 
 
