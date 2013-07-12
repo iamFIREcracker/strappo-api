@@ -33,6 +33,8 @@ def vagrant_key():
 @task
 def dev():
     ''' Use virtual machine settings. '''
+    env.env_name = 'vagrant'
+
     env.user = 'vagrant'
     env.hosts = ['127.0.0.1:2222']
     env.key_filename = vagrant_key()
@@ -44,14 +46,16 @@ def dev():
 
 
 @task
-def staging():
+def stag():
+    env.env_name = 'strappo'
+
     env.user = 'app'
     env.hosts = ['192.241.139.130']
 
     env.site_path = '/srv/www/poolit'
     env.venv_path = '/srv/www/poolit/venv'
     env.site_url  = 'http://localhost:8080/hello'
-    env.repo_branch = 'develop'
+    env.repo_branch = 'staging'
 
 
 
@@ -230,8 +234,8 @@ def rtag():
     Useful if someone else has deployed (which makes your production/staging local
     tag incorrect.
     '''
-    require('site_path', provided_by=['prod', 'stag'])
-    require('env_name', provided_by=['prod', 'stag'])
+    require('site_path', provided_by=['prod', 'stag', 'dev'])
+    require('env_name', provided_by=['prod', 'stag', 'dev'])
 
     with cd(env.site_path):
         current = run('hg id --rev . --quiet').strip(' \n+')
