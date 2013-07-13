@@ -149,11 +149,18 @@ class AcceptPassengerController(ParamAuthorizableController):
         add_drive_request = AddDriveRequestWorkflow()
 
         class AddDriveRequestSubscriber(object):
+            def not_found(self, driver_id):
+                web.ctx.orm.rollback()
+                raise web.notfound()
+            def unauthorized(self):
+                web.ctx.orm.rollback()
+                raise web.unauthorized()
             def success(self):
                 web.ctx.orm.commit()
                 raise app.weblib.nocontent()
 
         add_drive_request.add_subscriber(logger, AddDriveRequestSubscriber())
         add_drive_request.perform(web.ctx.orm, web.ctx.logger,
-                                 DriveRequestsRepository, driver_id,
-                                 passenger_id, NotifyPassengerTask)
+                                  DriversRepository, self.current_user.id,
+                                  driver_id, DriveRequestsRepository,
+                                  passenger_id, NotifyPassengerTask)
