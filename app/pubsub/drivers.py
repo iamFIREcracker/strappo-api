@@ -67,7 +67,7 @@ class DriverUpdater(Publisher):
             self.publish('driver_updated', driver)
 
 
-class DriverDeactivator(Publisher): # XXX Rename in hider and accept driver as input
+class DriverHider(Publisher): # XXX accept driver as input
     def perform(self, repository, driver_id):
         """Temporarily hides the driver identified by ``driver_id``.
 
