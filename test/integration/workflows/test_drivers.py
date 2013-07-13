@@ -191,7 +191,7 @@ class TestUnhideDriverWorkflow(unittest.TestCase):
         # Given
         logger = Mock()
         orm = Mock()
-        repository = Mock(unhide=MagicMock(return_value=None))
+        repository = Mock(get=MagicMock(return_value=None))
         subscriber = Mock(not_found=MagicMock())
         instance = UnhideDriverWorkflow()
 
@@ -206,7 +206,7 @@ class TestUnhideDriverWorkflow(unittest.TestCase):
         # Given
         logger = Mock()
         orm = Mock()
-        repository = Mock(unhide=MagicMock())
+        repository = Mock(get=MagicMock())
         subscriber = Mock(success=MagicMock())
         instance = UnhideDriverWorkflow()
 
