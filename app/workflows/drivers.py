@@ -15,6 +15,7 @@ from app.pubsub.drivers import MultipleDriversUnhider
 from app.pubsub.drivers import UnhiddenDriversGetter
 from app.weblib.forms import describe_invalid_form
 from app.weblib.pubsub import FormValidator
+from app.weblib.pubsub import Future
 from app.weblib.pubsub import Publisher
 from app.weblib.pubsub import LoggingSubscriber
 
@@ -79,24 +80,32 @@ class EditDriverWorkflow(Publisher):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         form_validator = FormValidator()
+        driver_getter = DriverWithIdGetter()
         driver_updater = DriverUpdater()
+        future_form = Future()
 
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
                 outer.publish('invalid_form', errors)
             def valid_form(self, form):
-                driver_updater.perform(repository, driver_id,
-                                       form.d.license_plate,
+                future_form.set(form)
+                driver_getter.perform(repository, driver_id)
+
+        class DriverGetterSubscriber(object):
+            def driver_not_found(self, driver_id):
+                outer.publish('not_found', driver_id)
+            def driver_found(self, driver):
+                form = future_form.get()
+                driver_updater.perform(driver, form.d.license_plate,
                                        form.d.telephone)
 
         class DriverUpdaterSubscriber(object):
-            def driver_not_found(self, driver_id):
-                outer.publish('not_found', driver_id)
             def driver_updated(self, driver):
                 orm.add(driver)
                 outer.publish('success')
 
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
+        driver_getter.add_subscriber(logger, DriverGetterSubscriber())
         driver_updater.add_subscriber(logger, DriverUpdaterSubscriber())
         form_validator.perform(drivers_forms.update(), params,
                                describe_invalid_form)

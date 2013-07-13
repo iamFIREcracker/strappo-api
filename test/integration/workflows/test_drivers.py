@@ -124,7 +124,7 @@ class TestEditDriverWorkflow(unittest.TestCase):
         logger = Mock()
         orm = Mock()
         params = storage(license_plate='plate', telephone='Telephone')
-        repository = Mock(update=MagicMock(return_value=None))
+        repository = Mock(get=MagicMock(return_value=None))
         subscriber = Mock(not_found=MagicMock())
         instance = EditDriverWorkflow()
 
@@ -140,7 +140,7 @@ class TestEditDriverWorkflow(unittest.TestCase):
         logger = Mock()
         orm = Mock()
         params = storage(license_plate='new_plate', telephone='new_phone')
-        repository = Mock(update=MagicMock())
+        repository = Mock(get=MagicMock())
         subscriber = Mock(success=MagicMock())
         instance = EditDriverWorkflow()
 
