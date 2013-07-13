@@ -103,13 +103,16 @@ class HideDriverController(ParamAuthorizableController):
             def not_found(self, driver_id):
                 web.ctx.orm.rollback()
                 raise web.notfound()
+            def unauthorized(self):
+                web.ctx.orm.rollback()
+                raise web.unauthorized()
             def success(self):
                 web.ctx.orm.commit()
                 raise app.weblib.nocontent()
 
         hide_driver.add_subscriber(logger, HideDriverSubscriber())
-        hide_driver.perform(web.ctx.orm, web.ctx.logger, 
-                                  DriversRepository, driver_id)
+        hide_driver.perform(web.ctx.orm, web.ctx.logger, DriversRepository,
+                            driver_id, self.current_user.id)
         return ret.get()
 
 
