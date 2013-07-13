@@ -47,7 +47,6 @@ class DriveRequestsRepository(object):
 
     @staticmethod
     def accept(driver_id, passenger_id):
-        # XXX join with passenger and driver
         request = expunged(DriveRequest.query.\
                                 filter_by(driver_id=driver_id).\
                                 filter_by(passenger_id=passenger_id).\
