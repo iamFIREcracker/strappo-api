@@ -109,17 +109,23 @@ class HideDriverWorkflow(Publisher):
     def perform(self, orm, logger, repository, driver_id):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
+        driver_getter = DriverWithIdGetter()
         driver_hider = DriverHider()
 
-        class DriverHiderSubscriber(object):
+        class DriverGetterSubscriber(object):
             def driver_not_found(self, driver_id):
                 outer.publish('not_found', driver_id)
+            def driver_found(self, driver):
+                driver_hider.perform(driver)
+
+        class DriverHiderSubscriber(object):
             def driver_hid(self, driver):
                 orm.add(driver)
                 outer.publish('success')
 
+        driver_getter.add_subscriber(logger, DriverGetterSubscriber())
         driver_hider.add_subscriber(logger, DriverHiderSubscriber())
-        driver_hider.perform(repository, driver_id)
+        driver_getter.perform(repository, driver_id)
 
 
 class UnhideDriverWorkflow(Publisher):
