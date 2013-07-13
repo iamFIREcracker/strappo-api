@@ -93,7 +93,7 @@ def serialize(driver):
     return dict(id=driver.id, license_plate=driver.license_plate,
             telephone=driver.telephone, hidden=driver.hidden)
 
-class EditDriverAuthorizer(Publisher):
+class DriverWithUserIdAuthorizer(Publisher):
     def perform(self, user_id, driver):
         """Checkes if the 'user_id' property of the given driver record matches
         the given user ID.
