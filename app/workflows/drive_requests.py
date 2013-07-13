@@ -9,7 +9,7 @@ from app.pubsub.drive_requests import DriveRequestAcceptor
 from app.pubsub.drive_requests import DriveRequestCreator
 from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
-from app.pubsub.passengers import PassengerDeactivator
+from app.pubsub.passengers import MultiplePassengersDeactivator
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.pubsub import Publisher
 from app.weblib.pubsub import TaskSubmitter
@@ -79,32 +79,29 @@ class AddDriveRequestWorkflow(Publisher):
 class AcceptDriveRequestWorkflow(Publisher):
     """Defines a workflow to mark a drive request as accepted."""
 
-    def perform(self, orm, logger, drive_requests_repository,
-                driver_id, passenger_id, passengers_repository):
+    def perform(self, orm, logger, repository, driver_id, passenger_id):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         request_acceptor = DriveRequestAcceptor()
-        passenger_deactivator = PassengerDeactivator()
+        passengers_deactivator = MultiplePassengersDeactivator()
 
         class DriveRequestAcceptorSubscriber(object):
             def drive_request_not_found(self, driver_id, passenger_id):
                 outer.publish('not_found')
             def drive_request_accepted(self, request):
                 orm.add(request)
-                passenger_deactivator.perform(passengers_repository,
-                                              request.passenger_id)
+                passengers_deactivator.perform([request.passenger])
 
-        class PassengerDeactivatorSubscriber(object):
-            def passenger_not_found(self, passenger_id):
-                outer.publish('not_found')
-            def passenger_hid(self, passenger):
-                orm.add(passenger)
+        class PassengersDeactivatorSubscriber(object):
+            def passengers_hid(self, passengers):
+                orm.add(passengers[0])
                 outer.publish('success')
 
-        request_acceptor.add_subscriber(logger, DriveRequestAcceptorSubscriber())
-        passenger_deactivator.add_subscriber(logger,
-                                             PassengerDeactivatorSubscriber())
-        request_acceptor.perform(drive_requests_repository, driver_id,
+        request_acceptor.add_subscriber(logger,
+                                        DriveRequestAcceptorSubscriber())
+        passengers_deactivator.add_subscriber(logger,
+                                              PassengersDeactivatorSubscriber())
+        request_acceptor.perform(repository, driver_id,
                                  passenger_id)
 
 

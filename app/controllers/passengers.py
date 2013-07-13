@@ -97,5 +97,5 @@ class AcceptDriverController(ParamAuthorizableController):
         accept_drive_request.add_subscriber(logger,
                                            AcceptDriveRequestSubscriber())
         accept_drive_request.perform(web.ctx.orm, web.ctx.logger,
-                                    DriveRequestsRepository, driver_id,
-                                    passenger_id, PassengersRepository)
+                                     DriveRequestsRepository, driver_id,
+                                     passenger_id)
