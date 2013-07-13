@@ -9,6 +9,8 @@ from app.pubsub.drive_requests import DriveRequestAcceptor
 from app.pubsub.drive_requests import DriveRequestCreator
 from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
+from app.pubsub.drivers import DriverWithIdGetter
+from app.pubsub.drivers import DriverWithUserIdAuthorizer
 from app.pubsub.passengers import MultiplePassengersDeactivator
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.pubsub import Publisher
@@ -56,11 +58,26 @@ class ListActiveDriveRequestsWorkflow(Publisher):
 class AddDriveRequestWorkflow(Publisher):
     """Defines a workflow to create a new ride request."""
 
-    def perform(self, orm, logger, repository, driver_id, passenger_id, task):
+    def perform(self, orm, logger, drivers_repository, user_id, driver_id,
+                requests_repository, passenger_id, task):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
+        driver_getter = DriverWithIdGetter()
+        authorizer = DriverWithUserIdAuthorizer()
         request_creator = DriveRequestCreator()
         task_submitter = TaskSubmitter()
+
+        class DriverGetterSubscriber(object):
+            def driver_not_found(self, driver_id):
+                outer.publish('not_found', driver_id)
+            def driver_found(self, driver):
+                authorizer.perform(user_id, driver)
+
+        class AuthorizerSubscriber(object):
+            def unauthorized(self, user_id, driver):
+                outer.publish('unauthorized')
+            def authorized(self, user_id, driver):
+                request_creator.perform(requests_repository, driver_id, passenger_id)
 
         class DriveRequestCreatorSubscriber(object):
             def drive_request_created(self, request):
@@ -71,9 +88,11 @@ class AddDriveRequestWorkflow(Publisher):
             def task_created(self, task_id):
                 outer.publish('success')
 
+        driver_getter.add_subscriber(logger, DriverGetterSubscriber())
+        authorizer.add_subscriber(logger, AuthorizerSubscriber())
         request_creator.add_subscriber(logger, DriveRequestCreatorSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
-        request_creator.perform(repository, driver_id, passenger_id)
+        driver_getter.perform(drivers_repository, driver_id)
 
 
 class AcceptDriveRequestWorkflow(Publisher):

@@ -234,18 +234,53 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
 
 class TestAddDriveRequestWorkflow(unittest.TestCase):
 
+    def test_drive_request_cannot_be_created_for_not_existing_driver(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        drivers_repository = Mock(get=MagicMock(return_value=None))
+        subscriber = Mock(not_found=MagicMock())
+        instance = AddDriveRequestWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(orm, logger, drivers_repository, 'uid',
+                         'not_existing_id', None, None, None)
+
+        # Then
+        subscriber.not_found.assert_called_with('not_existing_id')
+
+    def test_drive_request_cannot_be_created_by_another_registered_user(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        drivers_repository = Mock(get=MagicMock())
+        subscriber = Mock(unauthorized=MagicMock())
+        instance = AddDriveRequestWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(orm, logger, drivers_repository, 'uid', 'did', None,
+                         None, None)
+
+        # Then
+        subscriber.unauthorized.assert_called_with()
+
+
     def test_drive_request_is_successfully_created_when_workflow_is_executed(self):
         # Given
         logger = Mock()
         orm = Mock()
-        repository = Mock(add=MagicMock())
+        drivers_repository = Mock(get=MagicMock(return_value=Mock(user_id='uid')))
+        requests_repository = Mock(add=MagicMock())
         task = Mock()
         subscriber = Mock(success=MagicMock())
         instance = AddDriveRequestWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, repository, 'did', 'pid', task)
+        instance.perform(orm, logger, drivers_repository, 'uid', 'did',
+                         requests_repository, 'pid', task)
 
         # Then
         subscriber.success.assert_called_with()
