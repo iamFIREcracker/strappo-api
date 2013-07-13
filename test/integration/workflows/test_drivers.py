@@ -229,22 +229,38 @@ class TestUnhideDriverWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, repository, 'not_existing_id')
+        instance.perform(orm, logger, repository, 'not_existing_id', None)
 
         # Then
         subscriber.not_found.assert_called_with('not_existing_id')
+
+    def test_driver_cannot_be_unhid_by_another_registered_user(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        repository = Mock(get=MagicMock())
+        subscriber = Mock(unauthorized=MagicMock())
+        instance = UnhideDriverWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(orm, logger, repository, 'did', 'uid')
+
+        # Then
+        subscriber.unauthorized.assert_called_with()
+
 
     def test_driver_is_successfully_unhid_if_id_is_valid(self):
         # Given
         logger = Mock()
         orm = Mock()
-        repository = Mock(get=MagicMock())
+        repository = Mock(get=MagicMock(return_value=Mock(user_id='uid')))
         subscriber = Mock(success=MagicMock())
         instance = UnhideDriverWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, repository, 'did')
+        instance.perform(orm, logger, repository, 'did', 'uid')
 
         # Then
         subscriber.success.assert_called_with()

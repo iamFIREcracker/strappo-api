@@ -156,16 +156,23 @@ class HideDriverWorkflow(Publisher):
 class UnhideDriverWorkflow(Publisher):
     """Defines a workflow to unhide a driver."""
 
-    def perform(self, orm, logger, repository, driver_id):
+    def perform(self, orm, logger, repository, driver_id, user_id):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         driver_getter = DriverWithIdGetter()
+        authorizer = DriverWithUserIdAuthorizer()
         drivers_unhider = MultipleDriversUnhider()
 
         class DriverGetterSubscriber(object):
             def driver_not_found(self, driver_id):
                 outer.publish('not_found', driver_id)
             def driver_found(self, driver):
+                authorizer.perform(user_id, driver)
+
+        class AuthorizerSubscriber(object):
+            def unauthorized(self, user_id, driver):
+                outer.publish('unauthorized')
+            def authorized(self, user_id, driver):
                 drivers_unhider.perform([driver])
 
         class DriversUnhiderSubscriber(object):
@@ -174,6 +181,7 @@ class UnhideDriverWorkflow(Publisher):
                 outer.publish('success')
 
         driver_getter.add_subscriber(logger, DriverGetterSubscriber())
+        authorizer.add_subscriber(logger, AuthorizerSubscriber())
         drivers_unhider.add_subscriber(logger, DriversUnhiderSubscriber())
         driver_getter.perform(repository, driver_id)
 
