@@ -78,13 +78,16 @@ class EditDriverController(ParamAuthorizableController):
             def not_found(self, driver_id):
                 web.ctx.orm.rollback()
                 raise web.notfound()
+            def unauthorized(self):
+                web.ctx.orm.rollback()
+                raise web.unauthorized()
             def success(self):
                 web.ctx.orm.commit()
                 raise app.weblib.nocontent()
 
         edit_driver.add_subscriber(logger, EditDriverSubscriber())
         edit_driver.perform(web.ctx.orm, web.ctx.logger, web.input(),
-                            DriversRepository, driver_id)
+                            DriversRepository, driver_id, self.current_user.id)
         return ret.get()
 
 
