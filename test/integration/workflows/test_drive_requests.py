@@ -264,25 +264,7 @@ class TestAcceptDriveRequestWorkflow(unittest.TestCase):
         # When
         instance.add_subscriber(subscriber)
         instance.perform(orm, logger, drive_requests_repository, 'invalid_did',
-                         'invalid_pid', None)
-
-        # Then
-        subscriber.not_found.assert_called_with()
-
-    def test_not_found_is_published_if_passenger_associated_with_request_was_invalid(self):
-        # Given
-        logger = Mock()
-        orm = Mock()
-        request = storage(id='rid', driver_id='did', passenger_id='pid')
-        drive_requests_repository = Mock(accept=MagicMock(return_value=request))
-        passengers_repository = Mock(deactivate=MagicMock(return_value=None))
-        subscriber = Mock(not_found=MagicMock())
-        instance = AcceptDriveRequestWorkflow()
-
-        # When
-        instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, drive_requests_repository, 'did', 'pid',
-                         passengers_repository)
+                         'invalid_pid')
 
         # Then
         subscriber.not_found.assert_called_with()
@@ -291,16 +273,15 @@ class TestAcceptDriveRequestWorkflow(unittest.TestCase):
         # Given
         logger = Mock()
         orm = Mock()
-        request = storage(id='rid', driver_id='did', passenger_id='pid')
+        request = storage(id='rid', driver_id='did', passenger_id='pid',
+                          passenger=storage())
         drive_requests_repository = Mock(accept=MagicMock(return_value=request))
-        passengers_repository = Mock(deactivate=MagicMock())
         subscriber = Mock(success=MagicMock())
         instance = AcceptDriveRequestWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, drive_requests_repository, 'did', 'pid',
-                         passengers_repository)
+        instance.perform(orm, logger, drive_requests_repository, 'did', 'pid')
 
         # Then
         subscriber.success.assert_called_with()

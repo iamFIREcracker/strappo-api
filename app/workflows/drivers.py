@@ -4,9 +4,8 @@
 
 import app.forms.drivers as drivers_forms
 from app.pubsub import ACSUserIdsNotifier
-from app.pubsub.drivers import DriverActivator
 from app.pubsub.drivers import DriverCreator
-from app.pubsub.drivers import DriverDeactivator
+from app.pubsub.drivers import DriverHider
 from app.pubsub.drivers import DriverUpdater
 from app.pubsub.drivers import DriverSerializer
 from app.pubsub.drivers import DriverWithIdGetter
@@ -109,17 +108,23 @@ class HideDriverWorkflow(Publisher):
     def perform(self, orm, logger, repository, driver_id):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
-        driver_deactivator = DriverDeactivator()
+        driver_getter = DriverWithIdGetter()
+        driver_hider = DriverHider()
 
-        class DriverDeactivatorSubscriber(object):
+        class DriverGetterSubscriber(object):
             def driver_not_found(self, driver_id):
                 outer.publish('not_found', driver_id)
+            def driver_found(self, driver):
+                driver_hider.perform(driver)
+
+        class DriverHiderSubscriber(object):
             def driver_hid(self, driver):
                 orm.add(driver)
                 outer.publish('success')
 
-        driver_deactivator.add_subscriber(logger, DriverDeactivatorSubscriber())
-        driver_deactivator.perform(repository, driver_id)
+        driver_getter.add_subscriber(logger, DriverGetterSubscriber())
+        driver_hider.add_subscriber(logger, DriverHiderSubscriber())
+        driver_getter.perform(repository, driver_id)
 
 
 class UnhideDriverWorkflow(Publisher):
@@ -128,17 +133,23 @@ class UnhideDriverWorkflow(Publisher):
     def perform(self, orm, logger, repository, driver_id):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
-        driver_activator = DriverActivator()
+        driver_getter = DriverWithIdGetter()
+        drivers_unhider = MultipleDriversUnhider()
 
-        class DriverActivatorSubscriber(object):
+        class DriverGetterSubscriber(object):
             def driver_not_found(self, driver_id):
                 outer.publish('not_found', driver_id)
-            def driver_unhid(self, driver):
-                orm.add(driver)
+            def driver_found(self, driver):
+                drivers_unhider.perform([driver])
+
+        class DriversUnhiderSubscriber(object):
+            def drivers_unhid(self, drivers):
+                orm.add(drivers[0])
                 outer.publish('success')
 
-        driver_activator.add_subscriber(logger, DriverActivatorSubscriber())
-        driver_activator.perform(repository, driver_id)
+        driver_getter.add_subscriber(logger, DriverGetterSubscriber())
+        drivers_unhider.add_subscriber(logger, DriversUnhiderSubscriber())
+        driver_getter.perform(repository, driver_id)
 
 
 class NotifyDriversWorkflow(Publisher):

@@ -67,36 +67,15 @@ class DriverUpdater(Publisher):
             self.publish('driver_updated', driver)
 
 
-class DriverDeactivator(Publisher): # XXX Rename in hider and accept driver as input
-    def perform(self, repository, driver_id):
-        """Temporarily hides the driver identified by ``driver_id``.
+class DriverHider(Publisher):
+    def perform(self, driver):
+        """Temporarily hides the given driver.
 
-        If no driver exists identified by ``driver_id``, then a
-        'driver_not_found' message is published together with the given driver
-        ID;  on the other hand, a 'driver_hid' message is published with
-        the updated driver record.
+        On success, a 'driver_hid' message is published with the updated driver
+        record.
         """
-        driver = repository.hide(driver_id)
-        if driver is None:
-            self.publish('driver_not_found', driver_id)
-        else:
-            self.publish('driver_hid', driver)
-
-
-class DriverActivator(Publisher): # XXX Use multiple drivers unhider
-    def perform(self, repository, driver_id):
-        """Unhides the driver identified by ``driver_id``.
-
-        If no driver exists identified by ``driver_id``, then a
-        'driver_not_found' message is published together with the given driver
-        ID;  on the other hand, a 'driver_hid' message is published with
-        the updated driver record.
-        """
-        driver = repository.unhide(driver_id)
-        if driver is None:
-            self.publish('driver_not_found', driver_id)
-        else:
-            self.publish('driver_unhid', driver)
+        driver.hidden = True
+        self.publish('driver_hid', driver)
 
 
 class MultipleDriversUnhider(Publisher):

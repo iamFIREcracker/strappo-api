@@ -216,28 +216,6 @@ class TestDriversRepository(unittest.TestCase):
         self.assertEquals('license', driver.license_plate)
         self.assertEquals('phone', driver.telephone)
 
-    def test_hide_of_not_existing_driver_should_return_nothing(self):
-        # When
-        driver = DriversRepository.hide('not_existing_id')
-
-        # Then
-        self.assertIsNone(driver)
-
-    def test_hide_of_existing_driver_should_return_the_hid_driver(self):
-        # Given
-        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
-        self.session.add(Driver(id='did', user_id='uid', license_plate='plate'))
-        self.session.commit()
-        self.session.remove()
-
-        # When
-        self.session.add(DriversRepository.hide('did'))
-        self.session.commit()
-        driver = Driver.query.filter_by(id='did').first()
-
-        # Then
-        self.assertEquals(True, driver.hidden)
-
     def test_unhide_of_not_existing_driver_should_return_nothing(self):
         # When
         driver = DriversRepository.unhide('not_existing_id')
