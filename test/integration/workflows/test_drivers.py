@@ -112,7 +112,7 @@ class TestEditDriverWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, params, None, None)
+        instance.perform(orm, logger, params, None, None, None)
 
         # Then
         subscriber.invalid_form.assert_called_with({
@@ -130,23 +130,40 @@ class TestEditDriverWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, params, repository, 'not_existing_id')
+        instance.perform(orm, logger, params, repository, 'not_existing_id', None)
 
         # Then
         subscriber.not_found.assert_called_with('not_existing_id')
+
+    def test_driver_cannot_be_update_from_another_registered_user(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        params = storage(license_plate='new_plate', telephone='new_phone')
+        repository = Mock(get=MagicMock())
+        subscriber = Mock(unauthorized=MagicMock())
+        instance = EditDriverWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(orm, logger, params, repository, 'did', 'uid')
+
+        # Then
+        subscriber.unauthorized.assert_called_with()
+
 
     def test_driver_is_successfully_updated_if_params_and_id_are_valid(self):
         # Given
         logger = Mock()
         orm = Mock()
         params = storage(license_plate='new_plate', telephone='new_phone')
-        repository = Mock(get=MagicMock())
+        repository = Mock(get=MagicMock(return_value=Mock(user_id='uid')))
         subscriber = Mock(success=MagicMock())
         instance = EditDriverWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, params, repository, 'did')
+        instance.perform(orm, logger, params, repository, 'did', 'uid')
 
         # Then
         subscriber.success.assert_called_with()

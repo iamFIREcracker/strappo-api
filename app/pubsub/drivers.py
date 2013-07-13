@@ -93,6 +93,21 @@ def serialize(driver):
     return dict(id=driver.id, license_plate=driver.license_plate,
             telephone=driver.telephone, hidden=driver.hidden)
 
+class EditDriverAuthorizer(Publisher):
+    def perform(self, user_id, driver):
+        """Checkes if the 'user_id' property of the given driver record matches
+        the given user ID.
+
+        An 'authorized' message is published if the given user ID is equal to
+        the one associated with the given driver;  otherwise, an 'unauthorized'
+        message is sent back to subscribers.
+        """
+        entitled = user_id == driver.user_id
+        if entitled:
+            self.publish('authorized', user_id, driver)
+        else:
+            self.publish('unauthorized', user_id, driver)
+
 
 class DriverSerializer(Publisher):
     def perform(self, driver):

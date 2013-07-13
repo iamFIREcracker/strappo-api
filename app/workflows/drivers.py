@@ -10,6 +10,7 @@ from app.pubsub.drivers import DriverUpdater
 from app.pubsub.drivers import DriverSerializer
 from app.pubsub.drivers import DriverWithIdGetter
 from app.pubsub.drivers import DriversACSUserIdExtractor
+from app.pubsub.drivers import EditDriverAuthorizer
 from app.pubsub.drivers import HiddenDriversGetter
 from app.pubsub.drivers import MultipleDriversUnhider
 from app.pubsub.drivers import UnhiddenDriversGetter
@@ -76,11 +77,12 @@ class ViewDriverWorkflow(Publisher):
 class EditDriverWorkflow(Publisher):
     """Defines a workflow to edit the details of a registered driver."""
 
-    def perform(self, orm, logger, params, repository, driver_id):
+    def perform(self, orm, logger, params, repository, driver_id, user_id):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         form_validator = FormValidator()
         driver_getter = DriverWithIdGetter()
+        authorizer = EditDriverAuthorizer()
         driver_updater = DriverUpdater()
         future_form = Future()
 
@@ -95,6 +97,12 @@ class EditDriverWorkflow(Publisher):
             def driver_not_found(self, driver_id):
                 outer.publish('not_found', driver_id)
             def driver_found(self, driver):
+                authorizer.perform(user_id, driver)
+
+        class EditDriverAuthorizerSubscriber(object):
+            def unauthorized(self, user_id, driver):
+                outer.publish('unauthorized')
+            def authorized(self, user_id, driver):
                 form = future_form.get()
                 driver_updater.perform(driver, form.d.license_plate,
                                        form.d.telephone)
@@ -106,6 +114,7 @@ class EditDriverWorkflow(Publisher):
 
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
         driver_getter.add_subscriber(logger, DriverGetterSubscriber())
+        authorizer.add_subscriber(logger, EditDriverAuthorizerSubscriber())
         driver_updater.add_subscriber(logger, DriverUpdaterSubscriber())
         form_validator.perform(drivers_forms.update(), params,
                                describe_invalid_form)
