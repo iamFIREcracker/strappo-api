@@ -287,19 +287,53 @@ class TestAddDriveRequestWorkflow(unittest.TestCase):
 
 
 class TestAcceptDriveRequestWorkflow(unittest.TestCase):
+    def test_drive_request_for_not_existing_passenger_cannot_be_accepted(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        passengers_repository = Mock(get=MagicMock(return_value=None))
+        subscriber = Mock(not_found=MagicMock())
+        instance = AcceptDriveRequestWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(orm, logger, passengers_repository, 'not_existing_id',
+                         None, None, None)
+
+        # Then
+        subscriber.not_found.assert_called_with('not_existing_id')
+
+
+    def test_drive_request_cannot_be_accepted_by_another_registered_user(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        passengers_repository = Mock(get=MagicMock(return_value=Mock()))
+        subscriber = Mock(unauthorized=MagicMock())
+        instance = AcceptDriveRequestWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(orm, logger, passengers_repository, 'pid', 'uid',
+                         None, None)
+
+        # Then
+        subscriber.unauthorized.assert_called_with()
+
 
     def test_not_found_is_published_if_no_drive_requests_exists_associated_with_given_ids(self):
         # Given
         logger = Mock()
         orm = Mock()
+        passengers_repository = Mock(get=MagicMock(return_value=Mock(user_id='uid')))
         drive_requests_repository = Mock(accept=MagicMock(return_value=None))
         subscriber = Mock(not_found=MagicMock())
         instance = AcceptDriveRequestWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, drive_requests_repository, 'invalid_did',
-                         'invalid_pid')
+        instance.perform(orm, logger, passengers_repository, 'pid', 'uid',
+                         drive_requests_repository, 'invalid_pid')
 
         # Then
         subscriber.not_found.assert_called_with()
@@ -308,6 +342,7 @@ class TestAcceptDriveRequestWorkflow(unittest.TestCase):
         # Given
         logger = Mock()
         orm = Mock()
+        passengers_repository = Mock(get=MagicMock(return_value=Mock(user_id='uid')))
         request = storage(id='rid', driver_id='did', passenger_id='pid',
                           passenger=storage())
         drive_requests_repository = Mock(accept=MagicMock(return_value=request))
@@ -316,7 +351,8 @@ class TestAcceptDriveRequestWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, drive_requests_repository, 'did', 'pid')
+        instance.perform(orm, logger, passengers_repository, 'pid', 'uid',
+                         drive_requests_repository, 'did')
 
         # Then
         subscriber.success.assert_called_with()

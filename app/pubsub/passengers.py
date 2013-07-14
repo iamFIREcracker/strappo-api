@@ -41,6 +41,22 @@ class PassengerCreator(Publisher):
         self.publish('passenger_created', passenger)
 
 
+class PassengerWithUserIdAuthorizer(Publisher):
+    def perform(self, user_id, passenger):
+        """Checkes if the 'user_id' property of the given passenger record
+        matches the given user ID.
+
+        An 'authorized' message is published if the given user ID is equal to
+        the one associated with the given passenger;  otherwise, an
+        'unauthorized' message is sent back to subscribers.
+        """
+        entitled = user_id == passenger.user_id
+        if entitled:
+            self.publish('authorized', user_id, passenger)
+        else:
+            self.publish('unauthorized', user_id, passenger)
+
+
 def serialize(passenger):
     if passenger is None:
         return None

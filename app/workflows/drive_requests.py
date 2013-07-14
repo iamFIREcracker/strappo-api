@@ -11,6 +11,8 @@ from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
 from app.pubsub.drivers import DriverWithIdGetter
 from app.pubsub.drivers import DriverWithUserIdAuthorizer
+from app.pubsub.passengers import PassengerWithIdGetter
+from app.pubsub.passengers import PassengerWithUserIdAuthorizer
 from app.pubsub.passengers import MultiplePassengersDeactivator
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.pubsub import Publisher
@@ -98,15 +100,31 @@ class AddDriveRequestWorkflow(Publisher):
 class AcceptDriveRequestWorkflow(Publisher):
     """Defines a workflow to mark a drive request as accepted."""
 
-    def perform(self, orm, logger, repository, driver_id, passenger_id):
+    def perform(self, orm, logger, passengers_repository, passenger_id, user_id, 
+                requests_repository, driver_id):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
+        passenger_getter = PassengerWithIdGetter()
+        authorizer = PassengerWithUserIdAuthorizer()
         request_acceptor = DriveRequestAcceptor()
         passengers_deactivator = MultiplePassengersDeactivator()
 
+        class PassengerGetterSubscriber(object):
+            def passenger_not_found(self, passenger_id):
+                outer.publish('not_found', passenger_id)
+            def passenger_found(self, passenger):
+                authorizer.perform(user_id, passenger)
+
+        class AuthorizerSubscriber(object):
+            def unauthorized(self, user_id, passenger):
+                outer.publish('unauthorized')
+            def authorized(self, user_id, passenger):
+                request_acceptor.perform(requests_repository, driver_id,
+                                         passenger_id)
+
         class DriveRequestAcceptorSubscriber(object):
             def drive_request_not_found(self, driver_id, passenger_id):
-                outer.publish('not_found')
+                outer.publish('not_found') # XXX Bad request?!
             def drive_request_accepted(self, request):
                 orm.add(request)
                 passengers_deactivator.perform([request.passenger])
@@ -116,12 +134,13 @@ class AcceptDriveRequestWorkflow(Publisher):
                 orm.add(passengers[0])
                 outer.publish('success')
 
+        passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
+        authorizer.add_subscriber(logger, AuthorizerSubscriber())
         request_acceptor.add_subscriber(logger,
                                         DriveRequestAcceptorSubscriber())
         passengers_deactivator.add_subscriber(logger,
                                               PassengersDeactivatorSubscriber())
-        request_acceptor.perform(repository, driver_id,
-                                 passenger_id)
+        passenger_getter.perform(passengers_repository, passenger_id)
 
 
 class DeactivateActiveDriveRequestsWorkflow(Publisher):
