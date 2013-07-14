@@ -304,4 +304,6 @@ def restart():
     sdo("service redis-server restart")
 
     print(cyan("Restarting supervisor..."))
-    sdo("service supervisor restart")
+    # XXX Issuing a 'service supervisor restart' will produce an error!!!
+    sdo("service supervisor stop")
+    sdo("service supervisor start")
