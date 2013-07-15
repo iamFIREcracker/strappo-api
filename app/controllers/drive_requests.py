@@ -4,7 +4,9 @@
 import web
 
 from app.controllers import ParamAuthorizableController
+from app.repositories.drivers import DriversRepository
 from app.repositories.drive_requests import DriveRequestsRepository
+from app.repositories.passengers import PassengersRepository
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.request_decorators import api
@@ -22,11 +24,15 @@ class ListActiveDriveRequestsController(ParamAuthorizableController):
         ret = Future()
 
         class ListActiveDriveRequestsSubscriber(object):
+            def unauthorized(self):
+                raise web.unauthorized()
             def success(self, blob):
                 ret.set(jsonify(drive_requests=blob))
 
         accepted_requests.add_subscriber(logger,
                                          ListActiveDriveRequestsSubscriber())
-        accepted_requests.perform(web.ctx.logger, DriveRequestsRepository,
+        accepted_requests.perform(web.ctx.logger, DriversRepository,
+                                  PassengersRepository, DriveRequestsRepository,
+                                  self.current_user.id,
                                   web.input(driver_id=None, passenger_id=None))
         return ret.get()
