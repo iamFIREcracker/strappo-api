@@ -76,7 +76,9 @@ class Driver(Base):
     created = Column(DateTime, default=datetime.now)
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     drive_requests = relationship('DriveRequest', uselist=True,
-                          backref=backref('driver', cascade='expunge'))
+                                  backref=backref('driver', cascade='expunge'),
+                                  primaryjoin="and_(Driver.id == DriveRequest.driver_id,"
+                                                   "DriveRequest.active == True)")
 
     def __repr__(self):
         return '<Driver id=%(id)s, user_id=%(user_id)s, '\
@@ -96,7 +98,9 @@ class Passenger(Base):
     created = Column(DateTime, default=datetime.now)
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     drive_requests = relationship('DriveRequest', uselist=True,
-                          backref=backref('passenger', cascade='expunge'))
+                                  backref=backref('passenger', cascade='expunge'),
+                                  primaryjoin="and_(Passenger.id == DriveRequest.passenger_id,"
+                                                   "DriveRequest.active == True)")
 
     def __repr__(self):
         return '<Passenger id=%(id)s, user_id=%(user_id)s, '\
