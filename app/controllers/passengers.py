@@ -71,12 +71,14 @@ class ViewPassengerController(ParamAuthorizableController):
         class ViewPassengerSubscriber(object):
             def not_found(self, passenger_id):
                 raise web.notfound()
+            def unauthorized(self):
+                raise web.unauthorized()
             def success(self, blob):
                 ret.set(jsonify(passenger=blob))
 
         view_passenger.add_subscriber(logger, ViewPassengerSubscriber())
         view_passenger.perform(web.ctx.logger, PassengersRepository,
-                               passenger_id)
+                               passenger_id, self.current_user.id)
         return ret.get()
 
 
