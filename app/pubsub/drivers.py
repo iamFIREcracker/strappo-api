@@ -109,6 +109,23 @@ class DriverWithUserIdAuthorizer(Publisher):
             self.publish('unauthorized', user_id, driver)
 
 
+class DriverLinkedToPassengerWithUserIdAuthorizer(Publisher):
+    def perform(self, user_id, driver):
+        """Checks if the 'user_id' property of at least one of the passengers
+        contained in the linked drive_requests, matches the given user ID.
+
+        An 'authorized' message is published if the given user is authorized
+        to view driver details, otherwise an 'unauthorized' message will be
+        sent back to subscribers.
+        """
+        matching_requests = (user_id == r.passenger.user_id
+                             for r in driver.drive_requests)
+        if any(matching_requests):
+            self.publish('authorized', user_id, driver)
+        else:
+            self.publish('unauthorized', user_id, driver)
+
+
 class DriverSerializer(Publisher):
     def perform(self, driver):
         """Convert the given driver into a serializable dictionary.

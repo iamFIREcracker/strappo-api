@@ -11,6 +11,7 @@ from app.pubsub.drivers import DriverSerializer
 from app.pubsub.drivers import DriverWithIdGetter
 from app.pubsub.drivers import DriversACSUserIdExtractor
 from app.pubsub.drivers import DriverWithUserIdAuthorizer
+from app.pubsub.drivers import DriverLinkedToPassengerWithUserIdAuthorizer
 from app.pubsub.drivers import HiddenDriversGetter
 from app.pubsub.drivers import MultipleDriversUnhider
 from app.pubsub.drivers import UnhiddenDriversGetter
@@ -51,24 +52,43 @@ class AddDriverWorkflow(Publisher):
 class ViewDriverWorkflow(Publisher):
     """Defines a workflow to view the details of a registered driver."""
 
-    def perform(self, logger, repository, driver_id):
+    def perform(self, logger, repository, driver_id, user_id):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         drivers_getter = DriverWithIdGetter()
+        with_user_id_authorizer = DriverWithUserIdAuthorizer()
+        linked_to_passengers_authorizer = \
+                DriverLinkedToPassengerWithUserIdAuthorizer()
         driver_serializer = DriverSerializer()
 
         class DriverGetterSubscriber(object):
             def driver_not_found(self, driver_id):
                 outer.publish('not_found', driver_id)
             def driver_found(self, driver):
+                with_user_id_authorizer.perform(user_id, driver)
+
+        class WithUserIdAuthorizerSubscriber(object):
+            def unauthorized(self, user_id, driver):
+                linked_to_passengers_authorizer.perform(user_id, driver)
+            def authorized(self, user_id, driver):
+                driver_serializer.perform(driver)
+
+        class LinkedToPassengersAuthorizerSubscriber(object):
+            def unauthorized(self, user_id, driver):
+                outer.publish('unauthorized')
+            def authorized(self, user_id, driver):
                 driver_serializer.perform(driver)
 
         class DriverSerializerSubscriber(object):
             def driver_serialized(self, blob):
                 outer.publish('success', blob)
 
-
         drivers_getter.add_subscriber(logger, DriverGetterSubscriber())
+        with_user_id_authorizer.\
+                add_subscriber(logger, WithUserIdAuthorizerSubscriber())
+        linked_to_passengers_authorizer.\
+                add_subscriber(logger,
+                               LinkedToPassengersAuthorizerSubscriber())
         driver_serializer.add_subscriber(logger,
                                          DriverSerializerSubscriber())
         drivers_getter.perform(repository, driver_id)
