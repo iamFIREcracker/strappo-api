@@ -57,7 +57,7 @@ class ViewDriverWorkflow(Publisher):
         logger = LoggingSubscriber(logger)
         drivers_getter = DriverWithIdGetter()
         with_user_id_authorizer = DriverWithUserIdAuthorizer()
-        linked_to_passengers_authorizer = \
+        linked_to_passenger_authorizer = \
                 DriverLinkedToPassengerWithUserIdAuthorizer()
         driver_serializer = DriverSerializer()
 
@@ -69,11 +69,11 @@ class ViewDriverWorkflow(Publisher):
 
         class WithUserIdAuthorizerSubscriber(object):
             def unauthorized(self, user_id, driver):
-                linked_to_passengers_authorizer.perform(user_id, driver)
+                linked_to_passenger_authorizer.perform(user_id, driver)
             def authorized(self, user_id, driver):
                 driver_serializer.perform(driver)
 
-        class LinkedToPassengersAuthorizerSubscriber(object):
+        class LinkedToPassengerAuthorizerSubscriber(object):
             def unauthorized(self, user_id, driver):
                 outer.publish('unauthorized')
             def authorized(self, user_id, driver):
@@ -86,9 +86,9 @@ class ViewDriverWorkflow(Publisher):
         drivers_getter.add_subscriber(logger, DriverGetterSubscriber())
         with_user_id_authorizer.\
                 add_subscriber(logger, WithUserIdAuthorizerSubscriber())
-        linked_to_passengers_authorizer.\
+        linked_to_passenger_authorizer.\
                 add_subscriber(logger,
-                               LinkedToPassengersAuthorizerSubscriber())
+                               LinkedToPassengerAuthorizerSubscriber())
         driver_serializer.add_subscriber(logger,
                                          DriverSerializerSubscriber())
         drivers_getter.perform(repository, driver_id)

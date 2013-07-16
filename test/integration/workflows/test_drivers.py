@@ -47,7 +47,7 @@ class TestViewDriverWorkflow(unittest.TestCase):
         # Then
         subscriber.unauthorized.assert_called_with()
 
-    def test_serialized_driver_is_published_if_invoked_by_drive_owner(self):
+    def test_serialized_driver_is_published_if_invoked_by_driver_owner(self):
         # Given
         logger = Mock()
         driver = storage(id='did', user_id='uid', license_plate='1242124',
