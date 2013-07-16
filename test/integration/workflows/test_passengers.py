@@ -114,7 +114,7 @@ class TestAddPassengerWorkflow(unittest.TestCase):
 
 
 class TestViewPassengerWorkflow(unittest.TestCase):
-    def test_with_invalid_id_should_publish_a_not_found(self):
+    def test_not_found_is_published_if_invoked_with_invalid_passenger_id(self):
         # Given
         logger = Mock()
         repository = Mock(get=MagicMock(return_value=None))
@@ -123,12 +123,26 @@ class TestViewPassengerWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(logger, repository, 'not_existing')
+        instance.perform(logger, repository, 'not_existing', None)
 
         # Then
         subscriber.not_found.assert_called_with('not_existing')
 
-    def test_with_existing_id_should_return_serialized_passenger(self):
+    def test_another_registered_user_not_having_drive_request_in_common_cannot_view_passenger(self):
+        # Given
+        logger = Mock()
+        repository = Mock(get=MagicMock(return_value=Mock(drive_requests=[])))
+        subscriber = Mock(unauthorized=MagicMock())
+        instance = ViewPassengerWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, repository, 'pid', 'uid')
+
+        # Then
+        subscriber.unauthorized.assert_called_with()
+
+    def test_serialized_passenger_is_published_if_invoked_by_passenger_owner(self):
         # Given
         logger = Mock()
         passenger = storage(id='pid', user_id='uid', origin='origin',
@@ -141,7 +155,37 @@ class TestViewPassengerWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(logger, repository, 'pid')
+        instance.perform(logger, repository, 'pid', 'uid')
+
+        # Then
+        subscriber.success.assert_called_with({
+            'origin': 'origin',
+            'destination': 'destination',
+            'seats': 1,
+            'id': 'pid',
+            'user': {
+                'id': 'uid',
+                'name': 'name',
+                'avatar': 'avatar'
+            }
+        })
+
+    def test_serialized_passenger_is_published_if_invoked_by_linked_driver(self):
+        # Given
+        logger = Mock()
+        passenger = storage(id='pid', user_id='uid', origin='origin',
+                            destination='destination', seats=1,
+                            user=storage(id='uid', name='name',
+                                         avatar='avatar'),
+                            drive_requests=[storage(driver=storage(id='did',
+                                                                   user_id='uid2'))])
+        repository = Mock(get=MagicMock(return_value=passenger))
+        subscriber = Mock(success=MagicMock())
+        instance = ViewPassengerWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, repository, 'pid', 'uid2')
 
         # Then
         subscriber.success.assert_called_with({

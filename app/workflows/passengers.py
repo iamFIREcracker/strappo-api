@@ -11,6 +11,8 @@ from app.pubsub.passengers import MultiplePassengersSerializer
 from app.pubsub.passengers import PassengerACSUserIdExtractor
 from app.pubsub.passengers import PassengerCreator
 from app.pubsub.passengers import PassengerSerializer
+from app.pubsub.passengers import PassengerWithUserIdAuthorizer
+from app.pubsub.passengers import PassengerLinkedToDriverWithUserIdAuthorizer
 from app.weblib.forms import describe_invalid_form
 from app.weblib.pubsub import FormValidator
 from app.weblib.pubsub import Publisher
@@ -83,24 +85,42 @@ class AddPassengerWorkflow(Publisher):
 class ViewPassengerWorkflow(Publisher):
     """Defines a workflow to view the details of an active passenger."""
 
-    def perform(self, logger, repository, passenger_id):
+    def perform(self, logger, repository, passenger_id, user_id):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         passengers_getter = PassengerWithIdGetter()
+        with_user_id_authorizer = PassengerWithUserIdAuthorizer()
+        linked_to_driver_authorizer = \
+                PassengerLinkedToDriverWithUserIdAuthorizer()
         passenger_serializer = PassengerSerializer()
 
         class PassengerGetterSubscriber(object):
             def passenger_not_found(self, passenger_id):
                 outer.publish('not_found', passenger_id)
             def passenger_found(self, passenger):
+                with_user_id_authorizer.perform(user_id, passenger)
+
+        class WithUserIdAuthorizerSubscriber(object):
+            def unauthorized(self, user_id, passenger):
+                linked_to_driver_authorizer.perform(user_id, passenger)
+            def authorized(self, user_id, passenger):
+                passenger_serializer.perform(passenger)
+
+        class LinkedToDriverAuthorizerSubscriber(object):
+            def unauthorized(self, user_id, passenger):
+                outer.publish('unauthorized')
+            def authorized(self, user_id, passenger):
                 passenger_serializer.perform(passenger)
 
         class PassengersSerializerSubscriber(object):
             def passenger_serialized(self, blob):
                 outer.publish('success', blob)
 
-
         passengers_getter.add_subscriber(logger, PassengerGetterSubscriber())
+        with_user_id_authorizer.add_subscriber(logger,
+                                               WithUserIdAuthorizerSubscriber())
+        linked_to_driver_authorizer.\
+                add_subscriber(logger, LinkedToDriverAuthorizerSubscriber())
         passenger_serializer.add_subscriber(logger,
                                             PassengersSerializerSubscriber())
         passengers_getter.perform(repository, passenger_id)
