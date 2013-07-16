@@ -55,11 +55,14 @@ class ViewDriverController(ParamAuthorizableController):
         class ViewDriverSubscriber(object):
             def not_found(self, driver_id):
                 raise web.notfound()
+            def unauthorized(self):
+                raise web.unauthorized()
             def success(self, blob):
                 ret.set(jsonify(driver=blob))
 
         view_driver.add_subscriber(logger, ViewDriverSubscriber())
-        view_driver.perform(web.ctx.logger, DriversRepository, driver_id)
+        view_driver.perform(web.ctx.logger, DriversRepository, driver_id,
+                            self.current_user.id)
         return ret.get()
 
 
