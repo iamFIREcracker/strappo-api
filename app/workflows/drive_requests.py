@@ -114,7 +114,8 @@ class AddDriveRequestWorkflow(Publisher):
             def unauthorized(self, user_id, driver):
                 outer.publish('unauthorized')
             def authorized(self, user_id, driver):
-                request_creator.perform(requests_repository, driver_id, passenger_id)
+                request_creator.perform(requests_repository, driver_id,
+                                        passenger_id)
 
         class DriveRequestCreatorSubscriber(object):
             def drive_request_created(self, request):
