@@ -300,9 +300,6 @@ def update():
 @task
 def restart():
     ''' Restart the app.  Usable from other commands or from the CLI.'''
-    print(cyan("Restarting redis..."))
-    sdo("service redis-server restart")
-
     print(cyan("Restarting supervisor..."))
     # XXX Issuing a 'service supervisor restart' will produce an error!!!
     sdo("service supervisor stop")
