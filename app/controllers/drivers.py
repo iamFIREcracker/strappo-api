@@ -55,11 +55,14 @@ class ViewDriverController(ParamAuthorizableController):
         class ViewDriverSubscriber(object):
             def not_found(self, driver_id):
                 raise web.notfound()
+            def unauthorized(self):
+                raise web.unauthorized()
             def success(self, blob):
                 ret.set(jsonify(driver=blob))
 
         view_driver.add_subscriber(logger, ViewDriverSubscriber())
-        view_driver.perform(web.ctx.logger, DriversRepository, driver_id)
+        view_driver.perform(web.ctx.logger, DriversRepository, driver_id,
+                            self.current_user.id)
         return ret.get()
 
 
@@ -78,13 +81,16 @@ class EditDriverController(ParamAuthorizableController):
             def not_found(self, driver_id):
                 web.ctx.orm.rollback()
                 raise web.notfound()
+            def unauthorized(self):
+                web.ctx.orm.rollback()
+                raise web.unauthorized()
             def success(self):
                 web.ctx.orm.commit()
                 raise app.weblib.nocontent()
 
         edit_driver.add_subscriber(logger, EditDriverSubscriber())
         edit_driver.perform(web.ctx.orm, web.ctx.logger, web.input(),
-                            DriversRepository, driver_id)
+                            DriversRepository, driver_id, self.current_user.id)
         return ret.get()
 
 
@@ -100,13 +106,16 @@ class HideDriverController(ParamAuthorizableController):
             def not_found(self, driver_id):
                 web.ctx.orm.rollback()
                 raise web.notfound()
+            def unauthorized(self):
+                web.ctx.orm.rollback()
+                raise web.unauthorized()
             def success(self):
                 web.ctx.orm.commit()
                 raise app.weblib.nocontent()
 
         hide_driver.add_subscriber(logger, HideDriverSubscriber())
-        hide_driver.perform(web.ctx.orm, web.ctx.logger, 
-                                  DriversRepository, driver_id)
+        hide_driver.perform(web.ctx.orm, web.ctx.logger, DriversRepository,
+                            driver_id, self.current_user.id)
         return ret.get()
 
 
@@ -122,13 +131,16 @@ class UnhideDriverController(ParamAuthorizableController):
             def not_found(self, driver_id):
                 web.ctx.orm.rollback()
                 raise web.notfound()
+            def unauthorized(self):
+                web.ctx.orm.rollback()
+                raise web.unauthorized()
             def success(self):
                 web.ctx.orm.commit()
                 raise app.weblib.nocontent()
 
         unhide_driver.add_subscriber(logger, UnhideDriverSubscriber())
         unhide_driver.perform(web.ctx.orm, web.ctx.logger, DriversRepository,
-                              driver_id)
+                              driver_id, self.current_user.id)
         return ret.get()
 
 
@@ -140,11 +152,18 @@ class AcceptPassengerController(ParamAuthorizableController):
         add_drive_request = AddDriveRequestWorkflow()
 
         class AddDriveRequestSubscriber(object):
+            def not_found(self, driver_id):
+                web.ctx.orm.rollback()
+                raise web.notfound()
+            def unauthorized(self):
+                web.ctx.orm.rollback()
+                raise web.unauthorized()
             def success(self):
                 web.ctx.orm.commit()
                 raise app.weblib.nocontent()
 
         add_drive_request.add_subscriber(logger, AddDriveRequestSubscriber())
         add_drive_request.perform(web.ctx.orm, web.ctx.logger,
-                                 DriveRequestsRepository, driver_id,
-                                 passenger_id, NotifyPassengerTask)
+                                  DriversRepository, self.current_user.id,
+                                  driver_id, DriveRequestsRepository,
+                                  passenger_id, NotifyPassengerTask)

@@ -51,20 +51,16 @@ class DriverCreator(Publisher):
 
 
 class DriverUpdater(Publisher):
-    def perform(self, repository, driver_id, license_plate, telephone):
-        """Sets the properties 'license_plate' and 'telephone' of the driver
-        identified by ``driver_id``.
+    def perform(self, driver, license_plate, telephone):
+        """Sets the properties 'license_plate' and 'telephone' of the given
+        driver.
 
-        If no driver exists identified by ``driver_id``, then a
-        'driver_not_found' message is published together with the given driver
-        ID;  on the other hand, a 'driver_published' message is published with
-        the retrieved record.
+        When done, a 'driver_update' message is published together with
+        the update driver.
         """
-        driver = repository.update(driver_id, license_plate, telephone)
-        if driver is None:
-            self.publish('driver_not_found', driver_id)
-        else:
-            self.publish('driver_updated', driver)
+        driver.license_plate = license_plate
+        driver.telephone = telephone
+        self.publish('driver_updated', driver)
 
 
 class DriverHider(Publisher):
@@ -96,6 +92,38 @@ def serialize(driver):
         return None
     return dict(id=driver.id, license_plate=driver.license_plate,
             telephone=driver.telephone, hidden=driver.hidden)
+
+class DriverWithUserIdAuthorizer(Publisher):
+    def perform(self, user_id, driver):
+        """Checkes if the 'user_id' property of the given driver record matches
+        the given user ID.
+
+        An 'authorized' message is published if the given user ID is equal to
+        the one associated with the given driver;  otherwise, an 'unauthorized'
+        message is sent back to subscribers.
+        """
+        entitled = user_id == driver.user_id
+        if entitled:
+            self.publish('authorized', user_id, driver)
+        else:
+            self.publish('unauthorized', user_id, driver)
+
+
+class DriverLinkedToPassengerWithUserIdAuthorizer(Publisher):
+    def perform(self, user_id, driver):
+        """Checks if the 'user_id' property of at least one of the passengers
+        contained in the linked drive_requests, matches the given user ID.
+
+        An 'authorized' message is published if the given user is authorized
+        to view driver details, otherwise an 'unauthorized' message will be
+        sent back to subscribers.
+        """
+        matching_requests = (user_id == r.passenger.user_id
+                             for r in driver.drive_requests)
+        if any(matching_requests):
+            self.publish('authorized', user_id, driver)
+        else:
+            self.publish('unauthorized', user_id, driver)
 
 
 class DriverSerializer(Publisher):

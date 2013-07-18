@@ -71,12 +71,14 @@ class ViewPassengerController(ParamAuthorizableController):
         class ViewPassengerSubscriber(object):
             def not_found(self, passenger_id):
                 raise web.notfound()
+            def unauthorized(self):
+                raise web.unauthorized()
             def success(self, blob):
                 ret.set(jsonify(passenger=blob))
 
         view_passenger.add_subscriber(logger, ViewPassengerSubscriber())
         view_passenger.perform(web.ctx.logger, PassengersRepository,
-                               passenger_id)
+                               passenger_id, self.current_user.id)
         return ret.get()
 
 
@@ -89,7 +91,11 @@ class AcceptDriverController(ParamAuthorizableController):
 
         class AcceptDriveRequestSubscriber(object):
             def not_found(self):
+                web.ctx.orm.rollback()
                 raise web.notfound()
+            def unauthorized(self):
+                web.ctx.orm.rollback()
+                raise web.unauthorized()
             def success(self):
                 web.ctx.orm.commit()
                 raise app.weblib.nocontent()
@@ -97,5 +103,6 @@ class AcceptDriverController(ParamAuthorizableController):
         accept_drive_request.add_subscriber(logger,
                                            AcceptDriveRequestSubscriber())
         accept_drive_request.perform(web.ctx.orm, web.ctx.logger,
-                                     DriveRequestsRepository, driver_id,
-                                     passenger_id)
+                                     PassengersRepository, passenger_id,
+                                     self.current_user.id,
+                                     DriveRequestsRepository, driver_id)

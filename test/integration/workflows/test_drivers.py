@@ -28,12 +28,26 @@ class TestViewDriverWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(logger, repository, 'not_existing_id')
+        instance.perform(logger, repository, 'not_existing_id', None)
 
         # Then
         subscriber.not_found.assert_called_with('not_existing_id')
 
-    def test_serialized_driver_is_published_if_invoked_with_an_existing_driver_id(self):
+    def test_another_registered_user_not_having_drive_request_in_common_cannot_view_driver(self):
+        # Given
+        logger = Mock()
+        repository = Mock(get=MagicMock(return_value=Mock(drive_requests=[])))
+        subscriber = Mock(unauthorized=MagicMock())
+        instance = ViewDriverWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, repository, 'did', 'uid')
+
+        # Then
+        subscriber.unauthorized.assert_called_with()
+
+    def test_serialized_driver_is_published_if_invoked_by_driver_owner(self):
         # Given
         logger = Mock()
         driver = storage(id='did', user_id='uid', license_plate='1242124',
@@ -45,7 +59,7 @@ class TestViewDriverWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(logger, repository, 'not_existing_id')
+        instance.perform(logger, repository, 'did', 'uid')
 
         # Then
         subscriber.success.assert_called_with({
@@ -59,6 +73,36 @@ class TestViewDriverWorkflow(unittest.TestCase):
                 'avatar': 'avatar',
             }
         })
+
+    def test_serialized_driver_is_published_if_invoked_by_linked_passenger(self):
+        # Given
+        logger = Mock()
+        driver = storage(id='did', user_id='uid', license_plate='1242124',
+                         telephone='+124 453534', hidden=False,
+                         user=storage(name='name', avatar='avatar', id='uid'),
+                         drive_requests=[storage(passenger=storage(id='pid',
+                                                                   user_id='uid2'))])
+        repository = Mock(get=MagicMock(return_value=driver))
+        subscriber = Mock(success=MagicMock())
+        instance = ViewDriverWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, repository, 'did', 'uid2')
+
+        # Then
+        subscriber.success.assert_called_with({
+            'hidden': False,
+            'id': 'did',
+            'license_plate': '1242124',
+            'telephone': '+124 453534',
+            'user': {
+                'id': 'uid',
+                'name': 'name',
+                'avatar': 'avatar',
+            }
+        })
+
 
 
 class TestAddDriverWorkflow(unittest.TestCase):
@@ -112,7 +156,7 @@ class TestEditDriverWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, params, None, None)
+        instance.perform(orm, logger, params, None, None, None)
 
         # Then
         subscriber.invalid_form.assert_called_with({
@@ -124,29 +168,46 @@ class TestEditDriverWorkflow(unittest.TestCase):
         logger = Mock()
         orm = Mock()
         params = storage(license_plate='plate', telephone='Telephone')
-        repository = Mock(update=MagicMock(return_value=None))
+        repository = Mock(get=MagicMock(return_value=None))
         subscriber = Mock(not_found=MagicMock())
         instance = EditDriverWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, params, repository, 'not_existing_id')
+        instance.perform(orm, logger, params, repository, 'not_existing_id', None)
 
         # Then
         subscriber.not_found.assert_called_with('not_existing_id')
+
+    def test_driver_cannot_be_update_from_another_registered_user(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        params = storage(license_plate='new_plate', telephone='new_phone')
+        repository = Mock(get=MagicMock())
+        subscriber = Mock(unauthorized=MagicMock())
+        instance = EditDriverWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(orm, logger, params, repository, 'did', 'uid')
+
+        # Then
+        subscriber.unauthorized.assert_called_with()
+
 
     def test_driver_is_successfully_updated_if_params_and_id_are_valid(self):
         # Given
         logger = Mock()
         orm = Mock()
         params = storage(license_plate='new_plate', telephone='new_phone')
-        repository = Mock(update=MagicMock())
+        repository = Mock(get=MagicMock(return_value=Mock(user_id='uid')))
         subscriber = Mock(success=MagicMock())
         instance = EditDriverWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, params, repository, 'did')
+        instance.perform(orm, logger, params, repository, 'did', 'uid')
 
         # Then
         subscriber.success.assert_called_with()
@@ -164,22 +225,37 @@ class TestHideDriverWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, repository, 'not_existing_id')
+        instance.perform(orm, logger, repository, 'not_existing_id', None)
+
+        # THEN
+        subscriber.not_found.assert_called_with('not_existing_id')
+
+    def test_driver_cannot_be_hid_by_another_registered_user(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        repository = Mock(get=MagicMock())
+        subscriber = Mock(unauthorized=MagicMock())
+        instance = HideDriverWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(orm, logger, repository, 'did', 'uid')
 
         # Then
-        subscriber.not_found.assert_called_with('not_existing_id')
+        subscriber.unauthorized.assert_called_with()
 
     def test_driver_is_successfully_hid_if_id_is_valid(self):
         # Given
         logger = Mock()
         orm = Mock()
-        repository = Mock(get=MagicMock())
+        repository = Mock(get=MagicMock(return_value=Mock(user_id='uid')))
         subscriber = Mock(success=MagicMock())
         instance = HideDriverWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, repository, 'did')
+        instance.perform(orm, logger, repository, 'did', 'uid')
 
         # Then
         subscriber.success.assert_called_with()
@@ -197,22 +273,38 @@ class TestUnhideDriverWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, repository, 'not_existing_id')
+        instance.perform(orm, logger, repository, 'not_existing_id', None)
 
         # Then
         subscriber.not_found.assert_called_with('not_existing_id')
+
+    def test_driver_cannot_be_unhid_by_another_registered_user(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        repository = Mock(get=MagicMock())
+        subscriber = Mock(unauthorized=MagicMock())
+        instance = UnhideDriverWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(orm, logger, repository, 'did', 'uid')
+
+        # Then
+        subscriber.unauthorized.assert_called_with()
+
 
     def test_driver_is_successfully_unhid_if_id_is_valid(self):
         # Given
         logger = Mock()
         orm = Mock()
-        repository = Mock(get=MagicMock())
+        repository = Mock(get=MagicMock(return_value=Mock(user_id='uid')))
         subscriber = Mock(success=MagicMock())
         instance = UnhideDriverWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, repository, 'did')
+        instance.perform(orm, logger, repository, 'did', 'uid')
 
         # Then
         subscriber.success.assert_called_with()

@@ -47,16 +47,6 @@ class DriversRepository(object):
 
 
     @staticmethod
-    def update(driver_id, license_plate, telephone):
-        driver = DriversRepository.get(driver_id)
-        if driver is None:
-            return None
-        else:
-            driver.license_plate = license_plate
-            driver.telephone = telephone
-            return driver
-
-    @staticmethod
     def unhide(driver_id):
         driver = DriversRepository.get(driver_id)
         if driver is None:

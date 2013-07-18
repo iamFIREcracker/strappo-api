@@ -3,19 +3,18 @@
 
 from datetime import datetime
 
-from weblib.db import backref
-from weblib.db import declarative_base
-from weblib.db import relationship
-from weblib.db import uuid
-from weblib.db import Boolean
-from weblib.db import Column
-from weblib.db import DateTime
-from weblib.db import Enum
-from weblib.db import ForeignKey
-from weblib.db import Integer
-from weblib.db import String
-from weblib.db import Text
-from weblib.db import Time
+from app.weblib.db import backref
+from app.weblib.db import declarative_base
+from app.weblib.db import relationship
+from app.weblib.db import uuid
+from app.weblib.db import Boolean
+from app.weblib.db import Column
+from app.weblib.db import DateTime
+from app.weblib.db import ForeignKey
+from app.weblib.db import Integer
+from app.weblib.db import String
+from app.weblib.db import Text
+from app.weblib.db import Time
 
 
 
@@ -77,7 +76,9 @@ class Driver(Base):
     created = Column(DateTime, default=datetime.now)
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     drive_requests = relationship('DriveRequest', uselist=True,
-                          backref=backref('driver', cascade='expunge'))
+                                  backref=backref('driver', cascade='expunge'),
+                                  primaryjoin="and_(Driver.id == DriveRequest.driver_id,"
+                                                   "DriveRequest.active == True)")
 
     def __repr__(self):
         return '<Driver id=%(id)s, user_id=%(user_id)s, '\
@@ -97,7 +98,9 @@ class Passenger(Base):
     created = Column(DateTime, default=datetime.now)
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     drive_requests = relationship('DriveRequest', uselist=True,
-                          backref=backref('passenger', cascade='expunge'))
+                                  backref=backref('passenger', cascade='expunge'),
+                                  primaryjoin="and_(Passenger.id == DriveRequest.passenger_id,"
+                                                   "DriveRequest.active == True)")
 
     def __repr__(self):
         return '<Passenger id=%(id)s, user_id=%(user_id)s, '\

@@ -193,29 +193,6 @@ class TestDriversRepository(unittest.TestCase):
         # Then
         self.assertEquals('license', driver.license_plate)
 
-    def test_update_of_not_existing_driver_should_return_nothing(self):
-        # When
-        driver = DriversRepository.update('not_existing_id', 'license', 'phone')
-
-        # Then
-        self.assertIsNone(driver)
-
-    def test_update_of_existing_driver_should_return_the_updated_driver(self):
-        # Given
-        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
-        self.session.add(Driver(id='did', user_id='uid', license_plate='plate'))
-        self.session.commit()
-        self.session.remove()
-
-        # When
-        self.session.add(DriversRepository.update('did', 'license', 'phone'))
-        self.session.commit()
-        driver = Driver.query.filter_by(id='did').first()
-
-        # Then
-        self.assertEquals('license', driver.license_plate)
-        self.assertEquals('phone', driver.telephone)
-
     def test_unhide_of_not_existing_driver_should_return_nothing(self):
         # When
         driver = DriversRepository.unhide('not_existing_id')
