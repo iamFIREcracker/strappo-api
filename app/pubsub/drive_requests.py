@@ -9,7 +9,7 @@ class ActiveDriveRequestsFilterExtractor(Publisher):
         """Decides which search criteria should be used to filter active drive
         requests.
         """
-        if 'passenger_id' in params:
+        if 'passenger_id' in params and params['passenger_id'] is not None:
             self.publish('by_passenger_id_filter', params.passenger_id)
         else:
             self.publish('by_driver_id_filter', params.driver_id)
