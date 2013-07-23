@@ -90,7 +90,7 @@ class AcceptDriverController(ParamAuthorizableController):
         accept_drive_request = AcceptDriveRequestWorkflow()
 
         class AcceptDriveRequestSubscriber(object):
-            def not_found(self):
+            def not_found(self, passenger_id):
                 web.ctx.orm.rollback()
                 raise web.notfound()
             def unauthorized(self):
