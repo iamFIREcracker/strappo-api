@@ -13,9 +13,9 @@ class TitaniumPushNotificationsAdapter(object):
     NOTIFY_URL = 'https://api.cloud.appcelerator.com/v1/push_notification/notify.json?key=%(key)s'
 
     def notify(self, channel, ids, payload):
-        url = self.NOTIFY_TOKENS_URL % dict(key=web.config.TITANIUM_KEY)
+        url = self.NOTIFY_URL % dict(key=web.config.TITANIUM_KEY)
         data = urllib.urlencode(dict(channel=channel,
-                                     to_ids=','.join(tokens),
+                                     to_ids=','.join(ids),
                                      payload=payload))
         try:
             response = urllib2.urlopen(url, data)
