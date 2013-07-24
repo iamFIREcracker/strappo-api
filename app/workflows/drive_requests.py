@@ -38,6 +38,8 @@ class ListActiveDriveRequestsWorkflow(Publisher):
         requests_serializer = MultipleDriveRequestsSerializer()
 
         class FilterExtractorSubscriber(object):
+            def bad_request(self, params):
+                outer.publish('bad_request')
             def by_driver_id_filter(self, driver_id):
                 driver_getter.perform(drivers_repository, driver_id)
             def by_passenger_id_filter(self, passenger_id):

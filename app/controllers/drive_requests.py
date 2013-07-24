@@ -24,6 +24,8 @@ class ListActiveDriveRequestsController(ParamAuthorizableController):
         ret = Future()
 
         class ListActiveDriveRequestsSubscriber(object):
+            def bad_request(self):
+                raise web.badrequest()
             def unauthorized(self):
                 raise web.unauthorized()
             def success(self, blob):
@@ -33,6 +35,5 @@ class ListActiveDriveRequestsController(ParamAuthorizableController):
                                          ListActiveDriveRequestsSubscriber())
         accepted_requests.perform(web.ctx.logger, DriversRepository,
                                   PassengersRepository, DriveRequestsRepository,
-                                  self.current_user.id,
-                                  web.input(driver_id=None, passenger_id=None))
+                                  self.current_user.id, web.input())
         return ret.get()

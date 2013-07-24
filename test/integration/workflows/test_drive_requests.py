@@ -268,6 +268,19 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
             }
         }])
 
+    def test_bad_request_is_generated_if_neither_driver_and_passenger_id_is_set(self):
+        # Given
+        logger = Mock()
+        subscriber = Mock(bad_request=MagicMock())
+        instance = ListActiveDriveRequestsWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, None, None, None, None, storage())
+
+        # Then
+        subscriber.bad_request.assert_called_with()
+
 
 class TestAddDriveRequestWorkflow(unittest.TestCase):
 
