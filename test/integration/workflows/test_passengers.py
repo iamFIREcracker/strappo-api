@@ -216,12 +216,29 @@ class TestNotifyPassengerWorkflow(unittest.TestCase):
         # Then
         subscriber.passenger_not_found.assert_called_with('invalid_id')
 
+    def test_failure_message_is_published_if_unable_to_log_into_acs(self):
+        # Given
+        logger = Mock()
+        passenger = storage(user=storage(acs_id='acsid1'))
+        repository = Mock(get=MagicMock(return_value=passenger))
+        push_adapter = Mock(login=MagicMock(return_value=(None, 'Error!')))
+        subscriber = Mock(failure=MagicMock())
+        instance = NotifyPassengerWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, repository, 'pid', push_adapter, None, None)
+
+        # Then
+        subscriber.failure.assert_called_with('Error!')
+
     def test_failure_message_is_published_if_something_goes_wrong_with_the_push_adapter(self):
         # Given
         logger = Mock()
         passenger = storage(user=storage(acs_id='acsid1'))
         repository = Mock(get=MagicMock(return_value=passenger))
-        push_adapter = Mock(notify=MagicMock(return_value=(None, 'Error!')))
+        push_adapter = Mock(login=MagicMock(return_value=('session', None)),
+                            notify=MagicMock(return_value=(None, 'Error!')))
         subscriber = Mock(failure=MagicMock())
         instance = NotifyPassengerWorkflow()
 
@@ -237,7 +254,8 @@ class TestNotifyPassengerWorkflow(unittest.TestCase):
         logger = Mock()
         passenger = storage(user=storage(acs_id='acsid1'))
         repository = Mock(get=MagicMock(return_value=passenger))
-        push_adapter = Mock(notify=MagicMock(return_value=(None, None)))
+        push_adapter = Mock(login=MagicMock(return_value=('session', None)),
+                            notify=MagicMock(return_value=(None, None)))
         subscriber = Mock(success=MagicMock())
         instance = NotifyPassengerWorkflow()
 

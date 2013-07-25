@@ -3,6 +3,7 @@
 
 
 import app.forms.drivers as drivers_forms
+from app.pubsub import ACSSessionCreator
 from app.pubsub import ACSUserIdsNotifier
 from app.pubsub.drivers import DriverCreator
 from app.pubsub.drivers import DriverHider
@@ -216,7 +217,9 @@ class NotifyDriversWorkflow(Publisher):
         logger = LoggingSubscriber(logger)
         drivers_getter = UnhiddenDriversGetter()
         acs_ids_extractor = DriversACSUserIdExtractor()
+        acs_session_creator = ACSSessionCreator()
         acs_notifier = ACSUserIdsNotifier()
+        user_ids_future = Future()
 
         class DriversGetterSubscriber(object):
             def unhidden_drivers_found(self, drivers):
@@ -224,7 +227,15 @@ class NotifyDriversWorkflow(Publisher):
 
         class ACSUserIdsExtractorSubscriber(object):
             def acs_user_ids_extracted(self, user_ids):
-                acs_notifier.perform(push_adapter, channel, user_ids, payload)
+                user_ids_future.set(user_ids)
+                acs_session_creator.perform(push_adapter)
+
+        class ACSSessionCreatorSubscriber(object):
+            def acs_session_not_created(self, error):
+                outer.publish('failure', error)
+            def acs_session_created(self, session_id):
+                acs_notifier.perform(push_adapter, session_id, channel,
+                                     user_ids_future.get(), payload)
 
         class ACSNotifierSubscriber(object):
             def acs_user_ids_not_notified(self, error):
@@ -235,6 +246,8 @@ class NotifyDriversWorkflow(Publisher):
         drivers_getter.add_subscriber(logger, DriversGetterSubscriber())
         acs_ids_extractor.add_subscriber(logger,
                                          ACSUserIdsExtractorSubscriber())
+        acs_session_creator.add_subscriber(logger,
+                                           ACSSessionCreatorSubscriber())
         acs_notifier.add_subscriber(logger, ACSNotifierSubscriber())
         drivers_getter.perform(repository)
 

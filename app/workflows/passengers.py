@@ -3,6 +3,7 @@
 
 
 import app.forms.passengers as passengers_forms
+from app.pubsub import ACSSessionCreator
 from app.pubsub import ACSUserIdsNotifier
 from app.pubsub.passengers import ActivePassengersGetter
 from app.pubsub.passengers import PassengerWithIdGetter
@@ -137,7 +138,9 @@ class NotifyPassengerWorkflow(Publisher):
         logger = LoggingSubscriber(logger)
         passenger_getter = PassengerWithIdGetter()
         acs_id_extractor = PassengerACSUserIdExtractor()
+        acs_session_creator = ACSSessionCreator()
         acs_notifier = ACSUserIdsNotifier()
+        user_ids_future = Future()
 
         class PassengerGetterSubscriber(object):
             def passenger_not_found(self, passenger_id):
@@ -147,7 +150,15 @@ class NotifyPassengerWorkflow(Publisher):
 
         class ACSUserIdExtractorSubscriber(object):
             def acs_user_id_extracted(self, user_id):
-                acs_notifier.perform(push_adapter, channel, [user_id], payload)
+                user_ids_future.set([user_id])
+                acs_session_creator.perform(push_adapter)
+
+        class ACSSessionCreatorSubscriber(object):
+            def acs_session_not_created(self, error):
+                outer.publish('failure', error)
+            def acs_session_created(self, session_id):
+                acs_notifier.perform(push_adapter, session_id, channel,
+                                     user_ids_future.get(), payload)
 
         class ACSNotifierSubscriber(object):
             def acs_user_ids_not_notified(self, error):
@@ -158,6 +169,8 @@ class NotifyPassengerWorkflow(Publisher):
         passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
         acs_id_extractor.add_subscriber(logger,
                                         ACSUserIdExtractorSubscriber())
+        acs_session_creator.add_subscriber(logger,
+                                           ACSSessionCreatorSubscriber())
         acs_notifier.add_subscriber(logger, ACSNotifierSubscriber())
         passenger_getter.perform(repository, passenger_id)
 

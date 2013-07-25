@@ -311,13 +311,32 @@ class TestUnhideDriverWorkflow(unittest.TestCase):
 
 
 class TestNotifyDriversWorkflow(unittest.TestCase):
+    def test_failure_message_is_published_if_unable_to_log_into_acs(self):
+        # Given
+        logger = Mock()
+        drivers = [storage(user=storage(acs_id='acsid1')),
+                   storage(user=storage(acs_id='acsid2'))]
+        repository = Mock(get_all_unhidden=MagicMock(return_value=drivers))
+        push_adapter = Mock(login=MagicMock(return_value=(None, 'Error!')))
+        subscriber = Mock(failure=MagicMock())
+        instance = NotifyDriversWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, repository, push_adapter, None, None)
+
+        # Then
+        subscriber.failure.assert_called_with('Error!')
+
+
     def test_failure_message_is_published_if_something_goes_wrong_with_the_push_adapter(self):
         # Given
         logger = Mock()
         drivers = [storage(user=storage(acs_id='acsid1')),
                    storage(user=storage(acs_id='acsid2'))]
         repository = Mock(get_all_unhidden=MagicMock(return_value=drivers))
-        push_adapter = Mock(notify=MagicMock(return_value=(None, 'Error!')))
+        push_adapter = Mock(login=MagicMock(return_value=('session_id', None)),
+                            notify=MagicMock(return_value=(None, 'Error!')))
         subscriber = Mock(failure=MagicMock())
         instance = NotifyDriversWorkflow()
 
@@ -334,7 +353,8 @@ class TestNotifyDriversWorkflow(unittest.TestCase):
         drivers = [storage(user=storage(acs_id='acsid1')),
                    storage(user=storage(acs_id='acsid2'))]
         repository = Mock(get_all_unhidden=MagicMock(return_value=drivers))
-        push_adapter = Mock(notify=MagicMock(return_value=(None, None)))
+        push_adapter = Mock(login=MagicMock(return_value=('session_id', None)),
+                            notify=MagicMock(return_value=(None, None)))
         subscriber = Mock(success=MagicMock())
         instance = NotifyDriversWorkflow()
 
