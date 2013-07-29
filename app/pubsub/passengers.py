@@ -78,7 +78,8 @@ def serialize(passenger):
     if passenger is None:
         return None
     return dict(id=passenger.id, origin=passenger.origin,
-                destination=passenger.destination, seats=passenger.seats)
+                destination=passenger.destination, seats=passenger.seats,
+                matched=passenger.matched)
 
 
 def _serialize(passenger):
@@ -108,6 +109,20 @@ class MultiplePassengersSerializer(Publisher):
         """
         self.publish('passengers_serialized',
                      [_serialize(p) for p in passengers])
+
+
+class MultiplePassengerMatcher(Publisher):
+    def perform(self, passengers):
+        """Sets the 'matched' property of the given list of passengers to
+        `True`.
+
+        At the end of the operation a 'passengers_matched' message is
+        published, together with the modified passenger.
+        """
+        def match(p):
+            p.matched = True
+            return p
+        self.publish('passengers_matched', [match(p) for p in passengers])
 
 
 class MultiplePassengersDeactivator(Publisher):

@@ -94,6 +94,7 @@ class Passenger(Base):
     origin = Column(Text)
     destination = Column(Text)
     seats = Column(Integer)
+    matched = Column(Boolean, default=False)
     active = Column(Boolean, default=True)
     created = Column(DateTime, default=datetime.now)
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)

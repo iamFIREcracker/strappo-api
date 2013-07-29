@@ -58,6 +58,7 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
                                                                avatar='avatar',
                                                                id='uid')),
                                    passenger=storage(id='pid1',
+                                                     matched=False,
                                                      origin='origin1',
                                                      destination='destination1',
                                                      seats=1,
@@ -73,6 +74,7 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
                                                                avatar='avatar',
                                                                id='uid')),
                                     passenger=storage(id='pid2',
+                                                      matched=True,
                                                       origin='origin2',
                                                       destination='destination2',
                                                       seats=2,
@@ -104,6 +106,7 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
                 }
             },
             'passenger': {
+                'matched': False,
                 'origin': 'origin1',
                 'destination': 'destination1',
                 'seats': 1,
@@ -129,6 +132,7 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
                 }
             },
             'passenger': {
+                'matched': True,
                 'origin': 'origin2',
                 'destination': 'destination2',
                 'seats': 2,
@@ -184,6 +188,7 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
                                                                avatar='avatar1',
                                                                id='uid1')),
                                    passenger=storage(id='pid',
+                                                     matched=False,
                                                      origin='origin',
                                                      destination='destination',
                                                      seats=1,
@@ -199,6 +204,7 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
                                                                name='name2',
                                                                avatar='avatar2')),
                                     passenger=storage(id='pid',
+                                                      matched=True,
                                                       origin='origin',
                                                       destination='destination',
                                                       seats=2,
@@ -231,6 +237,7 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
                 }
             },
             'passenger': {
+                'matched': False,
                 'origin': 'origin',
                 'destination': 'destination',
                 'seats': 1,
@@ -257,6 +264,7 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
             },
             'passenger': {
                 'id': 'pid',
+                'matched': True,
                 'origin': 'origin',
                 'destination': 'destination',
                 'seats': 2,

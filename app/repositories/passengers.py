@@ -29,7 +29,7 @@ class PassengersRepository(object):
         id = unicode(uuid.uuid4())
         passenger = Passenger(id=id, user_id=user_id, origin=origin,
                               destination=destination, seats=seats,
-                              active=True)
+                              matched=False, active=True)
         return passenger
 
     @staticmethod

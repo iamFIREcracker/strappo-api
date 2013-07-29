@@ -11,9 +11,9 @@ from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
 from app.pubsub.drivers import DriverWithIdGetter
 from app.pubsub.drivers import DriverWithUserIdAuthorizer
+from app.pubsub.passengers import MultiplePassengerMatcher
 from app.pubsub.passengers import PassengerWithIdGetter
 from app.pubsub.passengers import PassengerWithUserIdAuthorizer
-from app.pubsub.passengers import MultiplePassengersDeactivator
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.pubsub import Publisher
 from app.weblib.pubsub import TaskSubmitter
@@ -146,7 +146,7 @@ class AcceptDriveRequestWorkflow(Publisher):
         passenger_getter = PassengerWithIdGetter()
         authorizer = PassengerWithUserIdAuthorizer()
         request_acceptor = DriveRequestAcceptor()
-        passengers_deactivator = MultiplePassengersDeactivator()
+        passengers_matcher = MultiplePassengerMatcher()
 
         class PassengerGetterSubscriber(object):
             def passenger_not_found(self, passenger_id):
@@ -166,19 +166,18 @@ class AcceptDriveRequestWorkflow(Publisher):
                 outer.publish('not_found') # XXX Bad request?!
             def drive_request_accepted(self, request):
                 orm.add(request)
-                passengers_deactivator.perform([request.passenger])
+                passengers_matcher.perform([request.passenger])
 
-        class PassengersDeactivatorSubscriber(object):
-            def passengers_hid(self, passengers):
-                orm.add(passengers[0])
+        class PassengersMatcherSubscriber(object):
+            def passengers_matched(self, passenger):
+                orm.add(passenger)
                 outer.publish('success')
 
         passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
         authorizer.add_subscriber(logger, AuthorizerSubscriber())
         request_acceptor.add_subscriber(logger,
                                         DriveRequestAcceptorSubscriber())
-        passengers_deactivator.add_subscriber(logger,
-                                              PassengersDeactivatorSubscriber())
+        passengers_matcher.add_subscriber(logger, PassengersMatcherSubscriber())
         passenger_getter.perform(passengers_repository, passenger_id)
 
 

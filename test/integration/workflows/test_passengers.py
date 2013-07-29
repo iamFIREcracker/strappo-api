@@ -34,11 +34,12 @@ class TestActivePassengersWorkflow(unittest.TestCase):
         # Given
         logger = Mock()
         passengers = [storage(id='pid1', user_id='uid1', origin='origin1',
-                              destination='destination1', seats=1,
+                              destination='destination1', seats=1, matched=True,
                               user=storage(name='Name1', avatar='Avatar1',
                                            id='uid1')),
                       storage(id='pid2', user_id='uid2', origin='origin2',
                               destination='destination2', seats=2,
+                              matched=False,
                               user=storage(name='Name2', avatar='Avatar2',
                                            id='uid2'))]
         repository = Mock(get_all_active=MagicMock(return_value=passengers))
@@ -51,6 +52,7 @@ class TestActivePassengersWorkflow(unittest.TestCase):
 
         # Then
         subscriber.success.assert_called_with([{
+            'matched': True,
             'origin': 'origin1',
             'destination': 'destination1',
             'seats': 1,
@@ -61,6 +63,7 @@ class TestActivePassengersWorkflow(unittest.TestCase):
                 'avatar': 'Avatar1'
             }
         }, {
+            'matched': False,
             'origin': 'origin2',
             'destination': 'destination2',
             'seats': 2,
@@ -146,7 +149,7 @@ class TestViewPassengerWorkflow(unittest.TestCase):
         # Given
         logger = Mock()
         passenger = storage(id='pid', user_id='uid', origin='origin',
-                            destination='destination', seats=1,
+                            destination='destination', seats=1, matched=True,
                             user=storage(id='uid', name='name',
                                          avatar='avatar'))
         repository = Mock(get=MagicMock(return_value=passenger))
@@ -159,6 +162,7 @@ class TestViewPassengerWorkflow(unittest.TestCase):
 
         # Then
         subscriber.success.assert_called_with({
+            'matched': True,
             'origin': 'origin',
             'destination': 'destination',
             'seats': 1,
@@ -174,7 +178,7 @@ class TestViewPassengerWorkflow(unittest.TestCase):
         # Given
         logger = Mock()
         passenger = storage(id='pid', user_id='uid', origin='origin',
-                            destination='destination', seats=1,
+                            destination='destination', seats=1, matched=True,
                             user=storage(id='uid', name='name',
                                          avatar='avatar'),
                             drive_requests=[storage(driver=storage(id='did',
@@ -189,6 +193,7 @@ class TestViewPassengerWorkflow(unittest.TestCase):
 
         # Then
         subscriber.success.assert_called_with({
+            'matched': True,
             'origin': 'origin',
             'destination': 'destination',
             'seats': 1,
