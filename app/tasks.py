@@ -67,7 +67,7 @@ def NotifyPassengerTask(driver_name, passenger_id):
                              push_adapter, 'passengers',
                              json.dumps({
                                  'channel': 'passengers',
-                                 'alert': 'Yeah, %(name)s has offered' \
+                                 'alert': 'Yeah, %(name)s has offered'
                                           'to give you a ride' \
                                                   % dict(name=driver_name)
                              }))
