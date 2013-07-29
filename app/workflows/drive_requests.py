@@ -14,6 +14,7 @@ from app.pubsub.drivers import DriverWithUserIdAuthorizer
 from app.pubsub.passengers import MultiplePassengerMatcher
 from app.pubsub.passengers import PassengerWithIdGetter
 from app.pubsub.passengers import PassengerWithUserIdAuthorizer
+from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.pubsub import Publisher
 from app.weblib.pubsub import TaskSubmitter
@@ -205,5 +206,4 @@ class DeactivateActiveDriveRequestsWorkflow(Publisher):
         requests_deactivator.add_subscriber(logger,
                                             DriveRequestsDeactivatorSubscriber())
         requests_getter.perform(repository)
-
 
