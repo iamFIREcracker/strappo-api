@@ -28,6 +28,11 @@ class TitaniumPushNotificationsAdapter(object):
     NOTIFY_URL = 'https://api.cloud.appcelerator.com/v1/push_notification/notify.json?key=%(key)s'
 
     def notify(self, session_id, channel, ids, payload):
+        # Do not call ACS if the list of user IDs to notify is empty, otherwise
+        # a broadcast message will be sent
+        if not ids:
+            return ('Skipped, empty `ids` list', None)
+
         url = self.NOTIFY_URL % dict(key=web.config.TITANIUM_KEY)
         session_cookie = '_session_id=%(id)s' % dict(id=session_id)
         req = urllib2.Request(url)
