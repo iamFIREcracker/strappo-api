@@ -31,7 +31,9 @@ class UsersRepository(object):
 
     @staticmethod
     def authorized_by(token):
-        return expunged(User.query.join(Token).filter(Token.id == token).\
+        return expunged(User.query.options(joinedload('driver'),
+                                           joinedload('passenger')).\
+                                filter(Token.id == token).\
                                 filter(User.deleted == False).first(),
                         User.session)
 
