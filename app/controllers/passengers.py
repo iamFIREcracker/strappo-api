@@ -15,6 +15,7 @@ from app.weblib.request_decorators import authorized
 from app.weblib.utils import jsonify
 from app.workflows.passengers import AddPassengerWorkflow
 from app.workflows.passengers import ActivePassengersWorkflow
+from app.workflows.passengers import DeactivatePassengerWorkflow
 from app.workflows.passengers import ViewPassengerWorkflow
 from app.workflows.drive_requests import AcceptDriveRequestWorkflow
 
@@ -56,7 +57,7 @@ class AddPassengerController(ParamAuthorizableController):
         add_passenger.add_subscriber(logger, AddPassengerSubscriber())
         add_passenger.perform(web.ctx.orm, web.ctx.logger, web.input(),
                               PassengersRepository, self.current_user.id,
-                              NotifyDriversTask)
+                              self.current_user.name, NotifyDriversTask)
         return ret.get()
 
 
@@ -80,6 +81,28 @@ class ViewPassengerController(ParamAuthorizableController):
         view_passenger.perform(web.ctx.logger, PassengersRepository,
                                passenger_id, self.current_user.id)
         return ret.get()
+
+
+class DeactivatePassengerController(ParamAuthorizableController):
+    @api
+    @authorized
+    def POST(self, passenger_id):
+        logger = LoggingSubscriber(web.ctx.logger)
+        deactivate_passenger = DeactivatePassengerWorkflow()
+
+        class DeactivatePassengerSubscriber(object):
+            def not_found(self, passenger_id):
+                raise web.notfound()
+            def unauthorized(self):
+                raise web.unauthorized()
+            def success(self):
+                raise web.ok()
+
+        deactivate_passenger.add_subscriber(logger,
+                                            DeactivatePassengerSubscriber())
+        deactivate_passenger.perform(web.ctx.logger, web.ctx.orm,
+                                     PassengersRepository, passenger_id,
+                                     self.current_user.id)
 
 
 class AcceptDriverController(ParamAuthorizableController):

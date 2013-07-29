@@ -32,7 +32,8 @@ class TestViewUserWorkflow(unittest.TestCase):
         logger = Mock()
         user = storage(id='uid', name='name', avatar='avatar',
                        passenger=storage(id='pid', origin='origin',
-                                         destination='destination', seats=1),
+                                         destination='destination', seats=1,
+                                         matched=True),
                        driver=None)
         repository = Mock(get=MagicMock(return_value=user))
         subscriber = Mock(success=MagicMock())
@@ -49,6 +50,7 @@ class TestViewUserWorkflow(unittest.TestCase):
             'avatar': 'avatar',
             'driver': None,
             'passenger': {
+                'matched': True,
                 'id': 'pid',
                 'origin': 'origin',
                 'destination': 'destination',

@@ -3,6 +3,7 @@
 
 
 import app.forms.passengers as passengers_forms
+from app.pubsub import ACSSessionCreator
 from app.pubsub import ACSUserIdsNotifier
 from app.pubsub.passengers import ActivePassengersGetter
 from app.pubsub.passengers import PassengerWithIdGetter
@@ -49,13 +50,14 @@ class ActivePassengersWorkflow(Publisher):
 class AddPassengerWorkflow(Publisher):
     """Defines a workflow to add a new passenger."""
 
-    def perform(self, orm, logger, params, repository, user_id, task):
+    def perform(self, orm, logger, params, repository,
+                user_id, user_name, task):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         form_validator = FormValidator()
         passenger_creator = PassengerCreator()
         task_submitter = TaskSubmitter()
-        passenger_id = Future()
+        passenger_id_future = Future()
 
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
@@ -68,12 +70,12 @@ class AddPassengerWorkflow(Publisher):
         class PassengerCreatorSubscriber(object):
             def passenger_created(self, passenger):
                 orm.add(passenger)
-                passenger_id.set(passenger.id)
-                task_submitter.perform(task, passenger_id.get())
+                passenger_id_future.set(passenger.id)
+                task_submitter.perform(task, user_name)
 
         class TaskSubmitterSubscriber(object):
             def task_created(self, task_id):
-                outer.publish('success', passenger_id.get())
+                outer.publish('success', passenger_id_future.get())
 
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
         passenger_creator.add_subscriber(logger, PassengerCreatorSubscriber())
@@ -137,7 +139,9 @@ class NotifyPassengerWorkflow(Publisher):
         logger = LoggingSubscriber(logger)
         passenger_getter = PassengerWithIdGetter()
         acs_id_extractor = PassengerACSUserIdExtractor()
+        acs_session_creator = ACSSessionCreator()
         acs_notifier = ACSUserIdsNotifier()
+        user_ids_future = Future()
 
         class PassengerGetterSubscriber(object):
             def passenger_not_found(self, passenger_id):
@@ -147,7 +151,15 @@ class NotifyPassengerWorkflow(Publisher):
 
         class ACSUserIdExtractorSubscriber(object):
             def acs_user_id_extracted(self, user_id):
-                acs_notifier.perform(push_adapter, channel, [user_id], payload)
+                user_ids_future.set([user_id])
+                acs_session_creator.perform(push_adapter)
+
+        class ACSSessionCreatorSubscriber(object):
+            def acs_session_not_created(self, error):
+                outer.publish('failure', error)
+            def acs_session_created(self, session_id):
+                acs_notifier.perform(push_adapter, session_id, channel,
+                                     user_ids_future.get(), payload)
 
         class ACSNotifierSubscriber(object):
             def acs_user_ids_not_notified(self, error):
@@ -158,7 +170,44 @@ class NotifyPassengerWorkflow(Publisher):
         passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
         acs_id_extractor.add_subscriber(logger,
                                         ACSUserIdExtractorSubscriber())
+        acs_session_creator.add_subscriber(logger,
+                                           ACSSessionCreatorSubscriber())
         acs_notifier.add_subscriber(logger, ACSNotifierSubscriber())
+        passenger_getter.perform(repository, passenger_id)
+
+
+class DeactivatePassengerWorkflow(Publisher):
+    """Defines a workflow to deactivate a passenger given its ID."""
+
+    def perform(self, logger, orm, repository, passenger_id, user_id):
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        passenger_getter = PassengerWithIdGetter()
+        with_user_id_authorizer = PassengerWithUserIdAuthorizer()
+        passengers_deactivator = MultiplePassengersDeactivator()
+
+        class PassengerGetterSubscriber(object):
+            def passenger_not_found(self, passenger_id):
+                outer.publish('not_found', passenger_id)
+            def passenger_found(self, passenger):
+                with_user_id_authorizer.perform(user_id, passenger)
+
+        class WithUserIdAuthorizerSubscriber(object):
+            def unauthorized(self, user_id, passenger):
+                outer.publish('unauthorized')
+            def authorized(self, user_id, passenger):
+                passengers_deactivator.perform([passenger])
+
+        class PassengersDeactivatorSubscriber(object):
+            def passengers_hid(self, passengers):
+                orm.add_all(passengers)
+                outer.publish('success')
+
+        passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
+        with_user_id_authorizer.\
+                add_subscriber(logger, WithUserIdAuthorizerSubscriber())
+        passengers_deactivator.add_subscriber(logger,
+                                              PassengersDeactivatorSubscriber())
         passenger_getter.perform(repository, passenger_id)
 
 

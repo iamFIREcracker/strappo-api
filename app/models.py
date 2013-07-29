@@ -93,8 +93,9 @@ class Passenger(Base):
     user_id = Column(String, ForeignKey('user.id'))
     origin = Column(Text)
     destination = Column(Text)
-    active = Column(Boolean, default=True)
     seats = Column(Integer)
+    matched = Column(Boolean, default=False)
+    active = Column(Boolean, default=True)
     created = Column(DateTime, default=datetime.now)
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     drive_requests = relationship('DriveRequest', uselist=True,

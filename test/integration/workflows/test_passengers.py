@@ -10,6 +10,7 @@ from mock import Mock
 
 from app.workflows.passengers import AddPassengerWorkflow
 from app.workflows.passengers import ActivePassengersWorkflow
+from app.workflows.passengers import DeactivatePassengerWorkflow
 from app.workflows.passengers import DeactivateActivePassengersWorkflow
 from app.workflows.passengers import NotifyPassengerWorkflow
 from app.workflows.passengers import ViewPassengerWorkflow
@@ -34,11 +35,12 @@ class TestActivePassengersWorkflow(unittest.TestCase):
         # Given
         logger = Mock()
         passengers = [storage(id='pid1', user_id='uid1', origin='origin1',
-                              destination='destination1', seats=1,
+                              destination='destination1', seats=1, matched=True,
                               user=storage(name='Name1', avatar='Avatar1',
                                            id='uid1')),
                       storage(id='pid2', user_id='uid2', origin='origin2',
                               destination='destination2', seats=2,
+                              matched=False,
                               user=storage(name='Name2', avatar='Avatar2',
                                            id='uid2'))]
         repository = Mock(get_all_active=MagicMock(return_value=passengers))
@@ -51,6 +53,7 @@ class TestActivePassengersWorkflow(unittest.TestCase):
 
         # Then
         subscriber.success.assert_called_with([{
+            'matched': True,
             'origin': 'origin1',
             'destination': 'destination1',
             'seats': 1,
@@ -61,6 +64,7 @@ class TestActivePassengersWorkflow(unittest.TestCase):
                 'avatar': 'Avatar1'
             }
         }, {
+            'matched': False,
             'origin': 'origin2',
             'destination': 'destination2',
             'seats': 2,
@@ -84,7 +88,7 @@ class TestAddPassengerWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, params, None, None, None)
+        instance.perform(orm, logger, params, None, None, None, None)
 
         # Then
         subscriber.invalid_form.assert_called_with({
@@ -106,7 +110,7 @@ class TestAddPassengerWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, params, repository, 'uid',
+        instance.perform(orm, logger, params, repository, 'uid', 'Name',
                          drivers_notifier)
 
         # Then
@@ -146,7 +150,7 @@ class TestViewPassengerWorkflow(unittest.TestCase):
         # Given
         logger = Mock()
         passenger = storage(id='pid', user_id='uid', origin='origin',
-                            destination='destination', seats=1,
+                            destination='destination', seats=1, matched=True,
                             user=storage(id='uid', name='name',
                                          avatar='avatar'))
         repository = Mock(get=MagicMock(return_value=passenger))
@@ -159,6 +163,7 @@ class TestViewPassengerWorkflow(unittest.TestCase):
 
         # Then
         subscriber.success.assert_called_with({
+            'matched': True,
             'origin': 'origin',
             'destination': 'destination',
             'seats': 1,
@@ -174,7 +179,7 @@ class TestViewPassengerWorkflow(unittest.TestCase):
         # Given
         logger = Mock()
         passenger = storage(id='pid', user_id='uid', origin='origin',
-                            destination='destination', seats=1,
+                            destination='destination', seats=1, matched=True,
                             user=storage(id='uid', name='name',
                                          avatar='avatar'),
                             drive_requests=[storage(driver=storage(id='did',
@@ -189,6 +194,7 @@ class TestViewPassengerWorkflow(unittest.TestCase):
 
         # Then
         subscriber.success.assert_called_with({
+            'matched': True,
             'origin': 'origin',
             'destination': 'destination',
             'seats': 1,
@@ -216,12 +222,29 @@ class TestNotifyPassengerWorkflow(unittest.TestCase):
         # Then
         subscriber.passenger_not_found.assert_called_with('invalid_id')
 
+    def test_failure_message_is_published_if_unable_to_log_into_acs(self):
+        # Given
+        logger = Mock()
+        passenger = storage(user=storage(acs_id='acsid1'))
+        repository = Mock(get=MagicMock(return_value=passenger))
+        push_adapter = Mock(login=MagicMock(return_value=(None, 'Error!')))
+        subscriber = Mock(failure=MagicMock())
+        instance = NotifyPassengerWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, repository, 'pid', push_adapter, None, None)
+
+        # Then
+        subscriber.failure.assert_called_with('Error!')
+
     def test_failure_message_is_published_if_something_goes_wrong_with_the_push_adapter(self):
         # Given
         logger = Mock()
         passenger = storage(user=storage(acs_id='acsid1'))
         repository = Mock(get=MagicMock(return_value=passenger))
-        push_adapter = Mock(notify=MagicMock(return_value=(None, 'Error!')))
+        push_adapter = Mock(login=MagicMock(return_value=('session', None)),
+                            notify=MagicMock(return_value=(None, 'Error!')))
         subscriber = Mock(failure=MagicMock())
         instance = NotifyPassengerWorkflow()
 
@@ -237,13 +260,62 @@ class TestNotifyPassengerWorkflow(unittest.TestCase):
         logger = Mock()
         passenger = storage(user=storage(acs_id='acsid1'))
         repository = Mock(get=MagicMock(return_value=passenger))
-        push_adapter = Mock(notify=MagicMock(return_value=(None, None)))
+        push_adapter = Mock(login=MagicMock(return_value=('session', None)),
+                            notify=MagicMock(return_value=(None, None)))
         subscriber = Mock(success=MagicMock())
         instance = NotifyPassengerWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
         instance.perform(logger, repository, 'pid', push_adapter, None, None)
+
+        # Then
+        subscriber.success.assert_called_with()
+
+
+class TestDeactivatePassengerWorkflow(unittest.TestCase):
+    def test_not_found_is_published_if_invoked_with_invalid_passenger_id(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        repository = Mock(get=MagicMock(return_value=None))
+        subscriber = Mock(not_found=MagicMock())
+        instance = DeactivatePassengerWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, orm, repository, 'not_existing', None)
+
+        # Then
+        subscriber.not_found.assert_called_with('not_existing')
+
+    def test_another_registered_user_not_having_drive_request_in_common_cannot_view_passenger(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        repository = Mock(get=MagicMock(return_value=Mock(drive_requests=[])))
+        subscriber = Mock(unauthorized=MagicMock())
+        instance = DeactivatePassengerWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, orm, repository, 'pid', 'uid')
+
+        # Then
+        subscriber.unauthorized.assert_called_with()
+
+    def test_passenger_gets_properly_deactivated_if_invoked_by_passenger_owner(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        passenger = storage(id='pid', user_id='uid')
+        repository = Mock(get=MagicMock(return_value=passenger))
+        subscriber = Mock(success=MagicMock())
+        instance = DeactivatePassengerWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, orm, repository, 'pid', 'uid')
 
         # Then
         subscriber.success.assert_called_with()

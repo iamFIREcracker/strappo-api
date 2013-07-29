@@ -58,6 +58,7 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
                                                                avatar='avatar',
                                                                id='uid')),
                                    passenger=storage(id='pid1',
+                                                     matched=False,
                                                      origin='origin1',
                                                      destination='destination1',
                                                      seats=1,
@@ -73,6 +74,7 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
                                                                avatar='avatar',
                                                                id='uid')),
                                     passenger=storage(id='pid2',
+                                                      matched=True,
                                                       origin='origin2',
                                                       destination='destination2',
                                                       seats=2,
@@ -104,6 +106,7 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
                 }
             },
             'passenger': {
+                'matched': False,
                 'origin': 'origin1',
                 'destination': 'destination1',
                 'seats': 1,
@@ -129,6 +132,7 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
                 }
             },
             'passenger': {
+                'matched': True,
                 'origin': 'origin2',
                 'destination': 'destination2',
                 'seats': 2,
@@ -184,6 +188,7 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
                                                                avatar='avatar1',
                                                                id='uid1')),
                                    passenger=storage(id='pid',
+                                                     matched=False,
                                                      origin='origin',
                                                      destination='destination',
                                                      seats=1,
@@ -199,6 +204,7 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
                                                                name='name2',
                                                                avatar='avatar2')),
                                     passenger=storage(id='pid',
+                                                      matched=True,
                                                       origin='origin',
                                                       destination='destination',
                                                       seats=2,
@@ -231,6 +237,7 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
                 }
             },
             'passenger': {
+                'matched': False,
                 'origin': 'origin',
                 'destination': 'destination',
                 'seats': 1,
@@ -257,6 +264,7 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
             },
             'passenger': {
                 'id': 'pid',
+                'matched': True,
                 'origin': 'origin',
                 'destination': 'destination',
                 'seats': 2,
@@ -267,6 +275,19 @@ class TestListAcceptedPassengersWorkflow(unittest.TestCase):
                 }
             }
         }])
+
+    def test_bad_request_is_generated_if_neither_driver_and_passenger_id_is_set(self):
+        # Given
+        logger = Mock()
+        subscriber = Mock(bad_request=MagicMock())
+        instance = ListActiveDriveRequestsWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, None, None, None, None, storage())
+
+        # Then
+        subscriber.bad_request.assert_called_with()
 
 
 class TestAddDriveRequestWorkflow(unittest.TestCase):

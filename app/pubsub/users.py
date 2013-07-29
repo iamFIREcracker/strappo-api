@@ -36,6 +36,22 @@ class AlreadyRegisteredVerifier(Publisher):
             self.publish('not_registered', acs_id)
 
 
+class UserWithDriverValidator(Publisher):
+    def perform(self, user):
+        """Checks whether the given user is already linked to a driver entity.
+
+        An 'invalid_user' message is published if the given user is already
+        linked to a driver;  on the other hand a 'valid_user' message will
+        be sent back to subscribers if no driver was previously linked with
+        the user.
+        """
+        if user.driver is None:
+            self.publish('valid_user', user)
+        else:
+            self.publish('invalid_user',
+                         dict(_global='Driver already present'))
+
+
 class AccountRefresher(Publisher):
     def perform(self, repository, userid, externalid, accounttype):
         """Refreshes the user external account.

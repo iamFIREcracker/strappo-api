@@ -3,6 +3,7 @@
 
 
 import app.forms.drivers as drivers_forms
+from app.pubsub import ACSSessionCreator
 from app.pubsub import ACSUserIdsNotifier
 from app.pubsub.drivers import DriverCreator
 from app.pubsub.drivers import DriverHider
@@ -15,6 +16,7 @@ from app.pubsub.drivers import DriverLinkedToPassengerWithUserIdAuthorizer
 from app.pubsub.drivers import HiddenDriversGetter
 from app.pubsub.drivers import MultipleDriversUnhider
 from app.pubsub.drivers import UnhiddenDriversGetter
+from app.pubsub.users import UserWithDriverValidator
 from app.weblib.forms import describe_invalid_form
 from app.weblib.pubsub import FormValidator
 from app.weblib.pubsub import Future
@@ -25,17 +27,25 @@ from app.weblib.pubsub import LoggingSubscriber
 class AddDriverWorkflow(Publisher):
     """Defines a workflow to add a new driver."""
 
-    def perform(self, orm, logger, params, repository, user_id):
+    def perform(self, orm, logger, params, repository, user):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
+        user_validator = UserWithDriverValidator()
         form_validator = FormValidator()
         driver_creator = DriverCreator()
+
+        class UserValidatorSubscriber(object):
+            def invalid_user(self, errors):
+                outer.publish('invalid_form', errors) # XXX change message
+            def valid_user(self, user):
+                form_validator.perform(drivers_forms.add(), params,
+                                    describe_invalid_form)
 
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
                 outer.publish('invalid_form', errors)
             def valid_form(self, form):
-                driver_creator.perform(repository, user_id,
+                driver_creator.perform(repository, user.id,
                                        form.d.license_plate, form.d.telephone)
 
         class DriverCreatorSubscriber(object):
@@ -43,10 +53,10 @@ class AddDriverWorkflow(Publisher):
                 orm.add(driver)
                 outer.publish('success', driver.id)
 
+        user_validator.add_subscriber(logger, UserValidatorSubscriber())
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
         driver_creator.add_subscriber(logger, DriverCreatorSubscriber())
-        form_validator.perform(drivers_forms.add(), params,
-                               describe_invalid_form)
+        user_validator.perform(user)
 
 
 class ViewDriverWorkflow(Publisher):
@@ -104,13 +114,13 @@ class EditDriverWorkflow(Publisher):
         driver_getter = DriverWithIdGetter()
         authorizer = DriverWithUserIdAuthorizer()
         driver_updater = DriverUpdater()
-        future_form = Future()
+        form_future = Future()
 
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
                 outer.publish('invalid_form', errors)
             def valid_form(self, form):
-                future_form.set(form)
+                form_future.set(form)
                 driver_getter.perform(repository, driver_id)
 
         class DriverGetterSubscriber(object):
@@ -123,7 +133,7 @@ class EditDriverWorkflow(Publisher):
             def unauthorized(self, user_id, driver):
                 outer.publish('unauthorized')
             def authorized(self, user_id, driver):
-                form = future_form.get()
+                form = form_future.get()
                 driver_updater.perform(driver, form.d.license_plate,
                                        form.d.telephone)
 
@@ -216,7 +226,9 @@ class NotifyDriversWorkflow(Publisher):
         logger = LoggingSubscriber(logger)
         drivers_getter = UnhiddenDriversGetter()
         acs_ids_extractor = DriversACSUserIdExtractor()
+        acs_session_creator = ACSSessionCreator()
         acs_notifier = ACSUserIdsNotifier()
+        user_ids_future = Future()
 
         class DriversGetterSubscriber(object):
             def unhidden_drivers_found(self, drivers):
@@ -224,7 +236,15 @@ class NotifyDriversWorkflow(Publisher):
 
         class ACSUserIdsExtractorSubscriber(object):
             def acs_user_ids_extracted(self, user_ids):
-                acs_notifier.perform(push_adapter, channel, user_ids, payload)
+                user_ids_future.set(user_ids)
+                acs_session_creator.perform(push_adapter)
+
+        class ACSSessionCreatorSubscriber(object):
+            def acs_session_not_created(self, error):
+                outer.publish('failure', error)
+            def acs_session_created(self, session_id):
+                acs_notifier.perform(push_adapter, session_id, channel,
+                                     user_ids_future.get(), payload)
 
         class ACSNotifierSubscriber(object):
             def acs_user_ids_not_notified(self, error):
@@ -235,6 +255,8 @@ class NotifyDriversWorkflow(Publisher):
         drivers_getter.add_subscriber(logger, DriversGetterSubscriber())
         acs_ids_extractor.add_subscriber(logger,
                                          ACSUserIdsExtractorSubscriber())
+        acs_session_creator.add_subscriber(logger,
+                                           ACSSessionCreatorSubscriber())
         acs_notifier.add_subscriber(logger, ACSNotifierSubscriber())
         drivers_getter.perform(repository)
 
@@ -260,3 +282,5 @@ class UnhideHiddenDriversWorkflow(Publisher):
         drivers_getter.add_subscriber(logger, DriversGetterSubscriber())
         drivers_unhider.add_subscriber(logger, DriversUnhiderSubscriber())
         drivers_getter.perform(repository)
+
+

@@ -106,6 +106,23 @@ class TestViewDriverWorkflow(unittest.TestCase):
 
 
 class TestAddDriverWorkflow(unittest.TestCase):
+    def test_cannot_add_a_driver_if_already_linked_to_current_user(self):
+        # Given
+        orm = Mock()
+        logger = Mock()
+        subscriber = Mock(invalid_form=MagicMock())
+        instance = AddDriverWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(orm, logger, None, None,
+                         storage(driver='not null'))
+
+        # Then
+        subscriber.invalid_form.assert_called_with({
+            '_global': 'Driver already present'
+        })
+
     def test_cannot_add_a_new_driver_without_specifying_required_fields(self):
         # Given
         orm = Mock()
@@ -116,7 +133,7 @@ class TestAddDriverWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, params, None, None)
+        instance.perform(orm, logger, params, None, storage(driver=None))
 
         # Then
         subscriber.invalid_form.assert_called_with({
@@ -136,7 +153,8 @@ class TestAddDriverWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, params, repository, 'uid')
+        instance.perform(orm, logger, params, repository,
+                         storage(id='uid', driver=None))
 
         # Then
         subscriber.success.assert_called_with('pid')
@@ -311,13 +329,32 @@ class TestUnhideDriverWorkflow(unittest.TestCase):
 
 
 class TestNotifyDriversWorkflow(unittest.TestCase):
+    def test_failure_message_is_published_if_unable_to_log_into_acs(self):
+        # Given
+        logger = Mock()
+        drivers = [storage(user=storage(acs_id='acsid1')),
+                   storage(user=storage(acs_id='acsid2'))]
+        repository = Mock(get_all_unhidden=MagicMock(return_value=drivers))
+        push_adapter = Mock(login=MagicMock(return_value=(None, 'Error!')))
+        subscriber = Mock(failure=MagicMock())
+        instance = NotifyDriversWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, repository, push_adapter, None, None)
+
+        # Then
+        subscriber.failure.assert_called_with('Error!')
+
+
     def test_failure_message_is_published_if_something_goes_wrong_with_the_push_adapter(self):
         # Given
         logger = Mock()
         drivers = [storage(user=storage(acs_id='acsid1')),
                    storage(user=storage(acs_id='acsid2'))]
         repository = Mock(get_all_unhidden=MagicMock(return_value=drivers))
-        push_adapter = Mock(notify=MagicMock(return_value=(None, 'Error!')))
+        push_adapter = Mock(login=MagicMock(return_value=('session_id', None)),
+                            notify=MagicMock(return_value=(None, 'Error!')))
         subscriber = Mock(failure=MagicMock())
         instance = NotifyDriversWorkflow()
 
@@ -334,7 +371,8 @@ class TestNotifyDriversWorkflow(unittest.TestCase):
         drivers = [storage(user=storage(acs_id='acsid1')),
                    storage(user=storage(acs_id='acsid2'))]
         repository = Mock(get_all_unhidden=MagicMock(return_value=drivers))
-        push_adapter = Mock(notify=MagicMock(return_value=(None, None)))
+        push_adapter = Mock(login=MagicMock(return_value=('session_id', None)),
+                            notify=MagicMock(return_value=(None, None)))
         subscriber = Mock(success=MagicMock())
         instance = NotifyDriversWorkflow()
 
