@@ -176,6 +176,41 @@ class NotifyPassengerWorkflow(Publisher):
         passenger_getter.perform(repository, passenger_id)
 
 
+class DeactivatePassengerWorkflow(Publisher):
+    """Defines a workflow to deactivate a passenger given its ID."""
+
+    def perform(self, logger, orm, repository, passenger_id, user_id):
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        passenger_getter = PassengerWithIdGetter()
+        with_user_id_authorizer = PassengerWithUserIdAuthorizer()
+        passengers_deactivator = MultiplePassengersDeactivator()
+
+        class PassengerGetterSubscriber(object):
+            def passenger_not_found(self, passenger_id):
+                outer.publish('not_found', passenger_id)
+            def passenger_found(self, passenger):
+                with_user_id_authorizer.perform(user_id, passenger)
+
+        class WithUserIdAuthorizerSubscriber(object):
+            def unauthorized(self, user_id, passenger):
+                outer.publish('unauthorized')
+            def authorized(self, user_id, passenger):
+                passengers_deactivator.perform([passenger])
+
+        class PassengersDeactivatorSubscriber(object):
+            def passengers_hid(self, passengers):
+                orm.add_all(passengers)
+                outer.publish('success')
+
+        passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
+        with_user_id_authorizer.\
+                add_subscriber(logger, WithUserIdAuthorizerSubscriber())
+        passengers_deactivator.add_subscriber(logger,
+                                              PassengersDeactivatorSubscriber())
+        passenger_getter.perform(repository, passenger_id)
+
+
 class DeactivateActivePassengersWorkflow(Publisher):
     """Defines a workflow to deactivate all the active passengers."""
 
