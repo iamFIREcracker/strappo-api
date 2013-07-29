@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from app.celery import celery
+import json
 
+from app.celery import celery
 from app.repositories.drive_requests import DriveRequestsRepository
 from app.repositories.drivers import DriversRepository
 from app.repositories.passengers import PassengersRepository
@@ -19,7 +20,7 @@ from app.workflows.passengers import NotifyPassengerWorkflow
 
 
 @celery.task
-def NotifyDriversTask(passenger_id):
+def NotifyDriversTask(passenger_name):
     logger = create_logger()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
@@ -35,12 +36,17 @@ def NotifyDriversTask(passenger_id):
     notify_drivers.add_subscriber(logging_subscriber,
                                     NotifyDriversSubscriber())
     notify_drivers.perform(logger, DriversRepository, push_adapter, 'drivers',
-                           'A new passenger is waiting for you!') # XXX TBD payload
+                           json.dumps({
+                               'channel': 'drivers',
+                               'alert': 'Hei, %(name)s is looking'
+                                        'for a passage' \
+                                                % dict(name=passenger_name)
+                           }))
     return ret.get()
 
 
 @celery.task
-def NotifyPassengerTask(passenger_id):
+def NotifyPassengerTask(driver_name, passenger_id):
     logger = create_logger()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
@@ -59,7 +65,12 @@ def NotifyPassengerTask(passenger_id):
                                     NotifyPassengerSubscriber())
     notify_passenger.perform(logger, PassengersRepository, passenger_id,
                              push_adapter, 'passengers',
-                             'A driver has offered to give you a ride') # XXX TBD payload
+                             json.dumps({
+                                 'channel': 'passengers',
+                                 'alert': 'Yeah, %(name)s has offered' \
+                                          'to give you a ride' \
+                                                  % dict(name=driver_name)
+                             }))
     return ret.get()
 
 

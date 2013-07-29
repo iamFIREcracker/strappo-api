@@ -122,7 +122,8 @@ class AddDriveRequestWorkflow(Publisher):
         class DriveRequestCreatorSubscriber(object):
             def drive_request_created(self, request):
                 orm.add(request)
-                task_submitter.perform(task, request.passenger_id)
+                task_submitter.perform(task, request.driver.name,
+                                       request.passenger_id)
 
         class TaskSubmitterSubscriber(object):
             def task_created(self, task_id):

@@ -84,7 +84,7 @@ class TestAddPassengerWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, params, None, None, None)
+        instance.perform(orm, logger, params, None, None, None, None)
 
         # Then
         subscriber.invalid_form.assert_called_with({
@@ -106,7 +106,7 @@ class TestAddPassengerWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, params, repository, 'uid',
+        instance.perform(orm, logger, params, repository, 'uid', 'Name',
                          drivers_notifier)
 
         # Then

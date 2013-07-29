@@ -50,13 +50,14 @@ class ActivePassengersWorkflow(Publisher):
 class AddPassengerWorkflow(Publisher):
     """Defines a workflow to add a new passenger."""
 
-    def perform(self, orm, logger, params, repository, user_id, task):
+    def perform(self, orm, logger, params, repository,
+                user_id, user_name, task):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         form_validator = FormValidator()
         passenger_creator = PassengerCreator()
         task_submitter = TaskSubmitter()
-        passenger_id = Future()
+        passenger_id_future = Future()
 
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
@@ -69,12 +70,12 @@ class AddPassengerWorkflow(Publisher):
         class PassengerCreatorSubscriber(object):
             def passenger_created(self, passenger):
                 orm.add(passenger)
-                passenger_id.set(passenger.id)
-                task_submitter.perform(task, passenger_id.get())
+                passenger_id_future.set(passenger.id)
+                task_submitter.perform(task, user_name)
 
         class TaskSubmitterSubscriber(object):
             def task_created(self, task_id):
-                outer.publish('success', passenger_id.get())
+                outer.publish('success', passenger_id_future.get())
 
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
         passenger_creator.add_subscriber(logger, PassengerCreatorSubscriber())
