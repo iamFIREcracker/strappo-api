@@ -172,8 +172,8 @@ class AcceptDriveRequestWorkflow(Publisher):
                 passengers_matcher.perform([request.passenger])
 
         class PassengersMatcherSubscriber(object):
-            def passengers_matched(self, passenger):
-                orm.add(passenger)
+            def passengers_matched(self, passengers):
+                orm.add(passengers[0])
                 outer.publish('success')
 
         passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
@@ -206,4 +206,6 @@ class DeactivateActiveDriveRequestsWorkflow(Publisher):
         requests_deactivator.add_subscriber(logger,
                                             DriveRequestsDeactivatorSubscriber())
         requests_getter.perform(repository)
+
+
 

@@ -106,7 +106,8 @@ class Passenger(Base):
     def __repr__(self):
         return '<Passenger id=%(id)s, user_id=%(user_id)s, '\
                'origin=%(origin)s, destination=%(destination)s, '\
-               'seats=%(seats)d, active=%(active)s>' % self.__dict__
+               'seats=%(seats)d, matched=%(matched)s, '\
+               'active=%(active)s>' % self.__dict__
 
 
 class DriveRequest(Base):
