@@ -105,11 +105,13 @@ class AddDriveRequestWorkflow(Publisher):
         authorizer = DriverWithUserIdAuthorizer()
         request_creator = DriveRequestCreator()
         task_submitter = TaskSubmitter()
+        driver_future = Future()
 
         class DriverGetterSubscriber(object):
             def driver_not_found(self, driver_id):
                 outer.publish('not_found', driver_id)
             def driver_found(self, driver):
+                driver_future.set(driver)
                 authorizer.perform(user_id, driver)
 
         class AuthorizerSubscriber(object):
@@ -122,7 +124,7 @@ class AddDriveRequestWorkflow(Publisher):
         class DriveRequestCreatorSubscriber(object):
             def drive_request_created(self, request):
                 orm.add(request)
-                task_submitter.perform(task, request.driver.name,
+                task_submitter.perform(task, driver_future.get().user.name,
                                        request.passenger_id)
 
         class TaskSubmitterSubscriber(object):
@@ -203,3 +205,5 @@ class DeactivateActiveDriveRequestsWorkflow(Publisher):
         requests_deactivator.add_subscriber(logger,
                                             DriveRequestsDeactivatorSubscriber())
         requests_getter.perform(repository)
+
+
