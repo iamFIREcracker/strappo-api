@@ -38,8 +38,8 @@ def NotifyDriversTask(passenger_name):
     notify_drivers.perform(logger, DriversRepository, push_adapter, 'drivers',
                            json.dumps({
                                'channel': 'drivers',
-                               'alert': 'Hei, %(name)s is looking'
-                                        'for a passage' \
+                               'alert': 'Hei, %(name)s is looking '
+                                        'for a passage!' \
                                                 % dict(name=passenger_name)
                            }))
     return ret.get()
@@ -67,8 +67,8 @@ def NotifyPassengerTask(driver_name, passenger_id):
                              push_adapter, 'passengers',
                              json.dumps({
                                  'channel': 'passengers',
-                                 'alert': 'Yeah, %(name)s has offered'
-                                          'to give you a ride' \
+                                 'alert': 'Yeah, %(name)s has offered '
+                                          'to give you a ride!' \
                                                   % dict(name=driver_name)
                              }))
     return ret.get()
