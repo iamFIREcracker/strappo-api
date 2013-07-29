@@ -105,13 +105,13 @@ class EditDriverWorkflow(Publisher):
         driver_getter = DriverWithIdGetter()
         authorizer = DriverWithUserIdAuthorizer()
         driver_updater = DriverUpdater()
-        future_form = Future()
+        form_future = Future()
 
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
                 outer.publish('invalid_form', errors)
             def valid_form(self, form):
-                future_form.set(form)
+                form_future.set(form)
                 driver_getter.perform(repository, driver_id)
 
         class DriverGetterSubscriber(object):
@@ -124,7 +124,7 @@ class EditDriverWorkflow(Publisher):
             def unauthorized(self, user_id, driver):
                 outer.publish('unauthorized')
             def authorized(self, user_id, driver):
-                form = future_form.get()
+                form = form_future.get()
                 driver_updater.perform(driver, form.d.license_plate,
                                        form.d.telephone)
 
