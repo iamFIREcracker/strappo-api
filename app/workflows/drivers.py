@@ -16,6 +16,7 @@ from app.pubsub.drivers import DriverLinkedToPassengerWithUserIdAuthorizer
 from app.pubsub.drivers import HiddenDriversGetter
 from app.pubsub.drivers import MultipleDriversUnhider
 from app.pubsub.drivers import UnhiddenDriversGetter
+from app.pubsub.users import UserWithDriverValidator
 from app.weblib.forms import describe_invalid_form
 from app.weblib.pubsub import FormValidator
 from app.weblib.pubsub import Future
@@ -26,17 +27,25 @@ from app.weblib.pubsub import LoggingSubscriber
 class AddDriverWorkflow(Publisher):
     """Defines a workflow to add a new driver."""
 
-    def perform(self, orm, logger, params, repository, user_id):
+    def perform(self, orm, logger, params, repository, user):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
+        user_validator = UserWithDriverValidator()
         form_validator = FormValidator()
         driver_creator = DriverCreator()
+
+        class UserValidatorSubscriber(object):
+            def invalid_user(self, errors):
+                outer.publish('invalid_form', errors) # XXX change message
+            def valid_user(self, user):
+                form_validator.perform(drivers_forms.add(), params,
+                                    describe_invalid_form)
 
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
                 outer.publish('invalid_form', errors)
             def valid_form(self, form):
-                driver_creator.perform(repository, user_id,
+                driver_creator.perform(repository, user.id,
                                        form.d.license_plate, form.d.telephone)
 
         class DriverCreatorSubscriber(object):
@@ -44,10 +53,10 @@ class AddDriverWorkflow(Publisher):
                 orm.add(driver)
                 outer.publish('success', driver.id)
 
+        user_validator.add_subscriber(logger, UserValidatorSubscriber())
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
         driver_creator.add_subscriber(logger, DriverCreatorSubscriber())
-        form_validator.perform(drivers_forms.add(), params,
-                               describe_invalid_form)
+        user_validator.perform(user)
 
 
 class ViewDriverWorkflow(Publisher):
@@ -273,3 +282,5 @@ class UnhideHiddenDriversWorkflow(Publisher):
         drivers_getter.add_subscriber(logger, DriversGetterSubscriber())
         drivers_unhider.add_subscriber(logger, DriversUnhiderSubscriber())
         drivers_getter.perform(repository)
+
+

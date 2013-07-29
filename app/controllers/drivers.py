@@ -40,7 +40,7 @@ class AddDriverController(ParamAuthorizableController):
 
         add_driver.add_subscriber(logger, AddDriverSubscriber())
         add_driver.perform(web.ctx.orm, web.ctx.logger, web.input(),
-                           DriversRepository, self.current_user.id)
+                           DriversRepository, self.current_user)
         return ret.get()
 
 

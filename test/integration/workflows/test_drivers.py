@@ -106,6 +106,23 @@ class TestViewDriverWorkflow(unittest.TestCase):
 
 
 class TestAddDriverWorkflow(unittest.TestCase):
+    def test_cannot_add_a_driver_if_already_linked_to_current_user(self):
+        # Given
+        orm = Mock()
+        logger = Mock()
+        subscriber = Mock(invalid_form=MagicMock())
+        instance = AddDriverWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(orm, logger, None, None,
+                         storage(driver='not null'))
+
+        # Then
+        subscriber.invalid_form.assert_called_with({
+            '_global': 'Driver already present'
+        })
+
     def test_cannot_add_a_new_driver_without_specifying_required_fields(self):
         # Given
         orm = Mock()
@@ -116,7 +133,7 @@ class TestAddDriverWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, params, None, None)
+        instance.perform(orm, logger, params, None, storage(driver=None))
 
         # Then
         subscriber.invalid_form.assert_called_with({
@@ -136,7 +153,8 @@ class TestAddDriverWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, params, repository, 'uid')
+        instance.perform(orm, logger, params, repository,
+                         storage(id='uid', driver=None))
 
         # Then
         subscriber.success.assert_called_with('pid')
