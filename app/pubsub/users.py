@@ -36,7 +36,7 @@ class AlreadyRegisteredVerifier(Publisher):
             self.publish('not_registered', acs_id)
 
 
-class UserWithDriverValidator(Publisher):
+class UserWithoutDriverValidator(Publisher):
     def perform(self, user):
         """Checks whether the given user is already linked to a driver entity.
 
