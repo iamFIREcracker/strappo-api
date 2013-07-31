@@ -14,6 +14,7 @@ from app.pubsub.passengers import PassengerCreator
 from app.pubsub.passengers import PassengerSerializer
 from app.pubsub.passengers import PassengerWithUserIdAuthorizer
 from app.pubsub.passengers import PassengerLinkedToDriverWithUserIdAuthorizer
+from app.pubsub.passengers import UnmatchedPassengersGetter
 from app.weblib.forms import describe_invalid_form
 from app.weblib.pubsub import FormValidator
 from app.weblib.pubsub import Publisher
@@ -28,7 +29,7 @@ class ListActivePassengersWorkflow(Publisher):
     def perform(self, logger, repository):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
-        passengers_getter = ActivePassengersGetter()
+        passengers_getter = UnmatchedPassengersGetter()
         passengers_serializer = MultiplePassengersSerializer()
 
         class ActivePassengersGetterSubscriber(object):

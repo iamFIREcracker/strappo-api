@@ -20,7 +20,7 @@ class TestListActivePassengersWorkflow(unittest.TestCase):
     def test_get_all_active_passengers_without_any_registered_one_should_return_an_empty_list(self):
         # Given
         logger = Mock()
-        repository = Mock(get_all_active=MagicMock(return_value=[]))
+        repository = Mock(get_all_unmatched=MagicMock(return_value=[]))
         subscriber = Mock(success=MagicMock())
         instance = ListActivePassengersWorkflow()
 
@@ -43,7 +43,7 @@ class TestListActivePassengersWorkflow(unittest.TestCase):
                               matched=False,
                               user=storage(name='Name2', avatar='Avatar2',
                                            id='uid2'))]
-        repository = Mock(get_all_active=MagicMock(return_value=passengers))
+        repository = Mock(get_all_unmatched=MagicMock(return_value=passengers))
         subscriber = Mock(success=MagicMock())
         instance = ListActivePassengersWorkflow()
 
