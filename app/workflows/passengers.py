@@ -22,7 +22,7 @@ from app.weblib.pubsub import TaskSubmitter
 from app.weblib.pubsub import Future
 
 
-class ActivePassengersWorkflow(Publisher):
+class ListActivePassengersWorkflow(Publisher):
     """Defines a workflow to view the list of active passengers."""
 
     def perform(self, logger, repository):
