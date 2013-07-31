@@ -70,6 +70,79 @@ class TestPassengersRepository(unittest.TestCase):
         # Then
         self.assertIsNotNone(passenger)
 
+    def test_get_all_unmatched_without_passengers_should_return_empty_list(self):
+        # When
+        passengers = PassengersRepository.get_all_unmatched()
+
+        # Then
+        self.assertEquals([], passengers)
+
+    def test_get_all_unmatched_with_passenger_linked_to_invalid_user_should_return_empty_list(self):
+        # Given
+        self.session.add(Passenger(id='pid', user_id='not_existing_id'))
+        self.session.commit()
+        self.session.remove()
+
+        # When
+        passengers = PassengersRepository.get_all_unmatched()
+
+        # Then
+        self.assertEquals([], passengers)
+
+    def test_get_all_unmatched_with_passenger_linked_to_deleted_user_should_return_empty_list(self):
+        # Given
+        self.session.add(User(id='uid', name='Name', avatar='Avatar',
+                              deleted=True))
+        self.session.add(Passenger(id='pid', user_id='uid'))
+        self.session.commit()
+        self.session.remove()
+
+        # When
+        passengers = PassengersRepository.get_all_unmatched()
+
+        # Then
+        self.assertEquals([], passengers)
+
+    def test_get_all_unmatched_with_deactivate_passenger_linked_to_deleted_user_should_return_empty_list(self):
+        # Given
+        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
+        self.session.add(Passenger(id='pid', user_id='uid', active=False))
+        self.session.commit()
+        self.session.remove()
+
+        # When
+        passengers = PassengersRepository.get_all_unmatched()
+
+        # Then
+        self.assertEquals([], passengers)
+
+    def test_get_all_unmatched_with_matched_passenger_linked_to_active_user_should_return_empty_list(self):
+        # Given
+        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
+        self.session.add(Passenger(id='pid', user_id='uid', matched=True))
+        self.session.commit()
+        self.session.remove()
+
+        # When
+        passengers = PassengersRepository.get_all_unmatched()
+
+        # Then
+        self.assertEquals([], passengers)
+
+    def test_get_all_unmatched_with_passenger_linked_to_active_user_should_return_the_passenger(self):
+        # Given
+        self.session.add(User(id='uid', name='Name', avatar='Avatar'))
+        self.session.add(Passenger(id='pid', user_id='uid'))
+        self.session.commit()
+        self.session.remove()
+
+        # When
+        passengers = PassengersRepository.get_all_unmatched()
+
+        # Then
+        self.assertEquals(1, len(passengers))
+        self.assertEquals('pid', passengers[0].id)
+
     def test_get_all_active_without_passengers_should_return_empty_list(self):
         # When
         passengers = PassengersRepository.get_all_active()
