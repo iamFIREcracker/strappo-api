@@ -78,6 +78,23 @@ class TestUnmatchedPassengersWorkflow(unittest.TestCase):
 
 
 class TestAddPassengerWorkflow(unittest.TestCase):
+    def test_cannot_add_a_passenger_if_already_linked_to_current_user(self):
+        # Given
+        orm = Mock()
+        logger = Mock()
+        subscriber = Mock(invalid_form=MagicMock())
+        instance = AddPassengerWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(orm, logger, None, None,
+                         storage(passenger='not null'), None)
+
+        # Then
+        subscriber.invalid_form.assert_called_with({
+            '_global': 'Passenger already present'
+        })
+
     def test_cannot_add_a_new_passenger_without_specifying_required_fields(self):
         # Given
         orm = Mock()
@@ -88,7 +105,8 @@ class TestAddPassengerWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, params, None, None, None, None)
+        instance.perform(orm, logger, params, None,
+                         storage(passenger=None), None)
 
         # Then
         subscriber.invalid_form.assert_called_with({
@@ -110,7 +128,8 @@ class TestAddPassengerWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, params, repository, 'uid', 'Name',
+        instance.perform(orm, logger, params, repository,
+                         storage(id='uid', name='Name', passenger=None),
                          drivers_notifier)
 
         # Then

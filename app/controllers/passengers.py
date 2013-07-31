@@ -56,8 +56,8 @@ class AddPassengerController(ParamAuthorizableController):
 
         add_passenger.add_subscriber(logger, AddPassengerSubscriber())
         add_passenger.perform(web.ctx.orm, web.ctx.logger, web.input(),
-                              PassengersRepository, self.current_user.id,
-                              self.current_user.name, NotifyDriversTask)
+                              PassengersRepository, self.current_user,
+                              NotifyDriversTask)
         return ret.get()
 
 

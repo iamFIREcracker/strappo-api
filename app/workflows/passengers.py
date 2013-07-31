@@ -15,6 +15,7 @@ from app.pubsub.passengers import PassengerSerializer
 from app.pubsub.passengers import PassengerWithUserIdAuthorizer
 from app.pubsub.passengers import PassengerLinkedToDriverWithUserIdAuthorizer
 from app.pubsub.passengers import UnmatchedPassengersGetter
+from app.pubsub.users import UserWithoutPassengerValidator
 from app.weblib.forms import describe_invalid_form
 from app.weblib.pubsub import FormValidator
 from app.weblib.pubsub import Publisher
@@ -51,20 +52,27 @@ class ListUnmatchedPassengersWorkflow(Publisher):
 class AddPassengerWorkflow(Publisher):
     """Defines a workflow to add a new passenger."""
 
-    def perform(self, orm, logger, params, repository,
-                user_id, user_name, task):
+    def perform(self, orm, logger, params, repository, user, task):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
+        user_validator = UserWithoutPassengerValidator()
         form_validator = FormValidator()
         passenger_creator = PassengerCreator()
         task_submitter = TaskSubmitter()
         passenger_id_future = Future()
 
+        class UserValidatorSubscriber(object):
+            def invalid_user(self, errors):
+                outer.publish('invalid_form', errors) # XXX change message
+            def valid_user(self, user):
+                form_validator.perform(passengers_forms.add(), params,
+                                    describe_invalid_form)
+
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
                 outer.publish('invalid_form', errors)
             def valid_form(self, form):
-                passenger_creator.perform(repository, user_id, form.d.origin,
+                passenger_creator.perform(repository, user.id, form.d.origin,
                                           form.d.destination,
                                           int(form.d.seats))
 
@@ -72,17 +80,17 @@ class AddPassengerWorkflow(Publisher):
             def passenger_created(self, passenger):
                 orm.add(passenger)
                 passenger_id_future.set(passenger.id)
-                task_submitter.perform(task, user_name)
+                task_submitter.perform(task, user.name)
 
         class TaskSubmitterSubscriber(object):
             def task_created(self, task_id):
                 outer.publish('success', passenger_id_future.get())
 
+        user_validator.add_subscriber(logger, UserValidatorSubscriber())
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
         passenger_creator.add_subscriber(logger, PassengerCreatorSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
-        form_validator.perform(passengers_forms.add(), params,
-                               describe_invalid_form)
+        user_validator.perform(user)
 
 
 class ViewPassengerWorkflow(Publisher):
