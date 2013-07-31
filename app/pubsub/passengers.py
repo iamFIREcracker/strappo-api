@@ -20,6 +20,16 @@ class PassengerWithIdGetter(Publisher):
             self.publish('passenger_found', passenger)
 
 
+class UnmatchedPassengersGetter(Publisher):
+    def perform(self, repository):
+        """Search for all the unmatched passengers around.
+
+        When done, a 'passengers_found' message will be published, followed by
+        the list of unmatched passengers.
+        """
+        self.publish('passengers_found', repository.get_all_unmatched())
+
+
 class ActivePassengersGetter(Publisher):
     def perform(self, repository):
         """Search for all the active passengers around.
