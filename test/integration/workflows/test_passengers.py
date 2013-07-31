@@ -9,20 +9,20 @@ from mock import MagicMock
 from mock import Mock
 
 from app.workflows.passengers import AddPassengerWorkflow
-from app.workflows.passengers import ListActivePassengersWorkflow
+from app.workflows.passengers import ListUnmatchedPassengersWorkflow
 from app.workflows.passengers import DeactivatePassengerWorkflow
 from app.workflows.passengers import DeactivateActivePassengersWorkflow
 from app.workflows.passengers import NotifyPassengerWorkflow
 from app.workflows.passengers import ViewPassengerWorkflow
 
 
-class TestListActivePassengersWorkflow(unittest.TestCase):
+class TestUnmatchedPassengersWorkflow(unittest.TestCase):
     def test_get_all_active_passengers_without_any_registered_one_should_return_an_empty_list(self):
         # Given
         logger = Mock()
         repository = Mock(get_all_unmatched=MagicMock(return_value=[]))
         subscriber = Mock(success=MagicMock())
-        instance = ListActivePassengersWorkflow()
+        instance = ListUnmatchedPassengersWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
@@ -45,7 +45,7 @@ class TestListActivePassengersWorkflow(unittest.TestCase):
                                            id='uid2'))]
         repository = Mock(get_all_unmatched=MagicMock(return_value=passengers))
         subscriber = Mock(success=MagicMock())
-        instance = ListActivePassengersWorkflow()
+        instance = ListUnmatchedPassengersWorkflow()
 
         # When
         instance.add_subscriber(subscriber)

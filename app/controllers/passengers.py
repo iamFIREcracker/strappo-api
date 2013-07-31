@@ -14,25 +14,25 @@ from app.weblib.request_decorators import api
 from app.weblib.request_decorators import authorized
 from app.weblib.utils import jsonify
 from app.workflows.passengers import AddPassengerWorkflow
-from app.workflows.passengers import ListActivePassengersWorkflow
+from app.workflows.passengers import ListUnmatchedPassengersWorkflow
 from app.workflows.passengers import DeactivatePassengerWorkflow
 from app.workflows.passengers import ViewPassengerWorkflow
 from app.workflows.drive_requests import AcceptDriveRequestWorkflow
 
 
-class ListActivePassengersController(ParamAuthorizableController):
+class ListUnmatchedPassengersController(ParamAuthorizableController):
     @api
     @authorized
     def GET(self):
         logger = LoggingSubscriber(web.ctx.logger)
-        passengers = ListActivePassengersWorkflow()
+        passengers = ListUnmatchedPassengersWorkflow()
         ret = Future()
 
-        class ActivePassengersSubscriber(object):
+        class ListUnmatchedPassengersSubscriber(object):
             def success(self, blob):
                 ret.set(jsonify(passengers=blob))
 
-        passengers.add_subscriber(logger, ActivePassengersSubscriber())
+        passengers.add_subscriber(logger, ListUnmatchedPassengersSubscriber())
         passengers.perform(web.ctx.logger, PassengersRepository)
         return ret.get()
 

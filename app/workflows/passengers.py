@@ -23,8 +23,8 @@ from app.weblib.pubsub import TaskSubmitter
 from app.weblib.pubsub import Future
 
 
-class ListActivePassengersWorkflow(Publisher):
-    """Defines a workflow to view the list of active passengers."""
+class ListUnmatchedPassengersWorkflow(Publisher):
+    """Defines a workflow to view the list of unmatched passengers."""
 
     def perform(self, logger, repository):
         outer = self # Handy to access ``self`` from inner classes
