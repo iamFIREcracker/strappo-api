@@ -39,7 +39,7 @@ def NotifyDriversTask(passenger_name):
                            json.dumps({
                                'channel': 'drivers',
                                'alert': 'Hei, %(name)s is looking '
-                                        'for a passage!' \
+                                        'for a lift!' \
                                                 % dict(name=passenger_name)
                            }))
     return ret.get()
