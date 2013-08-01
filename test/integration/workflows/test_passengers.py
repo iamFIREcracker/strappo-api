@@ -327,7 +327,7 @@ class TestDeactivatePassengerWorkflow(unittest.TestCase):
         # Given
         logger = Mock()
         orm = Mock()
-        passenger = storage(id='pid', user_id='uid')
+        passenger = storage(id='pid', user_id='uid', requests=[])
         repository = Mock(get=MagicMock(return_value=passenger))
         subscriber = Mock(success=MagicMock())
         instance = DeactivatePassengerWorkflow()

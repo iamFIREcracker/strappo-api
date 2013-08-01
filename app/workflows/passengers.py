@@ -5,6 +5,7 @@
 import app.forms.passengers as passengers_forms
 from app.pubsub import ACSSessionCreator
 from app.pubsub import ACSUserIdsNotifier
+from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.passengers import ActivePassengersGetter
 from app.pubsub.passengers import PassengerWithIdGetter
 from app.pubsub.passengers import MultiplePassengersDeactivator
@@ -194,6 +195,7 @@ class DeactivatePassengerWorkflow(Publisher):
         passenger_getter = PassengerWithIdGetter()
         with_user_id_authorizer = PassengerWithUserIdAuthorizer()
         passengers_deactivator = MultiplePassengersDeactivator()
+        requests_deactivator = MultipleDriveRequestsDeactivator()
 
         class PassengerGetterSubscriber(object):
             def passenger_not_found(self, passenger_id):
@@ -209,7 +211,12 @@ class DeactivatePassengerWorkflow(Publisher):
 
         class PassengersDeactivatorSubscriber(object):
             def passengers_hid(self, passengers):
-                orm.add_all(passengers)
+                orm.add(passengers[0])
+                requests_deactivator.perform(passengers[0].requests)
+
+        class DriveRequestsDeactivatorSubscriber(object):
+            def drive_requests_hid(self, requests):
+                orm.add_all(requests)
                 outer.publish('success')
 
         passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
@@ -217,6 +224,8 @@ class DeactivatePassengerWorkflow(Publisher):
                 add_subscriber(logger, WithUserIdAuthorizerSubscriber())
         passengers_deactivator.add_subscriber(logger,
                                               PassengersDeactivatorSubscriber())
+        requests_deactivator.\
+                add_subscriber(logger, DriveRequestsDeactivatorSubscriber())
         passenger_getter.perform(repository, passenger_id)
 
 
