@@ -29,7 +29,7 @@ URLS = (
     '/1/drivers/(.+)/unhide', UnhideDriverController,
     '/1/drivers/(.+)/accept/passenger/(.+)', AcceptPassengerController,
     '/1/drive_requests/active', ListActiveDriveRequestsController,
-    '/1/passengers/active', ListUnmatchedPassengersController,
+    '/1/passengers/unmatched', ListUnmatchedPassengersController,
     '/1/passengers/add', AddPassengerController,
     '/1/passengers/(.+)/view', ViewPassengerController,
     '/1/passengers/(.+)/deactivate', DeactivatePassengerController,
