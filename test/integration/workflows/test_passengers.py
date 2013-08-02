@@ -122,7 +122,7 @@ class TestAddPassengerWorkflow(unittest.TestCase):
         passenger = storage(id='pid', user_id='uid', origin='heaven',
                             destination='hell', seats=4)
         repository = Mock(add=MagicMock(return_value=passenger))
-        drivers_notifier = Mock()
+        drivers_notifier = Mock(delay=MagicMock())
         subscriber = Mock(success=MagicMock())
         instance = AddPassengerWorkflow()
 
@@ -133,6 +133,7 @@ class TestAddPassengerWorkflow(unittest.TestCase):
                          drivers_notifier)
 
         # Then
+        drivers_notifier.delay.assert_called_with('Name')
         subscriber.success.assert_called_with('pid')
 
 
