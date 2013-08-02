@@ -8,7 +8,7 @@ from app.controllers import ParamAuthorizableController
 from app.repositories.passengers import PassengersRepository
 from app.repositories.drive_requests import DriveRequestsRepository
 from app.tasks import NotifyDriversTask
-from app.tasks import NotifyDriversDeactivatedPassenger
+from app.tasks import NotifyDriversDeactivatedPassengerTask
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.request_decorators import api
@@ -104,7 +104,7 @@ class DeactivatePassengerController(ParamAuthorizableController):
         deactivate_passenger.perform(web.ctx.logger, web.ctx.orm,
                                      PassengersRepository, passenger_id,
                                      self.current_user,
-                                     NotifyDriversDeactivatedPassenger)
+                                     NotifyDriversDeactivatedPassengerTask)
 
 
 class AcceptDriverController(ParamAuthorizableController):
