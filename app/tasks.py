@@ -46,6 +46,10 @@ def NotifyDriversTask(passenger_name):
 
 
 @celery.task
+def NotifyDriversDeactivatedPassengerTask(passenger_name, driver_ids):
+    pass
+
+@celery.task
 def NotifyPassengerTask(driver_name, passenger_id):
     logger = create_logger()
     logging_subscriber = LoggingSubscriber(logger)

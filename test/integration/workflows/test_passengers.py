@@ -304,7 +304,7 @@ class TestDeactivatePassengerWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(logger, orm, repository, 'not_existing', None)
+        instance.perform(logger, orm, repository, 'not_existing', None, None)
 
         # Then
         subscriber.not_found.assert_called_with('not_existing')
@@ -319,7 +319,8 @@ class TestDeactivatePassengerWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(logger, orm, repository, 'pid', 'uid')
+        instance.perform(logger, orm, repository, 'pid', storage(id='uid'),
+                         None)
 
         # Then
         subscriber.unauthorized.assert_called_with()
@@ -330,15 +331,44 @@ class TestDeactivatePassengerWorkflow(unittest.TestCase):
         orm = Mock()
         passenger = storage(id='pid', user_id='uid', requests=[])
         repository = Mock(get=MagicMock(return_value=passenger))
+        drivers_notifier = Mock(delay=MagicMock())
         subscriber = Mock(success=MagicMock())
         instance = DeactivatePassengerWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(logger, orm, repository, 'pid', 'uid')
+        instance.perform(logger, orm, repository, 'pid',
+                         storage(id='uid', name='Name'), drivers_notifier)
 
         # Then
+        drivers_notifier.delay.assert_called_with('Name', [])
         subscriber.success.assert_called_with()
+
+    def test_passenger_gets_properly_deactivated_and_drivers_notified_if_invoked_by_passenger_owner(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        passenger = storage(id='pid', user_id='uid',
+                            requests=[storage(id='r1',
+                                              driver_id='did',
+                                              accepted=False),
+                                      storage(id='r2',
+                                              driver_id='did2',
+                                              accepted=True)])
+        repository = Mock(get=MagicMock(return_value=passenger))
+        drivers_notifier = Mock(delay=MagicMock())
+        subscriber = Mock(success=MagicMock())
+        instance = DeactivatePassengerWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, orm, repository, 'pid',
+                         storage(id='uid', name='Name'), drivers_notifier)
+
+        # Then
+        drivers_notifier.delay.assert_called_with('Name', ['did2'])
+        subscriber.success.assert_called_with()
+
 
 
 class TestDeactivateActivePassengersWorkflow(unittest.TestCase):
