@@ -47,7 +47,29 @@ def NotifyDriversTask(passenger_name):
 
 @celery.task
 def NotifyDriversDeactivatedPassengerTask(passenger_name, driver_ids):
-    pass
+    logger = create_logger()
+    logging_subscriber = LoggingSubscriber(logger)
+    push_adapter = TitaniumPushNotificationsAdapter()
+    notify_drivers = NotifyDriversWorkflow()
+    ret = Future()
+
+    class NotifyDriversSubscriber(object):
+        def failure(self, error):
+            ret.set((None, error))
+        def success(self):
+            ret.set((None, None))
+
+    notify_drivers.add_subscriber(logging_subscriber,
+                                    NotifyDriversSubscriber())
+    notify_drivers.perform(logger, DriversRepository, push_adapter, 'drivers',
+                           json.dumps({
+                               'channel': 'drivers',
+                               'alert': 'Oh no, %(name)s is no more '
+                                        'looking for a ride!' \
+                                                % dict(name=passenger_name)
+                           }))
+    return ret.get()
+
 
 @celery.task
 def NotifyPassengerTask(driver_name, passenger_id):
