@@ -8,6 +8,7 @@ from app.controllers import ParamAuthorizableController
 from app.repositories.passengers import PassengersRepository
 from app.repositories.drive_requests import DriveRequestsRepository
 from app.tasks import NotifyDriversTask
+from app.tasks import NotifyDriversAlitPassengerTask
 from app.tasks import NotifyDriversDeactivatedPassengerTask
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
@@ -82,6 +83,30 @@ class ViewPassengerController(ParamAuthorizableController):
         view_passenger.perform(web.ctx.logger, PassengersRepository,
                                passenger_id, self.current_user.id)
         return ret.get()
+
+
+class AlightPassengerController(ParamAuthorizableController):
+    @api
+    @authorized
+    def POST(self, passenger_id):
+        logger = LoggingSubscriber(web.ctx.logger)
+        deactivate_passenger = DeactivatePassengerWorkflow()
+
+        class DeactivatePassengerSubscriber(object):
+            def not_found(self, passenger_id):
+                raise web.notfound()
+            def unauthorized(self):
+                raise web.unauthorized()
+            def success(self):
+                raise web.ok()
+
+        deactivate_passenger.add_subscriber(logger,
+                                            DeactivatePassengerSubscriber())
+        deactivate_passenger.perform(web.ctx.logger, web.ctx.orm,
+                                     PassengersRepository, passenger_id,
+                                     self.current_user,
+                                     NotifyDriversAlitPassenger)
+
 
 
 class DeactivatePassengerController(ParamAuthorizableController):

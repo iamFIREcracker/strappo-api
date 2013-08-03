@@ -12,6 +12,7 @@ from app.controllers.drivers import UnhideDriverController
 from app.controllers.drivers import ViewDriverController
 from app.controllers.passengers import AcceptDriverController
 from app.controllers.passengers import AddPassengerController
+from app.controllers.passengers import AlightPassengerController
 from app.controllers.passengers import DeactivatePassengerController
 from app.controllers.passengers import ListUnmatchedPassengersController
 from app.controllers.passengers import ViewPassengerController
@@ -32,6 +33,7 @@ URLS = (
     '/1/passengers/unmatched', ListUnmatchedPassengersController,
     '/1/passengers/add', AddPassengerController,
     '/1/passengers/(.+)/view', ViewPassengerController,
+    '/1/passengers/(.+)/alight', AlightPassengerController,
     '/1/passengers/(.+)/deactivate', DeactivatePassengerController,
     '/1/passengers/(.+)/accept/driver/(.+)', AcceptDriverController,
     '/1/users/(.+)/view', ViewUserController,
