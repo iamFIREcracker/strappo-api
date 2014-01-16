@@ -16,6 +16,13 @@ class PassengersRepository(object):
                                 filter(User.deleted == False).\
                                 filter(Passenger.id == id).first(),
                         Passenger.session)
+    @staticmethod
+    def get_all_unmatched():
+        return [expunged(p, Passenger.session)
+                for p in Passenger.query.options(joinedload('user')).\
+                        filter(User.deleted == False).\
+                        filter(Passenger.active == True).\
+                        filter(Passenger.matched == False)]
 
     @staticmethod
     def get_all_active():

@@ -8,31 +8,33 @@ from app.controllers import ParamAuthorizableController
 from app.repositories.passengers import PassengersRepository
 from app.repositories.drive_requests import DriveRequestsRepository
 from app.tasks import NotifyDriversTask
+from app.tasks import NotifyDriversAlitPassengerTask
+from app.tasks import NotifyDriversDeactivatedPassengerTask
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.request_decorators import api
 from app.weblib.request_decorators import authorized
 from app.weblib.utils import jsonify
 from app.workflows.passengers import AddPassengerWorkflow
-from app.workflows.passengers import ActivePassengersWorkflow
+from app.workflows.passengers import ListUnmatchedPassengersWorkflow
 from app.workflows.passengers import DeactivatePassengerWorkflow
 from app.workflows.passengers import ViewPassengerWorkflow
 from app.workflows.drive_requests import AcceptDriveRequestWorkflow
 
 
-class ActivePassengersController(ParamAuthorizableController):
+class ListUnmatchedPassengersController(ParamAuthorizableController):
     @api
     @authorized
     def GET(self):
         logger = LoggingSubscriber(web.ctx.logger)
-        passengers = ActivePassengersWorkflow()
+        passengers = ListUnmatchedPassengersWorkflow()
         ret = Future()
 
-        class ActivePassengersSubscriber(object):
+        class ListUnmatchedPassengersSubscriber(object):
             def success(self, blob):
                 ret.set(jsonify(passengers=blob))
 
-        passengers.add_subscriber(logger, ActivePassengersSubscriber())
+        passengers.add_subscriber(logger, ListUnmatchedPassengersSubscriber())
         passengers.perform(web.ctx.logger, PassengersRepository)
         return ret.get()
 
@@ -56,8 +58,8 @@ class AddPassengerController(ParamAuthorizableController):
 
         add_passenger.add_subscriber(logger, AddPassengerSubscriber())
         add_passenger.perform(web.ctx.orm, web.ctx.logger, web.input(),
-                              PassengersRepository, self.current_user.id,
-                              self.current_user.name, NotifyDriversTask)
+                              PassengersRepository, self.current_user,
+                              NotifyDriversTask)
         return ret.get()
 
 
@@ -83,6 +85,30 @@ class ViewPassengerController(ParamAuthorizableController):
         return ret.get()
 
 
+class AlightPassengerController(ParamAuthorizableController):
+    @api
+    @authorized
+    def POST(self, passenger_id):
+        logger = LoggingSubscriber(web.ctx.logger)
+        deactivate_passenger = DeactivatePassengerWorkflow()
+
+        class DeactivatePassengerSubscriber(object):
+            def not_found(self, passenger_id):
+                raise web.notfound()
+            def unauthorized(self):
+                raise web.unauthorized()
+            def success(self):
+                raise web.ok()
+
+        deactivate_passenger.add_subscriber(logger,
+                                            DeactivatePassengerSubscriber())
+        deactivate_passenger.perform(web.ctx.logger, web.ctx.orm,
+                                     PassengersRepository, passenger_id,
+                                     self.current_user,
+                                     NotifyDriversAlitPassenger)
+
+
+
 class DeactivatePassengerController(ParamAuthorizableController):
     @api
     @authorized
@@ -102,7 +128,8 @@ class DeactivatePassengerController(ParamAuthorizableController):
                                             DeactivatePassengerSubscriber())
         deactivate_passenger.perform(web.ctx.logger, web.ctx.orm,
                                      PassengersRepository, passenger_id,
-                                     self.current_user.id)
+                                     self.current_user,
+                                     NotifyDriversDeactivatedPassengerTask)
 
 
 class AcceptDriverController(ParamAuthorizableController):

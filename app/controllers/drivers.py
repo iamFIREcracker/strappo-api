@@ -100,7 +100,6 @@ class HideDriverController(ParamAuthorizableController):
     def POST(self, driver_id):
         logger = LoggingSubscriber(web.ctx.logger)
         hide_driver = HideDriverWorkflow()
-        ret = Future()
 
         class HideDriverSubscriber(object):
             def not_found(self, driver_id):
@@ -116,7 +115,6 @@ class HideDriverController(ParamAuthorizableController):
         hide_driver.add_subscriber(logger, HideDriverSubscriber())
         hide_driver.perform(web.ctx.orm, web.ctx.logger, DriversRepository,
                             driver_id, self.current_user.id)
-        return ret.get()
 
 
 class UnhideDriverController(ParamAuthorizableController):
@@ -125,7 +123,6 @@ class UnhideDriverController(ParamAuthorizableController):
     def POST(self, driver_id):
         logger = LoggingSubscriber(web.ctx.logger)
         unhide_driver = UnhideDriverWorkflow()
-        ret = Future()
 
         class UnhideDriverSubscriber(object):
             def not_found(self, driver_id):
@@ -141,7 +138,6 @@ class UnhideDriverController(ParamAuthorizableController):
         unhide_driver.add_subscriber(logger, UnhideDriverSubscriber())
         unhide_driver.perform(web.ctx.orm, web.ctx.logger, DriversRepository,
                               driver_id, self.current_user.id)
-        return ret.get()
 
 
 class AcceptPassengerController(ParamAuthorizableController):

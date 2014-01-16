@@ -38,8 +38,60 @@ def NotifyDriversTask(passenger_name):
     notify_drivers.perform(logger, DriversRepository, push_adapter, 'drivers',
                            json.dumps({
                                'channel': 'drivers',
-                               'alert': 'Hei, %(name)s is looking'
-                                        'for a passage' \
+                               'alert': 'Hei, %(name)s is looking '
+                                        'for a lift!' \
+                                                % dict(name=passenger_name)
+                           }))
+    return ret.get()
+
+
+@celery.task
+def NotifyDriversAlitPassengerTask(passenger_name, driver_ids):
+    logger = create_logger()
+    logging_subscriber = LoggingSubscriber(logger)
+    push_adapter = TitaniumPushNotificationsAdapter()
+    notify_drivers = NotifyDriversWorkflow()
+    ret = Future()
+
+    class NotifyDriversSubscriber(object):
+        def failure(self, error):
+            ret.set((None, error))
+        def success(self):
+            ret.set((None, None))
+
+    notify_drivers.add_subscriber(logging_subscriber,
+                                    NotifyDriversSubscriber())
+    notify_drivers.perform(logger, DriversRepository, push_adapter, 'drivers',
+                           json.dumps({
+                               'channel': 'drivers',
+                               'alert': '%(name)s is so thankful '
+                                        'for the ride!' \
+                                                % dict(name=passenger_name)
+                           }))
+    return ret.get()
+
+
+@celery.task
+def NotifyDriversDeactivatedPassengerTask(passenger_name, driver_ids):
+    logger = create_logger()
+    logging_subscriber = LoggingSubscriber(logger)
+    push_adapter = TitaniumPushNotificationsAdapter()
+    notify_drivers = NotifyDriversWorkflow()
+    ret = Future()
+
+    class NotifyDriversSubscriber(object):
+        def failure(self, error):
+            ret.set((None, error))
+        def success(self):
+            ret.set((None, None))
+
+    notify_drivers.add_subscriber(logging_subscriber,
+                                    NotifyDriversSubscriber())
+    notify_drivers.perform(logger, DriversRepository, push_adapter, 'drivers',
+                           json.dumps({
+                               'channel': 'drivers',
+                               'alert': 'Oh no, %(name)s is no more '
+                                        'looking for a ride!' \
                                                 % dict(name=passenger_name)
                            }))
     return ret.get()
@@ -67,8 +119,8 @@ def NotifyPassengerTask(driver_name, passenger_id):
                              push_adapter, 'passengers',
                              json.dumps({
                                  'channel': 'passengers',
-                                 'alert': 'Yeah, %(name)s has offered'
-                                          'to give you a ride' \
+                                 'alert': 'Yeah, %(name)s has offered '
+                                          'to give you a ride!' \
                                                   % dict(name=driver_name)
                              }))
     return ret.get()

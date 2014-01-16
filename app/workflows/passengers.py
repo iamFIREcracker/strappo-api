@@ -5,6 +5,8 @@
 import app.forms.passengers as passengers_forms
 from app.pubsub import ACSSessionCreator
 from app.pubsub import ACSUserIdsNotifier
+from app.pubsub.drive_requests import AcceptedDriveRequestsFilter
+from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.passengers import ActivePassengersGetter
 from app.pubsub.passengers import PassengerWithIdGetter
 from app.pubsub.passengers import MultiplePassengersDeactivator
@@ -14,6 +16,8 @@ from app.pubsub.passengers import PassengerCreator
 from app.pubsub.passengers import PassengerSerializer
 from app.pubsub.passengers import PassengerWithUserIdAuthorizer
 from app.pubsub.passengers import PassengerLinkedToDriverWithUserIdAuthorizer
+from app.pubsub.passengers import UnmatchedPassengersGetter
+from app.pubsub.users import UserWithoutPassengerValidator
 from app.weblib.forms import describe_invalid_form
 from app.weblib.pubsub import FormValidator
 from app.weblib.pubsub import Publisher
@@ -22,13 +26,13 @@ from app.weblib.pubsub import TaskSubmitter
 from app.weblib.pubsub import Future
 
 
-class ActivePassengersWorkflow(Publisher):
-    """Defines a workflow to view the list of active passengers."""
+class ListUnmatchedPassengersWorkflow(Publisher):
+    """Defines a workflow to view the list of unmatched passengers."""
 
     def perform(self, logger, repository):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
-        passengers_getter = ActivePassengersGetter()
+        passengers_getter = UnmatchedPassengersGetter()
         passengers_serializer = MultiplePassengersSerializer()
 
         class ActivePassengersGetterSubscriber(object):
@@ -50,20 +54,27 @@ class ActivePassengersWorkflow(Publisher):
 class AddPassengerWorkflow(Publisher):
     """Defines a workflow to add a new passenger."""
 
-    def perform(self, orm, logger, params, repository,
-                user_id, user_name, task):
+    def perform(self, orm, logger, params, repository, user, task):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
+        user_validator = UserWithoutPassengerValidator()
         form_validator = FormValidator()
         passenger_creator = PassengerCreator()
         task_submitter = TaskSubmitter()
         passenger_id_future = Future()
 
+        class UserValidatorSubscriber(object):
+            def invalid_user(self, errors):
+                outer.publish('invalid_form', errors) # XXX change message
+            def valid_user(self, user):
+                form_validator.perform(passengers_forms.add(), params,
+                                    describe_invalid_form)
+
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
                 outer.publish('invalid_form', errors)
             def valid_form(self, form):
-                passenger_creator.perform(repository, user_id, form.d.origin,
+                passenger_creator.perform(repository, user.id, form.d.origin,
                                           form.d.destination,
                                           int(form.d.seats))
 
@@ -71,17 +82,17 @@ class AddPassengerWorkflow(Publisher):
             def passenger_created(self, passenger):
                 orm.add(passenger)
                 passenger_id_future.set(passenger.id)
-                task_submitter.perform(task, user_name)
+                task_submitter.perform(task, user.name)
 
         class TaskSubmitterSubscriber(object):
             def task_created(self, task_id):
                 outer.publish('success', passenger_id_future.get())
 
+        user_validator.add_subscriber(logger, UserValidatorSubscriber())
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
         passenger_creator.add_subscriber(logger, PassengerCreatorSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
-        form_validator.perform(passengers_forms.add(), params,
-                               describe_invalid_form)
+        user_validator.perform(user)
 
 
 class ViewPassengerWorkflow(Publisher):
@@ -179,18 +190,21 @@ class NotifyPassengerWorkflow(Publisher):
 class DeactivatePassengerWorkflow(Publisher):
     """Defines a workflow to deactivate a passenger given its ID."""
 
-    def perform(self, logger, orm, repository, passenger_id, user_id):
+    def perform(self, logger, orm, repository, passenger_id, user, task):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         passenger_getter = PassengerWithIdGetter()
         with_user_id_authorizer = PassengerWithUserIdAuthorizer()
         passengers_deactivator = MultiplePassengersDeactivator()
+        requests_deactivator = MultipleDriveRequestsDeactivator()
+        accepted_requests_filter = AcceptedDriveRequestsFilter()
+        task_submitter = TaskSubmitter()
 
         class PassengerGetterSubscriber(object):
             def passenger_not_found(self, passenger_id):
                 outer.publish('not_found', passenger_id)
             def passenger_found(self, passenger):
-                with_user_id_authorizer.perform(user_id, passenger)
+                with_user_id_authorizer.perform(user.id, passenger)
 
         class WithUserIdAuthorizerSubscriber(object):
             def unauthorized(self, user_id, passenger):
@@ -200,7 +214,21 @@ class DeactivatePassengerWorkflow(Publisher):
 
         class PassengersDeactivatorSubscriber(object):
             def passengers_hid(self, passengers):
-                orm.add_all(passengers)
+                orm.add(passengers[0])
+                requests_deactivator.perform(passengers[0].requests)
+
+        class DriveRequestsDeactivatorSubscriber(object):
+            def drive_requests_hid(self, requests):
+                orm.add_all(requests)
+                accepted_requests_filter.perform(requests)
+
+        class AcceptedDriveReuqestsSubscriber(object):
+            def drive_requests_extracted(self, requests):
+                task_submitter.perform(task, user.name,
+                                       [r.driver_id for r in requests])
+
+        class TaskSubmitterSubscriber(object):
+            def task_created(self, task_id):
                 outer.publish('success')
 
         passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
@@ -208,6 +236,11 @@ class DeactivatePassengerWorkflow(Publisher):
                 add_subscriber(logger, WithUserIdAuthorizerSubscriber())
         passengers_deactivator.add_subscriber(logger,
                                               PassengersDeactivatorSubscriber())
+        requests_deactivator.\
+                add_subscriber(logger, DriveRequestsDeactivatorSubscriber())
+        accepted_requests_filter.\
+                add_subscriber(logger, AcceptedDriveReuqestsSubscriber())
+        task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         passenger_getter.perform(repository, passenger_id)
 
 

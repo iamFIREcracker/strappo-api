@@ -329,9 +329,11 @@ class TestAddDriveRequestWorkflow(unittest.TestCase):
         # Given
         logger = Mock()
         orm = Mock()
-        drivers_repository = Mock(get=MagicMock(return_value=Mock(user_id='uid')))
-        requests_repository = Mock(add=MagicMock())
-        task = Mock()
+        driver = storage(user_id='uid', user=storage(name='Name'))
+        drive_request = storage(id='rid', passenger_id='pid')
+        drivers_repository = Mock(get=MagicMock(return_value=driver))
+        requests_repository = Mock(add=MagicMock(return_value=drive_request))
+        task = Mock(delay=MagicMock())
         subscriber = Mock(success=MagicMock())
         instance = AddDriveRequestWorkflow()
 
@@ -341,6 +343,7 @@ class TestAddDriveRequestWorkflow(unittest.TestCase):
                          requests_repository, 'pid', task)
 
         # Then
+        task.delay.assert_called_with('Name', 'pid')
         subscriber.success.assert_called_with()
 
 

@@ -36,7 +36,7 @@ class AlreadyRegisteredVerifier(Publisher):
             self.publish('not_registered', acs_id)
 
 
-class UserWithDriverValidator(Publisher):
+class UserWithoutDriverValidator(Publisher):
     def perform(self, user):
         """Checks whether the given user is already linked to a driver entity.
 
@@ -50,6 +50,23 @@ class UserWithDriverValidator(Publisher):
         else:
             self.publish('invalid_user',
                          dict(_global='Driver already present'))
+
+
+class UserWithoutPassengerValidator(Publisher):
+    def perform(self, user):
+        """Checks whether the given user is already linked to a passenger
+        entity.
+
+        An 'invalid_user' message is published if the given user is already
+        linked to a passenger;  on the other hand a 'valid_user' message will
+        be sent back to subscribers if no passenger was previously linked with
+        the user.
+        """
+        if user.passenger is None:
+            self.publish('valid_user', user)
+        else:
+            self.publish('invalid_user',
+                         dict(_global='Passenger already present'))
 
 
 class AccountRefresher(Publisher):

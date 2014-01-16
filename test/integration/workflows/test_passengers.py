@@ -9,20 +9,20 @@ from mock import MagicMock
 from mock import Mock
 
 from app.workflows.passengers import AddPassengerWorkflow
-from app.workflows.passengers import ActivePassengersWorkflow
+from app.workflows.passengers import ListUnmatchedPassengersWorkflow
 from app.workflows.passengers import DeactivatePassengerWorkflow
 from app.workflows.passengers import DeactivateActivePassengersWorkflow
 from app.workflows.passengers import NotifyPassengerWorkflow
 from app.workflows.passengers import ViewPassengerWorkflow
 
 
-class TestActivePassengersWorkflow(unittest.TestCase):
+class TestUnmatchedPassengersWorkflow(unittest.TestCase):
     def test_get_all_active_passengers_without_any_registered_one_should_return_an_empty_list(self):
         # Given
         logger = Mock()
-        repository = Mock(get_all_active=MagicMock(return_value=[]))
+        repository = Mock(get_all_unmatched=MagicMock(return_value=[]))
         subscriber = Mock(success=MagicMock())
-        instance = ActivePassengersWorkflow()
+        instance = ListUnmatchedPassengersWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
@@ -43,9 +43,9 @@ class TestActivePassengersWorkflow(unittest.TestCase):
                               matched=False,
                               user=storage(name='Name2', avatar='Avatar2',
                                            id='uid2'))]
-        repository = Mock(get_all_active=MagicMock(return_value=passengers))
+        repository = Mock(get_all_unmatched=MagicMock(return_value=passengers))
         subscriber = Mock(success=MagicMock())
-        instance = ActivePassengersWorkflow()
+        instance = ListUnmatchedPassengersWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
@@ -78,6 +78,23 @@ class TestActivePassengersWorkflow(unittest.TestCase):
 
 
 class TestAddPassengerWorkflow(unittest.TestCase):
+    def test_cannot_add_a_passenger_if_already_linked_to_current_user(self):
+        # Given
+        orm = Mock()
+        logger = Mock()
+        subscriber = Mock(invalid_form=MagicMock())
+        instance = AddPassengerWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(orm, logger, None, None,
+                         storage(passenger='not null'), None)
+
+        # Then
+        subscriber.invalid_form.assert_called_with({
+            '_global': 'Passenger already present'
+        })
+
     def test_cannot_add_a_new_passenger_without_specifying_required_fields(self):
         # Given
         orm = Mock()
@@ -88,7 +105,8 @@ class TestAddPassengerWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, params, None, None, None, None)
+        instance.perform(orm, logger, params, None,
+                         storage(passenger=None), None)
 
         # Then
         subscriber.invalid_form.assert_called_with({
@@ -104,16 +122,18 @@ class TestAddPassengerWorkflow(unittest.TestCase):
         passenger = storage(id='pid', user_id='uid', origin='heaven',
                             destination='hell', seats=4)
         repository = Mock(add=MagicMock(return_value=passenger))
-        drivers_notifier = Mock()
+        drivers_notifier = Mock(delay=MagicMock())
         subscriber = Mock(success=MagicMock())
         instance = AddPassengerWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(orm, logger, params, repository, 'uid', 'Name',
+        instance.perform(orm, logger, params, repository,
+                         storage(id='uid', name='Name', passenger=None),
                          drivers_notifier)
 
         # Then
+        drivers_notifier.delay.assert_called_with('Name')
         subscriber.success.assert_called_with('pid')
 
 
@@ -284,7 +304,7 @@ class TestDeactivatePassengerWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(logger, orm, repository, 'not_existing', None)
+        instance.perform(logger, orm, repository, 'not_existing', None, None)
 
         # Then
         subscriber.not_found.assert_called_with('not_existing')
@@ -299,7 +319,8 @@ class TestDeactivatePassengerWorkflow(unittest.TestCase):
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(logger, orm, repository, 'pid', 'uid')
+        instance.perform(logger, orm, repository, 'pid', storage(id='uid'),
+                         None)
 
         # Then
         subscriber.unauthorized.assert_called_with()
@@ -308,17 +329,46 @@ class TestDeactivatePassengerWorkflow(unittest.TestCase):
         # Given
         logger = Mock()
         orm = Mock()
-        passenger = storage(id='pid', user_id='uid')
+        passenger = storage(id='pid', user_id='uid', requests=[])
         repository = Mock(get=MagicMock(return_value=passenger))
+        drivers_notifier = Mock(delay=MagicMock())
         subscriber = Mock(success=MagicMock())
         instance = DeactivatePassengerWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
-        instance.perform(logger, orm, repository, 'pid', 'uid')
+        instance.perform(logger, orm, repository, 'pid',
+                         storage(id='uid', name='Name'), drivers_notifier)
 
         # Then
+        drivers_notifier.delay.assert_called_with('Name', [])
         subscriber.success.assert_called_with()
+
+    def test_passenger_gets_properly_deactivated_and_drivers_notified_if_invoked_by_passenger_owner(self):
+        # Given
+        logger = Mock()
+        orm = Mock()
+        passenger = storage(id='pid', user_id='uid',
+                            requests=[storage(id='r1',
+                                              driver_id='did',
+                                              accepted=False),
+                                      storage(id='r2',
+                                              driver_id='did2',
+                                              accepted=True)])
+        repository = Mock(get=MagicMock(return_value=passenger))
+        drivers_notifier = Mock(delay=MagicMock())
+        subscriber = Mock(success=MagicMock())
+        instance = DeactivatePassengerWorkflow()
+
+        # When
+        instance.add_subscriber(subscriber)
+        instance.perform(logger, orm, repository, 'pid',
+                         storage(id='uid', name='Name'), drivers_notifier)
+
+        # Then
+        drivers_notifier.delay.assert_called_with('Name', ['did2'])
+        subscriber.success.assert_called_with()
+
 
 
 class TestDeactivateActivePassengersWorkflow(unittest.TestCase):

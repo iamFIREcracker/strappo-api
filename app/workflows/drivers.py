@@ -16,7 +16,7 @@ from app.pubsub.drivers import DriverLinkedToPassengerWithUserIdAuthorizer
 from app.pubsub.drivers import HiddenDriversGetter
 from app.pubsub.drivers import MultipleDriversUnhider
 from app.pubsub.drivers import UnhiddenDriversGetter
-from app.pubsub.users import UserWithDriverValidator
+from app.pubsub.users import UserWithoutDriverValidator
 from app.weblib.forms import describe_invalid_form
 from app.weblib.pubsub import FormValidator
 from app.weblib.pubsub import Future
@@ -30,7 +30,7 @@ class AddDriverWorkflow(Publisher):
     def perform(self, orm, logger, params, repository, user):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
-        user_validator = UserWithDriverValidator()
+        user_validator = UserWithoutDriverValidator()
         form_validator = FormValidator()
         driver_creator = DriverCreator()
 
