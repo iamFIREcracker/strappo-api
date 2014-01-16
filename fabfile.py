@@ -27,7 +27,7 @@ def vagrant_key():
     ''' Get the ssh key to access the virtual box machine. '''
     with settings(hide('running')):
         result = local('vagrant ssh-config | grep IdentityFile', capture=True)
-    return result.split()[1]
+    return result.split()[1].strip('"')
 
 
 @task
