@@ -17,6 +17,12 @@ class ActiveDriveRequestsFilterExtractor(Publisher):
             self.publish('bad_request', params)
 
 
+class ActiveDriveRequestsWithIdGetter(Publisher):
+    def perform(self, repository, drive_request_id):
+        self.publish('drive_requests_found',
+                     repository.get_active_by_id(drive_request_id))
+
+
 class ActiveDriveRequestsWithDriverIdGetter(Publisher):
     def perform(self, repository, driver_id):
         """Search for all the active drive requests associated with the given
@@ -77,6 +83,17 @@ class DriveRequestAcceptor(Publisher):
             self.publish('drive_request_not_found', driver_id, passenger_id)
         else:
             self.publish('drive_request_accepted', request)
+
+
+class DriveRequestCancellor(Publisher):
+    def perform(self, repository, drive_request_id, driver_id):
+        request = repository.cancel(drive_request_id, driver_id)
+        if request is None:
+            self.publish('drive_request_not_found',
+                         drive_request_id, driver_id)
+        else:
+            self.publish('drive_request_cancelled', request)
+
 
 
 def serialize(request):

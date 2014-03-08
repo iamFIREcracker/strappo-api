@@ -6,6 +6,7 @@ from app.pubsub.drive_requests import ActiveDriveRequestsGetter
 from app.pubsub.drive_requests import ActiveDriveRequestsWithDriverIdGetter
 from app.pubsub.drive_requests import ActiveDriveRequestsWithPassengerIdGetter
 from app.pubsub.drive_requests import DriveRequestAcceptor
+from app.pubsub.drive_requests import DriveRequestCancellor
 from app.pubsub.drive_requests import DriveRequestCreator
 from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
@@ -135,6 +136,51 @@ class AddDriveRequestWorkflow(Publisher):
         driver_getter.add_subscriber(logger, DriverGetterSubscriber())
         authorizer.add_subscriber(logger, AuthorizerSubscriber())
         request_creator.add_subscriber(logger, DriveRequestCreatorSubscriber())
+        task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
+        driver_getter.perform(drivers_repository, driver_id)
+
+
+class CancelDriveRequestWorkflow(Publisher):
+    """Defines a workflow to cancel an existing ride request."""
+
+    def perform(self, orm, logger, drivers_repository, user_id, driver_id,
+                requests_repository, drive_request_id, task):
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        driver_getter = DriverWithIdGetter()
+        authorizer = DriverWithUserIdAuthorizer()
+        request_cancellor = DriveRequestCancellor()
+        task_submitter = TaskSubmitter()
+        driver_future = Future()
+
+        class DriverGetterSubscriber(object):
+            def driver_not_found(self, driver_id):
+                outer.publish('not_found', driver_id)
+            def driver_found(self, driver):
+                driver_future.set(driver)
+                authorizer.perform(user_id, driver)
+
+        class AuthorizerSubscriber(object):
+            def unauthorized(self, user_id, driver):
+                outer.publish('unauthorized')
+            def authorized(self, user_id, driver):
+                request_cancellor.perform(requests_repository,
+                                          drive_request_id, driver_id)
+
+        class DriveRequestCancellorSubscriber(object):
+            def drive_request_cancelled(self, request):
+                orm.add(request)
+                task_submitter.perform(task, driver_future.get().user.name,
+                                       request.passenger_id)
+
+        class TaskSubmitterSubscriber(object):
+            def task_created(self, task_id):
+                outer.publish('success')
+
+        driver_getter.add_subscriber(logger, DriverGetterSubscriber())
+        authorizer.add_subscriber(logger, AuthorizerSubscriber())
+        request_cancellor.add_subscriber(logger,
+                                         DriveRequestCancellorSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         driver_getter.perform(drivers_repository, driver_id)
 
