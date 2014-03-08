@@ -10,6 +10,7 @@ from app.pubsub.drive_requests import DriveRequestCancellor
 from app.pubsub.drive_requests import DriveRequestCreator
 from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
+from app.pubsub.drivers import DeepDriverWithIdGetter
 from app.pubsub.drivers import DriverWithIdGetter
 from app.pubsub.drivers import DriverWithUserIdAuthorizer
 from app.pubsub.drivers import DriverWithoutDriveRequestForPassengerValidator
@@ -104,7 +105,7 @@ class AddDriveRequestWorkflow(Publisher):
                 requests_repository, passenger_id, task):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
-        driver_getter = DriverWithIdGetter()
+        driver_getter = DeepDriverWithIdGetter()
         authorizer = DriverWithUserIdAuthorizer()
         driver_validator = DriverWithoutDriveRequestForPassengerValidator()
         request_creator = DriveRequestCreator()

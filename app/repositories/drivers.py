@@ -12,6 +12,13 @@ from app.weblib.db import joinedload
 class DriversRepository(object):
     @staticmethod
     def get(driver_id):
+        return expunged(Driver.query.options(joinedload('user')).\
+                                filter(Driver.id == driver_id).\
+                                filter(User.deleted == False).first(),
+                        Driver.session)
+
+    @staticmethod
+    def get_with_requests(driver_id):
         return expunged(Driver.query.options(joinedload('user'),
                                              joinedload('drive_requests')).\
                                 filter(Driver.id == driver_id).\
