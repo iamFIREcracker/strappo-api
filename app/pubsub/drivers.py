@@ -38,6 +38,13 @@ class DriverWithIdGetter(Publisher):
         else:
             self.publish('driver_found', driver)
 
+class DeepDriverWithIdGetter(Publisher):
+    def perform(self, repository, driver_id):
+        driver = repository.get_with_requests(driver_id)
+        if driver is None:
+            self.publish('driver_not_found', driver_id)
+        else:
+            self.publish('driver_found', driver)
 
 class DriverCreator(Publisher):
     def perform(self, repository, user_id, license_plate, telephone):
