@@ -127,6 +127,35 @@ def NotifyPassengerTask(driver_name, passenger_id):
 
 
 @celery.task
+def NotifyPassengerRideCancelledTask(driver_name, passenger_id):
+    logger = create_logger()
+    logging_subscriber = LoggingSubscriber(logger)
+    push_adapter = TitaniumPushNotificationsAdapter()
+    notify_passenger = NotifyPassengerWorkflow()
+    ret = Future()
+
+    class NotifyPassengerSubscriber(object):
+        def passenger_not_found(self, passenger_id):
+            ret.set((None, 'Passenger not found: %(passenger_id)s' % locals()))
+        def failure(self, error):
+            ret.set((None, error))
+        def success(self):
+            ret.set((None, None))
+
+    notify_passenger.add_subscriber(logging_subscriber,
+                                    NotifyPassengerSubscriber())
+    notify_passenger.perform(logger, PassengersRepository, passenger_id,
+                             push_adapter, 'passengers',
+                             json.dumps({
+                                 'channel': 'passengers',
+                                 'alert': 'Oh noes, %(name)s just cancelled '
+                                          'her drive request!' \
+                                                  % dict(name=driver_name)
+                             }))
+    return ret.get()
+
+
+@celery.task
 def DeactivateActivePassengers():
     logger = create_logger()
     orm = create_session()
