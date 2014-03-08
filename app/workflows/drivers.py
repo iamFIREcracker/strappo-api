@@ -32,30 +32,54 @@ class AddDriverWorkflow(Publisher):
         logger = LoggingSubscriber(logger)
         user_validator = UserWithoutDriverValidator()
         form_validator = FormValidator()
+        driver_getter = DriverWithIdGetter()
         driver_creator = DriverCreator()
+        driver_updater = DriverUpdater()
+        driver_future = Future()
 
         class UserValidatorSubscriber(object):
             def invalid_user(self, errors):
-                outer.publish('invalid_form', errors) # XXX change message
+                driver_getter.perform(repository, user.driver.id)
             def valid_user(self, user):
+                driver_future.set(None)
                 form_validator.perform(drivers_forms.add(), params,
-                                    describe_invalid_form)
+                                       describe_invalid_form)
+
+        class DriverGetterSubscriber(object):
+            def driver_found(self, driver):
+                driver_future.set(driver)
+                form_validator.perform(drivers_forms.add(), params,
+                                       describe_invalid_form)
 
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
                 outer.publish('invalid_form', errors)
             def valid_form(self, form):
-                driver_creator.perform(repository, user.id,
-                                       form.d.license_plate, form.d.telephone)
+                driver = driver_future.get()
+                if driver is None:
+                    driver_creator.perform(repository, user.id,
+                                           form.d.license_plate,
+                                           form.d.telephone)
+                else:
+                    driver_updater.perform(driver,
+                                           form.d.license_plate,
+                                           form.d.telephone)
 
         class DriverCreatorSubscriber(object):
             def driver_created(self, driver):
                 orm.add(driver)
                 outer.publish('success', driver.id)
 
+        class DriverUpdaterSubscriber(object):
+            def driver_updated(self, driver):
+                orm.add(driver)
+                outer.publish('success', driver.id)
+
         user_validator.add_subscriber(logger, UserValidatorSubscriber())
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
+        driver_getter.add_subscriber(logger, DriverGetterSubscriber())
         driver_creator.add_subscriber(logger, DriverCreatorSubscriber())
+        driver_updater.add_subscriber(logger, DriverUpdaterSubscriber())
         user_validator.perform(user)
 
 
