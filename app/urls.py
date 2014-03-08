@@ -6,6 +6,7 @@ from app.controllers.destinations import ListPredefinedDestinationsController
 from app.controllers.drive_requests import ListActiveDriveRequestsController
 from app.controllers.drivers import AcceptPassengerController
 from app.controllers.drivers import AddDriverController
+from app.controllers.drivers import CancelDriveRequestController
 from app.controllers.drivers import EditDriverController
 from app.controllers.drivers import HideDriverController
 from app.controllers.drivers import UnhideDriverController
@@ -21,21 +22,27 @@ from app.controllers.users import ViewUserController
 
 
 URLS = (
+    '/1/users/login', LoginUserController,
+    '/1/users/(.+)/view', ViewUserController,
+
+    '/1/drivers/add', AddDriverController,
+    '/1/drivers/(.+)/accept/passenger/(.+)', AcceptPassengerController,
+    '/1/drivers/(.+)/cancel/drive_request/(.+)', CancelDriveRequestController,
+
+    '/1/passengers/unmatched', ListUnmatchedPassengersController,
+    '/1/passengers/add', AddPassengerController,
+    '/1/passengers/(.+)/deactivate', DeactivatePassengerController,
+    '/1/passengers/(.+)/accept/driver/(.+)', AcceptDriverController,
+
+    '/1/drive_requests/active', ListActiveDriveRequestsController,
+
+
     '/1/destinations', ListDestinationsController,
     '/1/destinations/predefined', ListPredefinedDestinationsController,
-    '/1/drivers/add', AddDriverController,
     '/1/drivers/(.+)/view', ViewDriverController,
     '/1/drivers/(.+)/edit', EditDriverController,
     '/1/drivers/(.+)/hide', HideDriverController,
     '/1/drivers/(.+)/unhide', UnhideDriverController,
-    '/1/drivers/(.+)/accept/passenger/(.+)', AcceptPassengerController,
-    '/1/drive_requests/active', ListActiveDriveRequestsController,
-    '/1/passengers/unmatched', ListUnmatchedPassengersController,
-    '/1/passengers/add', AddPassengerController,
     '/1/passengers/(.+)/view', ViewPassengerController,
     '/1/passengers/(.+)/alight', AlightPassengerController,
-    '/1/passengers/(.+)/deactivate', DeactivatePassengerController,
-    '/1/passengers/(.+)/accept/driver/(.+)', AcceptDriverController,
-    '/1/users/(.+)/view', ViewUserController,
-    '/1/users/login', LoginUserController
 )
