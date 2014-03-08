@@ -12,6 +12,7 @@ from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
 from app.pubsub.drivers import DriverWithIdGetter
 from app.pubsub.drivers import DriverWithUserIdAuthorizer
+from app.pubsub.drivers import DriverWithoutDriveRequestForPassengerValidator
 from app.pubsub.passengers import MultiplePassengerMatcher
 from app.pubsub.passengers import PassengerWithIdGetter
 from app.pubsub.passengers import PassengerWithUserIdAuthorizer
@@ -105,6 +106,7 @@ class AddDriveRequestWorkflow(Publisher):
         logger = LoggingSubscriber(logger)
         driver_getter = DriverWithIdGetter()
         authorizer = DriverWithUserIdAuthorizer()
+        driver_validator = DriverWithoutDriveRequestForPassengerValidator()
         request_creator = DriveRequestCreator()
         task_submitter = TaskSubmitter()
         driver_future = Future()
@@ -120,6 +122,12 @@ class AddDriveRequestWorkflow(Publisher):
             def unauthorized(self, user_id, driver):
                 outer.publish('unauthorized')
             def authorized(self, user_id, driver):
+                driver_validator.perform(driver, passenger_id)
+
+        class DriverValidatorSubscriber(object):
+            def invalid_driver(self, errors):
+                outer.publish('success')
+            def valid_driver(self, driver):
                 request_creator.perform(requests_repository, driver_id,
                                         passenger_id)
 
@@ -135,6 +143,7 @@ class AddDriveRequestWorkflow(Publisher):
 
         driver_getter.add_subscriber(logger, DriverGetterSubscriber())
         authorizer.add_subscriber(logger, AuthorizerSubscriber())
+        driver_validator.add_subscriber(logger, DriverValidatorSubscriber())
         request_creator.add_subscriber(logger, DriveRequestCreatorSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         driver_getter.perform(drivers_repository, driver_id)

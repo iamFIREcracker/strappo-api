@@ -126,6 +126,17 @@ class DriverLinkedToPassengerWithUserIdAuthorizer(Publisher):
             self.publish('unauthorized', user_id, driver)
 
 
+class DriverWithoutDriveRequestForPassengerValidator(Publisher):
+    def perform(self, driver, passenger_id):
+        matching_requests = (passenger_id == r.passenger.id
+                             for r in driver.drive_requests)
+        if any(matching_requests):
+            self.publish('invalid_driver',
+                         dict(_global='Driver request already present'))
+        else:
+            self.publish('valid_driver', driver)
+
+
 class DriverSerializer(Publisher):
     def perform(self, driver):
         """Convert the given driver into a serializable dictionary.
