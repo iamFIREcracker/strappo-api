@@ -15,17 +15,17 @@ def populate_db():
     app.models.Base.session.add(Driver(id='did6', user_id='uid6',
                                        license_plate='MI17D12',
                                        telephone='+3287126534'))
-    app.models.Base.session.add(User(id='uid7', name='Mario R.',
+    app.models.Base.session.add(User(id='uid7', name='Fabio C.',
                                      avatar='http://www.placehold.it/128x128/as213f/AAAAAA&text=no+image'))
     app.models.Base.session.add(Driver(id='did7', user_id='uid7',
                                        license_plate='LUASADS',
                                        telephone='+3287126534'))
-    app.models.Base.session.add(User(id='uid8', name='Mario R.',
+    app.models.Base.session.add(User(id='uid8', name='Michele R.',
                                      avatar='http://www.placehold.it/128x128/c5d417/AAAAAA&text=no+image'))
     app.models.Base.session.add(Driver(id='did8', user_id='uid8',
                                        license_plate='SDFJSD',
                                        telephone='+3287126534'))
-    app.models.Base.session.add(User(id='uid9', name='Mario R.',
+    app.models.Base.session.add(User(id='uid9', name='Andrea P.',
                                      avatar='http://www.placehold.it/128x128/f123ff1/AAAAAA&text=no+image'))
     app.models.Base.session.add(Driver(id='did9', user_id='uid9',
                                        license_plate='JKHFAS1',
