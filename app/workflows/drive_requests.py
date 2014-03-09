@@ -178,6 +178,9 @@ class CancelDriveRequestWorkflow(Publisher):
                                           drive_request_id, driver_id)
 
         class DriveRequestCancellorSubscriber(object):
+            def drive_request_not_found(self, drive_request_id, driver_id):
+                outer.publish('success')
+
             def drive_request_cancelled(self, request):
                 orm.add(request)
                 task_submitter.perform(task, driver_future.get().user.name,
