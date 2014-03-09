@@ -9,6 +9,7 @@ from app.repositories.drivers import DriversRepository
 from app.repositories.drive_requests import DriveRequestsRepository
 from app.tasks import NotifyPassengerTask
 from app.tasks import NotifyPassengerRideCancelledTask
+from app.tasks import NotifyPassengersDeactivatedDriverTask
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.request_decorators import api
@@ -17,6 +18,7 @@ from app.weblib.utils import jsonify
 from app.workflows.drivers import AddDriverWorkflow
 from app.workflows.drivers import EditDriverWorkflow
 from app.workflows.drivers import HideDriverWorkflow
+from app.workflows.drivers import DeactivateDriverWorkflow
 from app.workflows.drivers import UnhideDriverWorkflow
 from app.workflows.drivers import ViewDriverWorkflow
 from app.workflows.drive_requests import AddDriveRequestWorkflow
@@ -44,6 +46,30 @@ class AddDriverController(ParamAuthorizableController):
         add_driver.perform(web.ctx.orm, web.ctx.logger, web.input(),
                            DriversRepository, self.current_user)
         return ret.get()
+
+
+class DeactivateDriverController(ParamAuthorizableController):
+    @api
+    @authorized
+    def POST(self, driver_id):
+        logger = LoggingSubscriber(web.ctx.logger)
+        deactivate_driver = DeactivateDriverWorkflow()
+
+        class DeactivateDriverSubscriber(object):
+            def not_found(self, driver_id):
+                raise web.notfound()
+            def unauthorized(self):
+                raise web.unauthorized()
+            def success(self):
+                web.ctx.orm.commit()
+                raise web.ok()
+
+        deactivate_driver.add_subscriber(logger,
+                                         DeactivateDriverSubscriber())
+        deactivate_driver.perform(web.ctx.logger, web.ctx.orm,
+                                  DriversRepository, driver_id,
+                                  self.current_user,
+                                  NotifyPassengersDeactivatedDriverTask)
 
 
 class CancelDriveRequestController(ParamAuthorizableController):

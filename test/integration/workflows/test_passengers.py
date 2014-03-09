@@ -12,7 +12,7 @@ from app.workflows.passengers import AddPassengerWorkflow
 from app.workflows.passengers import ListUnmatchedPassengersWorkflow
 from app.workflows.passengers import DeactivatePassengerWorkflow
 from app.workflows.passengers import DeactivateActivePassengersWorkflow
-from app.workflows.passengers import NotifyPassengerWorkflow
+from app.workflows.passengers import NotifyPassengersWorkflow
 from app.workflows.passengers import ViewPassengerWorkflow
 
 
@@ -233,7 +233,7 @@ class TestNotifyPassengerWorkflow(unittest.TestCase):
         logger = Mock()
         repository = Mock(get=MagicMock(return_value=None))
         subscriber = Mock(passenger_not_found=MagicMock())
-        instance = NotifyPassengerWorkflow()
+        instance = NotifyPassengersWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
@@ -249,7 +249,7 @@ class TestNotifyPassengerWorkflow(unittest.TestCase):
         repository = Mock(get=MagicMock(return_value=passenger))
         push_adapter = Mock(login=MagicMock(return_value=(None, 'Error!')))
         subscriber = Mock(failure=MagicMock())
-        instance = NotifyPassengerWorkflow()
+        instance = NotifyPassengersWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
@@ -266,7 +266,7 @@ class TestNotifyPassengerWorkflow(unittest.TestCase):
         push_adapter = Mock(login=MagicMock(return_value=('session', None)),
                             notify=MagicMock(return_value=(None, 'Error!')))
         subscriber = Mock(failure=MagicMock())
-        instance = NotifyPassengerWorkflow()
+        instance = NotifyPassengersWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
@@ -283,7 +283,7 @@ class TestNotifyPassengerWorkflow(unittest.TestCase):
         push_adapter = Mock(login=MagicMock(return_value=('session', None)),
                             notify=MagicMock(return_value=(None, None)))
         subscriber = Mock(success=MagicMock())
-        instance = NotifyPassengerWorkflow()
+        instance = NotifyPassengersWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
