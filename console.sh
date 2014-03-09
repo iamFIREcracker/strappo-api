@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-SERVER=${1:-http://localhost:8000}
+SERVER=${1:-http://localhost:8080}
 
 
 parse_json() {
