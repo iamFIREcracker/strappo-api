@@ -14,6 +14,8 @@ from app.pubsub.passengers import MultiplePassengersDeactivator
 from app.pubsub.passengers import MultiplePassengersSerializer
 from app.pubsub.passengers import PassengerACSUserIdExtractor
 from app.pubsub.passengers import PassengerCreator
+from app.pubsub.passengers import PassengerUpdater
+from app.pubsub.passengers import PassengerWithIdGetter
 from app.pubsub.passengers import PassengerSerializer
 from app.pubsub.passengers import PassengerWithUserIdAuthorizer
 from app.pubsub.passengers import PassengerLinkedToDriverWithUserIdAuthorizer
@@ -60,29 +62,53 @@ class AddPassengerWorkflow(Publisher):
         logger = LoggingSubscriber(logger)
         user_validator = UserWithoutPassengerValidator()
         form_validator = FormValidator()
+        passenger_getter = PassengerWithIdGetter()
         passenger_creator = PassengerCreator()
+        passenger_updater = PassengerUpdater()
         task_submitter = TaskSubmitter()
+        passenger_future = Future()
         passenger_id_future = Future()
 
         class UserValidatorSubscriber(object):
             def invalid_user(self, errors):
-                outer.publish('invalid_form', errors) # XXX change message
+                passenger_getter.perform(repository, user.passenger.id)
             def valid_user(self, user):
+                passenger_future.set(None)
                 form_validator.perform(passengers_forms.add(), params,
                                     describe_invalid_form)
+
+        class PassengerGetterSubscriber(object):
+            def passenger_found(self, passenger):
+                passenger_future.set(passenger)
+                form_validator.perform(passengers_forms.add(), params,
+                                       describe_invalid_form)
 
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
                 outer.publish('invalid_form', errors)
             def valid_form(self, form):
-                passenger_creator.perform(repository, user.id, form.d.origin,
-                                          form.d.destination,
-                                          int(form.d.seats))
+                passenger = passenger_future.get()
+                if passenger is None:
+                    passenger_creator.perform(repository, user.id,
+                                              form.d.origin,
+                                              form.d.destination,
+                                              int(form.d.seats))
+                else:
+                    passenger_updater.perform(passenger,
+                                              form.d.origin,
+                                              form.d.destination,
+                                              int(form.d.seats))
 
         class PassengerCreatorSubscriber(object):
             def passenger_created(self, passenger):
-                orm.add(passenger)
                 passenger_id_future.set(passenger.id)
+                orm.add(passenger)
+                task_submitter.perform(task, user.name)
+
+        class PassengerUpdaterSubscriber(object):
+            def passenger_updated(self, passenger):
+                passenger_id_future.set(passenger.id)
+                orm.add(passenger)
                 task_submitter.perform(task, user.name)
 
         class TaskSubmitterSubscriber(object):
@@ -91,7 +117,9 @@ class AddPassengerWorkflow(Publisher):
 
         user_validator.add_subscriber(logger, UserValidatorSubscriber())
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
+        passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
         passenger_creator.add_subscriber(logger, PassengerCreatorSubscriber())
+        passenger_updater.add_subscriber(logger, PassengerUpdaterSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         user_validator.perform(user)
 

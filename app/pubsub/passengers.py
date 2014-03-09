@@ -57,6 +57,15 @@ class PassengerCreator(Publisher):
         self.publish('passenger_created', passenger)
 
 
+class PassengerUpdater(Publisher):
+    def perform(self, passenger, origin, destination, seats):
+        passenger.origin = origin
+        passenger.destination = destination
+        passenger.seats = seats
+        self.publish('passenger_updated', passenger)
+
+
+
 class PassengerWithUserIdAuthorizer(Publisher):
     def perform(self, user_id, passenger):
         """Checkes if the 'user_id' property of the given passenger record
