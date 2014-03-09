@@ -40,7 +40,7 @@ def populate_db():
     app.models.Base.session.add(Passenger(id='pid4', user_id='uid4',
                                           origin='Viareggio Scalo',
                                           destination='Cosmopolitan',
-                                          seats=2, active=False))
+                                          seats=2))
     app.models.Base.session.add(DriveRequest(id='rrid1', driver_id='did',
                                             passenger_id='pid4', accepted=True))
 
