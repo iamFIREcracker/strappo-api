@@ -16,7 +16,7 @@ from app.workflows.drive_requests import DeactivateActiveDriveRequestsWorkflow
 from app.workflows.drivers import NotifyDriversWorkflow
 from app.workflows.drivers import UnhideHiddenDriversWorkflow
 from app.workflows.passengers import DeactivateActivePassengersWorkflow
-from app.workflows.passengers import NotifyPassengerWorkflow
+from app.workflows.passengers import NotifyPassengersWorkflow
 
 
 @celery.task
@@ -102,7 +102,7 @@ def NotifyPassengerTask(driver_name, passenger_id):
     logger = create_logger()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
-    notify_passenger = NotifyPassengerWorkflow()
+    notify_passengers = NotifyPassengersWorkflow()
     ret = Future()
 
     class NotifyPassengerSubscriber(object):
@@ -113,17 +113,45 @@ def NotifyPassengerTask(driver_name, passenger_id):
         def success(self):
             ret.set((None, None))
 
-    notify_passenger.add_subscriber(logging_subscriber,
+    notify_passengers.add_subscriber(logging_subscriber,
                                     NotifyPassengerSubscriber())
-    notify_passenger.perform(logger, PassengersRepository, passenger_id,
-                             push_adapter, 'passengers',
-                             json.dumps({
-                                 'channel': 'passengers',
-                                 'alert': 'Yeah, %(name)s has offered '
-                                          'to give you a ride!' \
-                                                  % dict(name=driver_name)
-                             }))
+    notify_passengers.perform(logger, PassengersRepository, [passenger_id],
+                              push_adapter, 'passengers',
+                              json.dumps({
+                                  'channel': 'passengers',
+                                  'alert': 'Yeah, %(name)s has offered '
+                                           'to give you a ride!' \
+                                                   % dict(name=driver_name)
+                              }))
     return ret.get()
+
+
+@celery.task
+def NotifyPassengersDeactivatedDriverTask(driver_name, passenger_ids):
+    logger = create_logger()
+    logging_subscriber = LoggingSubscriber(logger)
+    push_adapter = TitaniumPushNotificationsAdapter()
+    notify_passengers = NotifyPassengersWorkflow()
+    ret = Future()
+
+    class NotifyPassengersSubscriber(object):
+        def failure(self, error):
+            ret.set((None, error))
+        def success(self):
+            ret.set((None, None))
+
+    notify_passengers.add_subscriber(logging_subscriber,
+                                     NotifyPassengersSubscriber())
+    notify_passengers.perform(logger, PassengersRepository, passenger_ids,
+                              push_adapter, 'drivers',
+                              json.dumps({
+                                  'channel': 'drivers',
+                                  'alert': 'Oh no, %(name)s is no more '
+                                           'looking for a ride!' \
+                                                   % dict(name=driver_name)
+                              }))
+    return ret.get()
+
 
 
 @celery.task
@@ -131,7 +159,7 @@ def NotifyPassengerRideCancelledTask(driver_name, passenger_id):
     logger = create_logger()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
-    notify_passenger = NotifyPassengerWorkflow()
+    notify_passengers = NotifyPassengersWorkflow()
     ret = Future()
 
     class NotifyPassengerSubscriber(object):
@@ -142,16 +170,16 @@ def NotifyPassengerRideCancelledTask(driver_name, passenger_id):
         def success(self):
             ret.set((None, None))
 
-    notify_passenger.add_subscriber(logging_subscriber,
+    notify_passengers.add_subscriber(logging_subscriber,
                                     NotifyPassengerSubscriber())
-    notify_passenger.perform(logger, PassengersRepository, passenger_id,
-                             push_adapter, 'passengers',
-                             json.dumps({
-                                 'channel': 'passengers',
-                                 'alert': 'Oh noes, %(name)s just cancelled '
-                                          'her drive request!' \
-                                                  % dict(name=driver_name)
-                             }))
+    notify_passengers.perform(logger, PassengersRepository, [passenger_id],
+                              push_adapter, 'passengers',
+                              json.dumps({
+                                  'channel': 'passengers',
+                                  'alert': 'Oh noes, %(name)s just cancelled '
+                                           'her drive request!' \
+                                                   % dict(name=driver_name)
+                              }))
     return ret.get()
 
 

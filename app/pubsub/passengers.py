@@ -20,6 +20,12 @@ class PassengerWithIdGetter(Publisher):
             self.publish('passenger_found', passenger)
 
 
+class MultiplePassengersWithIdGetter(Publisher):
+    def perform(self, repository, passenger_ids):
+        self.publish('passengers_found',
+                     filter(None, [repository.get(id) for id in passenger_ids]))
+
+
 class UnmatchedPassengersGetter(Publisher):
     def perform(self, repository):
         """Search for all the unmatched passengers around.
@@ -149,10 +155,6 @@ class MultiplePassengersDeactivator(Publisher):
 
 
 class PassengerACSUserIdExtractor(Publisher):
-    def perform(self, passenger):
-        """Extract ACS user ID associated with the given passenger.
-
-        At the end of the operation a 'acs_user_id_extracted' message will be
-        published, together with the ACS user id of the passenger.
-        """
-        self.publish('acs_user_id_extracted', passenger.user.acs_id)
+    def perform(self, passengers):
+        self.publish('acs_user_ids_extracted',
+                     [p.user.acs_id for p in passengers])

@@ -9,6 +9,7 @@ from app.pubsub.drive_requests import AcceptedDriveRequestsFilter
 from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.passengers import ActivePassengersGetter
 from app.pubsub.passengers import PassengerWithIdGetter
+from app.pubsub.passengers import MultiplePassengersWithIdGetter
 from app.pubsub.passengers import MultiplePassengersDeactivator
 from app.pubsub.passengers import MultiplePassengersSerializer
 from app.pubsub.passengers import PassengerACSUserIdExtractor
@@ -139,30 +140,28 @@ class ViewPassengerWorkflow(Publisher):
         passengers_getter.perform(repository, passenger_id)
 
 
-class NotifyPassengerWorkflow(Publisher):
+class NotifyPassengersWorkflow(Publisher):
     """Defines a workflow to notify a passenger that a driver has offered 
     a ride request.
     """
 
-    def perform(self, logger, repository, passenger_id, push_adapter, channel,
+    def perform(self, logger, repository, passenger_ids, push_adapter, channel,
                 payload):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
-        passenger_getter = PassengerWithIdGetter()
+        passengers_getter = MultiplePassengersWithIdGetter()
         acs_id_extractor = PassengerACSUserIdExtractor()
         acs_session_creator = ACSSessionCreator()
         acs_notifier = ACSUserIdsNotifier()
         user_ids_future = Future()
 
         class PassengerGetterSubscriber(object):
-            def passenger_not_found(self, passenger_id):
-                outer.publish('passenger_not_found', passenger_id)
-            def passenger_found(self, passenger):
-                acs_id_extractor.perform(passenger)
+            def passengers_found(self, passengers):
+                acs_id_extractor.perform(passengers)
 
         class ACSUserIdExtractorSubscriber(object):
-            def acs_user_id_extracted(self, user_id):
-                user_ids_future.set([user_id])
+            def acs_user_ids_extracted(self, user_ids):
+                user_ids_future.set(user_ids)
                 acs_session_creator.perform(push_adapter)
 
         class ACSSessionCreatorSubscriber(object):
@@ -178,13 +177,13 @@ class NotifyPassengerWorkflow(Publisher):
             def acs_user_ids_notified(self):
                 outer.publish('success')
 
-        passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
+        passengers_getter.add_subscriber(logger, PassengerGetterSubscriber())
         acs_id_extractor.add_subscriber(logger,
                                         ACSUserIdExtractorSubscriber())
         acs_session_creator.add_subscriber(logger,
                                            ACSSessionCreatorSubscriber())
         acs_notifier.add_subscriber(logger, ACSNotifierSubscriber())
-        passenger_getter.perform(repository, passenger_id)
+        passengers_getter.perform(repository, passenger_ids)
 
 
 class DeactivatePassengerWorkflow(Publisher):
@@ -197,7 +196,6 @@ class DeactivatePassengerWorkflow(Publisher):
         with_user_id_authorizer = PassengerWithUserIdAuthorizer()
         passengers_deactivator = MultiplePassengersDeactivator()
         requests_deactivator = MultipleDriveRequestsDeactivator()
-        accepted_requests_filter = AcceptedDriveRequestsFilter()
         task_submitter = TaskSubmitter()
 
         class PassengerGetterSubscriber(object):
@@ -215,15 +213,11 @@ class DeactivatePassengerWorkflow(Publisher):
         class PassengersDeactivatorSubscriber(object):
             def passengers_hid(self, passengers):
                 orm.add(passengers[0])
-                requests_deactivator.perform(passengers[0].requests)
+                requests_deactivator.perform(passengers[0].drive_requests)
 
         class DriveRequestsDeactivatorSubscriber(object):
             def drive_requests_hid(self, requests):
                 orm.add_all(requests)
-                accepted_requests_filter.perform(requests)
-
-        class AcceptedDriveReuqestsSubscriber(object):
-            def drive_requests_extracted(self, requests):
                 task_submitter.perform(task, user.name,
                                        [r.driver_id for r in requests])
 
@@ -238,8 +232,6 @@ class DeactivatePassengerWorkflow(Publisher):
                                               PassengersDeactivatorSubscriber())
         requests_deactivator.\
                 add_subscriber(logger, DriveRequestsDeactivatorSubscriber())
-        accepted_requests_filter.\
-                add_subscriber(logger, AcceptedDriveReuqestsSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         passenger_getter.perform(repository, passenger_id)
 

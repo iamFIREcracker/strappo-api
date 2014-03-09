@@ -7,6 +7,7 @@ from app.controllers.drive_requests import ListActiveDriveRequestsController
 from app.controllers.drivers import AcceptPassengerController
 from app.controllers.drivers import AddDriverController
 from app.controllers.drivers import CancelDriveRequestController
+from app.controllers.drivers import DeactivateDriverController
 from app.controllers.drivers import EditDriverController
 from app.controllers.drivers import HideDriverController
 from app.controllers.drivers import UnhideDriverController
@@ -26,6 +27,7 @@ URLS = (
     '/1/users/(.+)/view', ViewUserController,
 
     '/1/drivers/add', AddDriverController,
+    '/1/drivers/(.+)/deactivate', DeactivateDriverController,
     '/1/drivers/(.+)/accept/passenger/(.+)', AcceptPassengerController,
     '/1/drivers/(.+)/cancel/drive_request/(.+)', CancelDriveRequestController,
 

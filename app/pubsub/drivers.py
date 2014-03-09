@@ -100,6 +100,15 @@ def serialize(driver):
     return dict(id=driver.id, license_plate=driver.license_plate,
             telephone=driver.telephone, hidden=driver.hidden)
 
+
+class MultipleDriversDeactivator(Publisher):
+    def perform(self, drivers):
+        def deactivate(d):
+            d.active = False
+            return d
+        self.publish('drivers_hid', [deactivate(d) for d in drivers])
+
+
 class DriverWithUserIdAuthorizer(Publisher):
     def perform(self, user_id, driver):
         """Checkes if the 'user_id' property of the given driver record matches

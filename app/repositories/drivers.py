@@ -50,7 +50,7 @@ class DriversRepository(object):
     def add(user_id, license_plate, telephone):
         id = unicode(uuid.uuid4())
         driver = Driver(id=id, user_id=user_id, license_plate=license_plate,
-                        telephone=telephone, hidden=False)
+                        telephone=telephone, hidden=False, active=True)
         return driver
 
 

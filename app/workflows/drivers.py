@@ -5,6 +5,8 @@
 import app.forms.drivers as drivers_forms
 from app.pubsub import ACSSessionCreator
 from app.pubsub import ACSUserIdsNotifier
+from app.pubsub.drive_requests import AcceptedDriveRequestsFilter
+from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.drivers import DriverCreator
 from app.pubsub.drivers import DriverHider
 from app.pubsub.drivers import DriverUpdater
@@ -14,6 +16,7 @@ from app.pubsub.drivers import DriversACSUserIdExtractor
 from app.pubsub.drivers import DriverWithUserIdAuthorizer
 from app.pubsub.drivers import DriverLinkedToPassengerWithUserIdAuthorizer
 from app.pubsub.drivers import HiddenDriversGetter
+from app.pubsub.drivers import MultipleDriversDeactivator
 from app.pubsub.drivers import MultipleDriversUnhider
 from app.pubsub.drivers import UnhiddenDriversGetter
 from app.pubsub.users import UserWithoutDriverValidator
@@ -22,6 +25,8 @@ from app.weblib.pubsub import FormValidator
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import Publisher
 from app.weblib.pubsub import LoggingSubscriber
+from app.weblib.pubsub import TaskSubmitter
+
 
 
 class AddDriverWorkflow(Publisher):
@@ -81,6 +86,56 @@ class AddDriverWorkflow(Publisher):
         driver_creator.add_subscriber(logger, DriverCreatorSubscriber())
         driver_updater.add_subscriber(logger, DriverUpdaterSubscriber())
         user_validator.perform(user)
+
+class DeactivateDriverWorkflow(Publisher):
+    """Defines a workflow to deactivate a driver given its ID."""
+
+    def perform(self, logger, orm, repository, driver_id, user, task):
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        driver_getter = DriverWithIdGetter()
+        with_user_id_authorizer = DriverWithUserIdAuthorizer()
+        drivers_deactivator = MultipleDriversDeactivator()
+        requests_deactivator = MultipleDriveRequestsDeactivator()
+        task_submitter = TaskSubmitter()
+
+        class DriverGetterSubscriber(object):
+            def driver_not_found(self, driver_id):
+                outer.publish('not_found', driver_id)
+            def driver_found(self, driver):
+                with_user_id_authorizer.perform(user.id, driver)
+
+        class WithUserIdAuthorizerSubscriber(object):
+            def unauthorized(self, user_id, driver):
+                outer.publish('unauthorized')
+            def authorized(self, user_id, driver):
+                drivers_deactivator.perform([driver])
+
+        class DriversDeactivatorSubscriber(object):
+            def drivers_hid(self, drivers):
+                orm.add(drivers[0])
+                requests_deactivator.perform(drivers[0].drive_requests)
+
+        class DriveRequestsDeactivatorSubscriber(object):
+            def drive_requests_hid(self, requests):
+                orm.add_all(requests)
+                task_submitter.perform(task, user.name,
+                                       [r.passenger_id for r in requests])
+
+        class TaskSubmitterSubscriber(object):
+            def task_created(self, task_id):
+                outer.publish('success')
+
+        driver_getter.add_subscriber(logger, DriverGetterSubscriber())
+        with_user_id_authorizer.\
+                add_subscriber(logger, WithUserIdAuthorizerSubscriber())
+        drivers_deactivator.add_subscriber(logger,
+                                              DriversDeactivatorSubscriber())
+        requests_deactivator.\
+                add_subscriber(logger, DriveRequestsDeactivatorSubscriber())
+        task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
+        driver_getter.perform(repository, driver_id)
+
 
 
 class ViewDriverWorkflow(Publisher):
