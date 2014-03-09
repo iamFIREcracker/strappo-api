@@ -122,6 +122,7 @@ class DeactivatePassengerController(ParamAuthorizableController):
             def unauthorized(self):
                 raise web.unauthorized()
             def success(self):
+                web.ctx.orm.commit()
                 raise web.ok()
 
         deactivate_passenger.add_subscriber(logger,
