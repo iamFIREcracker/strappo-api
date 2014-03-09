@@ -50,7 +50,6 @@ class DriveRequestsRepository(object):
         request = expunged(DriveRequest.query.\
                                 filter_by(id=id).\
                                 filter_by(driver_id=driver_id).\
-                                filter_by(accepted=False).\
                                 filter_by(active=True).first(),
                            DriveRequest.session)
         if request:
