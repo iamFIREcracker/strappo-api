@@ -197,7 +197,6 @@ class DeactivatePassengerWorkflow(Publisher):
         with_user_id_authorizer = PassengerWithUserIdAuthorizer()
         passengers_deactivator = MultiplePassengersDeactivator()
         requests_deactivator = MultipleDriveRequestsDeactivator()
-        accepted_requests_filter = AcceptedDriveRequestsFilter()
         task_submitter = TaskSubmitter()
 
         class PassengerGetterSubscriber(object):
@@ -220,10 +219,6 @@ class DeactivatePassengerWorkflow(Publisher):
         class DriveRequestsDeactivatorSubscriber(object):
             def drive_requests_hid(self, requests):
                 orm.add_all(requests)
-                accepted_requests_filter.perform(requests)
-
-        class AcceptedDriveReuqestsSubscriber(object):
-            def drive_requests_extracted(self, requests):
                 task_submitter.perform(task, user.name,
                                        [r.driver_id for r in requests])
 
@@ -238,8 +233,6 @@ class DeactivatePassengerWorkflow(Publisher):
                                               PassengersDeactivatorSubscriber())
         requests_deactivator.\
                 add_subscriber(logger, DriveRequestsDeactivatorSubscriber())
-        accepted_requests_filter.\
-                add_subscriber(logger, AcceptedDriveReuqestsSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         passenger_getter.perform(repository, passenger_id)
 
