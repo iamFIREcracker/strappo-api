@@ -215,7 +215,7 @@ class DeactivatePassengerWorkflow(Publisher):
         class PassengersDeactivatorSubscriber(object):
             def passengers_hid(self, passengers):
                 orm.add(passengers[0])
-                requests_deactivator.perform(passengers[0].requests)
+                requests_deactivator.perform(passengers[0].drive_requests)
 
         class DriveRequestsDeactivatorSubscriber(object):
             def drive_requests_hid(self, requests):
