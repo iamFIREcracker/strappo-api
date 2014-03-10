@@ -229,7 +229,7 @@ class DeactivatePassengerWorkflow(Publisher):
 
         class PassengerGetterSubscriber(object):
             def passenger_not_found(self, passenger_id):
-                outer.publish('not_found', passenger_id)
+                outer.publish('success')
             def passenger_found(self, passenger):
                 with_user_id_authorizer.perform(user.id, passenger)
 
