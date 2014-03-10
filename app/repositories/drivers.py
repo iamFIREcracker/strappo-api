@@ -13,8 +13,10 @@ class DriversRepository(object):
     @staticmethod
     def get(driver_id):
         return expunged(Driver.query.options(joinedload('user')).\
+                                filter(User.deleted == False).\
                                 filter(Driver.id == driver_id).\
-                                filter(User.deleted == False).first(),
+                                filter(Driver.active == True).\
+                                first(),
                         Driver.session)
 
     @staticmethod
