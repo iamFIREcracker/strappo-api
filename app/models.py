@@ -128,4 +128,5 @@ class DriveRequest(Base):
     def __repr__(self):
         return '<DriveRequest id=%(id)s, driver_id=%(driver_id)s, '\
                'passenger_id=%(passenger_id)s, '\
-               'accepted=%(accepted)s>' % self.__dict__
+               'accepted=%(accepted)s, '\
+               'active=%(active)s>' % self.__dict__
