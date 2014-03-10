@@ -6,7 +6,8 @@ from app.pubsub.drive_requests import ActiveDriveRequestsGetter
 from app.pubsub.drive_requests import ActiveDriveRequestsWithDriverIdGetter
 from app.pubsub.drive_requests import ActiveDriveRequestsWithPassengerIdGetter
 from app.pubsub.drive_requests import DriveRequestAcceptor
-from app.pubsub.drive_requests import DriveRequestCancellor
+from app.pubsub.drive_requests import DriveRequestCancellorByDriverId
+from app.pubsub.drive_requests import DriveRequestCancellorByPassengerId
 from app.pubsub.drive_requests import DriveRequestCreator
 from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
@@ -150,7 +151,7 @@ class AddDriveRequestWorkflow(Publisher):
         driver_getter.perform(drivers_repository, driver_id)
 
 
-class CancelDriveRequestWorkflow(Publisher):
+class CancelDriveOfferWorkflow(Publisher):
     """Defines a workflow to cancel an existing ride request."""
 
     def perform(self, orm, logger, drivers_repository, user_id, driver_id,
@@ -159,7 +160,7 @@ class CancelDriveRequestWorkflow(Publisher):
         logger = LoggingSubscriber(logger)
         driver_getter = DriverWithIdGetter()
         authorizer = DriverWithUserIdAuthorizer()
-        request_cancellor = DriveRequestCancellor()
+        request_cancellor = DriveRequestCancellorByDriverId()
         task_submitter = TaskSubmitter()
         driver_future = Future()
 
@@ -196,6 +197,54 @@ class CancelDriveRequestWorkflow(Publisher):
                                          DriveRequestCancellorSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         driver_getter.perform(drivers_repository, driver_id)
+
+
+class CancelDriveRequestWorkflow(Publisher):
+    """Defines a workflow to cancel an existing ride request."""
+
+    def perform(self, orm, logger, passengers_repository, user_id, passenger_id,
+                requests_repository, drive_request_id, task):
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        passenger_getter = PassengerWithIdGetter()
+        authorizer = PassengerWithUserIdAuthorizer()
+        request_cancellor = DriveRequestCancellorByPassengerId()
+        task_submitter = TaskSubmitter()
+        passenger_future = Future()
+
+        class PassengerGetterSubscriber(object):
+            def passenger_not_found(self, passenger_id):
+                outer.publish('not_found', passenger_id)
+            def passenger_found(self, passenger):
+                passenger_future.set(passenger)
+                authorizer.perform(user_id, passenger)
+
+        class AuthorizerSubscriber(object):
+            def unauthorized(self, user_id, passenger):
+                outer.publish('unauthorized')
+            def authorized(self, user_id, passenger):
+                request_cancellor.perform(requests_repository,
+                                          drive_request_id, passenger_id)
+
+        class DriveRequestCancellorSubscriber(object):
+            def drive_request_not_found(self, drive_request_id, passenger_id):
+                outer.publish('success')
+
+            def drive_request_cancelled(self, request):
+                orm.add(request)
+                task_submitter.perform(task, passenger_future.get().user.name,
+                                       request.passenger_id)
+
+        class TaskSubmitterSubscriber(object):
+            def task_created(self, task_id):
+                outer.publish('success')
+
+        passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
+        authorizer.add_subscriber(logger, AuthorizerSubscriber())
+        request_cancellor.add_subscriber(logger,
+                                         DriveRequestCancellorSubscriber())
+        task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
+        passenger_getter.perform(passengers_repository, passenger_id)
 
 
 class AcceptDriveRequestWorkflow(Publisher):

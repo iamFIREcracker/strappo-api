@@ -85,15 +85,26 @@ class DriveRequestAcceptor(Publisher):
             self.publish('drive_request_accepted', request)
 
 
-class DriveRequestCancellor(Publisher):
+class DriveRequestCancellorByDriverId(Publisher):
     def perform(self, repository, drive_request_id, driver_id):
-        request = repository.cancel(drive_request_id, driver_id)
+        request = repository.cancel_by_driver_id(drive_request_id,
+                                                 driver_id)
         if request is None:
             self.publish('drive_request_not_found',
                          drive_request_id, driver_id)
         else:
             self.publish('drive_request_cancelled', request)
 
+
+class DriveRequestCancellorByPassengerId(Publisher):
+    def perform(self, repository, drive_request_id, passenger_id):
+        request = repository.cancel_by_passenger_id(drive_request_id,
+                                                    passenger_id)
+        if request is None:
+            self.publish('drive_request_not_found',
+                         drive_request_id, passenger_id)
+        else:
+            self.publish('drive_request_cancelled', request)
 
 
 def serialize(request):
