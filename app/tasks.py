@@ -20,6 +20,35 @@ from app.workflows.passengers import NotifyPassengersWorkflow
 
 
 @celery.task
+def NotifyDriverRideCancelledTask(driver_name, driver_id):
+    logger = create_logger()
+    logging_subscriber = LoggingSubscriber(logger)
+    push_adapter = TitaniumPushNotificationsAdapter()
+    notify_drivers = NotifyDriversWorkflow()
+    ret = Future()
+
+    class NotifyDriverSubscriber(object):
+        def driver_not_found(self, driver_id):
+            ret.set((None, 'Driver not found: %(driver_id)s' % locals()))
+        def failure(self, error):
+            ret.set((None, error))
+        def success(self):
+            ret.set((None, None))
+
+    notify_drivers.add_subscriber(logging_subscriber,
+                                    NotifyDriverSubscriber())
+    notify_drivers.perform(logger, DriversRepository, [driver_id],
+                              push_adapter, 'drivers',
+                              json.dumps({
+                                  'channel': 'drivers',
+                                  'alert': 'Oh noes, %(name)s just cancelled '
+                                           'her drive request!' \
+                                                   % dict(name=driver_name)
+                              }))
+    return ret.get()
+
+
+@celery.task
 def NotifyDriversTask(passenger_name):
     logger = create_logger()
     logging_subscriber = LoggingSubscriber(logger)

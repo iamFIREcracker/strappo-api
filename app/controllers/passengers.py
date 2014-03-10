@@ -7,6 +7,7 @@ import app.weblib
 from app.controllers import ParamAuthorizableController
 from app.repositories.passengers import PassengersRepository
 from app.repositories.drive_requests import DriveRequestsRepository
+from app.tasks import NotifyDriverRideCancelledTask
 from app.tasks import NotifyDriversTask
 from app.tasks import NotifyDriversAlitPassengerTask
 from app.tasks import NotifyDriversDeactivatedPassengerTask
@@ -20,6 +21,7 @@ from app.workflows.passengers import ListUnmatchedPassengersWorkflow
 from app.workflows.passengers import DeactivatePassengerWorkflow
 from app.workflows.passengers import ViewPassengerWorkflow
 from app.workflows.drive_requests import AcceptDriveRequestWorkflow
+from app.workflows.drive_requests import CancelDriveRequestWorkflow
 
 
 class ListUnmatchedPassengersController(ParamAuthorizableController):
@@ -98,6 +100,7 @@ class AlightPassengerController(ParamAuthorizableController):
             def unauthorized(self):
                 raise web.unauthorized()
             def success(self):
+                web.ctx.orm.commit()
                 raise web.ok()
 
         deactivate_passenger.add_subscriber(logger,
@@ -105,7 +108,7 @@ class AlightPassengerController(ParamAuthorizableController):
         deactivate_passenger.perform(web.ctx.logger, web.ctx.orm,
                                      PassengersRepository, passenger_id,
                                      self.current_user,
-                                     NotifyDriversAlitPassenger)
+                                     NotifyDriversAlitPassengerTask)
 
 
 
@@ -157,3 +160,29 @@ class AcceptDriverController(ParamAuthorizableController):
                                      PassengersRepository, passenger_id,
                                      self.current_user.id,
                                      DriveRequestsRepository, driver_id)
+
+
+class CancelDriveRequestController(ParamAuthorizableController):
+    @api
+    @authorized
+    def POST(self, passenger_id, drive_request_id):
+        logger = LoggingSubscriber(web.ctx.logger)
+        cancel_drive_request = CancelDriveRequestWorkflow()
+
+        class CancelDriveRequestSubscriber(object):
+            def not_found(self, driver_id):
+                web.ctx.orm.rollback()
+                raise web.notfound()
+            def unauthorized(self):
+                web.ctx.orm.rollback()
+                raise web.unauthorized()
+            def success(self):
+                web.ctx.orm.commit()
+                raise app.weblib.nocontent()
+
+        cancel_drive_request.add_subscriber(logger, CancelDriveRequestSubscriber())
+        cancel_drive_request.perform(web.ctx.orm, web.ctx.logger,
+                                     PassengersRepository, self.current_user.id,
+                                     passenger_id, DriveRequestsRepository,
+                                     drive_request_id,
+                                     NotifyDriverRideCancelledTask)

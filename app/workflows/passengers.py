@@ -6,6 +6,7 @@ import app.forms.passengers as passengers_forms
 from app.pubsub import ACSSessionCreator
 from app.pubsub import ACSUserIdsNotifier
 from app.pubsub.drive_requests import AcceptedDriveRequestsFilter
+from app.pubsub.drive_requests import DriveRequestCancellorByDriverId
 from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.passengers import ActivePassengersGetter
 from app.pubsub.passengers import PassengerWithIdGetter
@@ -228,7 +229,7 @@ class DeactivatePassengerWorkflow(Publisher):
 
         class PassengerGetterSubscriber(object):
             def passenger_not_found(self, passenger_id):
-                outer.publish('not_found', passenger_id)
+                outer.publish('success')
             def passenger_found(self, passenger):
                 with_user_id_authorizer.perform(user.id, passenger)
 

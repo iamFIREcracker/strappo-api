@@ -101,7 +101,7 @@ class DeactivateDriverWorkflow(Publisher):
 
         class DriverGetterSubscriber(object):
             def driver_not_found(self, driver_id):
-                outer.publish('not_found', driver_id)
+                outer.publish('success')
             def driver_found(self, driver):
                 with_user_id_authorizer.perform(user.id, driver)
 

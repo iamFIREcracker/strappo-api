@@ -22,7 +22,7 @@ from app.workflows.drivers import DeactivateDriverWorkflow
 from app.workflows.drivers import UnhideDriverWorkflow
 from app.workflows.drivers import ViewDriverWorkflow
 from app.workflows.drive_requests import AddDriveRequestWorkflow
-from app.workflows.drive_requests import CancelDriveRequestWorkflow
+from app.workflows.drive_requests import CancelDriveOfferWorkflow
 
 
 class AddDriverController(ParamAuthorizableController):
@@ -72,14 +72,14 @@ class DeactivateDriverController(ParamAuthorizableController):
                                   NotifyPassengersDeactivatedDriverTask)
 
 
-class CancelDriveRequestController(ParamAuthorizableController):
+class CancelDriveOfferController(ParamAuthorizableController):
     @api
     @authorized
     def POST(self, driver_id, drive_request_id):
         logger = LoggingSubscriber(web.ctx.logger)
-        cancel_drive_request = CancelDriveRequestWorkflow()
+        cancel_drive_offer = CancelDriveOfferWorkflow()
 
-        class CancelDriveRequestSubscriber(object):
+        class CancelDriveOfferSubscriber(object):
             def not_found(self, driver_id):
                 web.ctx.orm.rollback()
                 raise web.notfound()
@@ -90,12 +90,12 @@ class CancelDriveRequestController(ParamAuthorizableController):
                 web.ctx.orm.commit()
                 raise app.weblib.nocontent()
 
-        cancel_drive_request.add_subscriber(logger, CancelDriveRequestSubscriber())
-        cancel_drive_request.perform(web.ctx.orm, web.ctx.logger,
-                                     DriversRepository, self.current_user.id,
-                                     driver_id, DriveRequestsRepository,
-                                     drive_request_id,
-                                     NotifyPassengerRideCancelledTask)
+        cancel_drive_offer.add_subscriber(logger, CancelDriveOfferSubscriber())
+        cancel_drive_offer.perform(web.ctx.orm, web.ctx.logger,
+                                   DriversRepository, self.current_user.id,
+                                   driver_id, DriveRequestsRepository,
+                                   drive_request_id,
+                                   NotifyPassengerRideCancelledTask)
 
 
 class ViewDriverController(ParamAuthorizableController):
