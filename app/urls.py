@@ -35,6 +35,7 @@ URLS = (
     '/1/passengers/unmatched', ListUnmatchedPassengersController,
     '/1/passengers/add', AddPassengerController,
     '/1/passengers/(.+)/deactivate', DeactivatePassengerController,
+    '/1/passengers/(.+)/alight', AlightPassengerController,
     '/1/passengers/(.+)/accept/driver/(.+)', AcceptDriverController,
     '/1/passengers/(.+)/cancel/drive_request/(.+)', CancelDriveRequestController,
 
@@ -48,5 +49,4 @@ URLS = (
     '/1/drivers/(.+)/hide', HideDriverController,
     '/1/drivers/(.+)/unhide', UnhideDriverController,
     '/1/passengers/(.+)/view', ViewPassengerController,
-    '/1/passengers/(.+)/alight', AlightPassengerController,
 )

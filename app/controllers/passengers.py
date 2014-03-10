@@ -100,6 +100,7 @@ class AlightPassengerController(ParamAuthorizableController):
             def unauthorized(self):
                 raise web.unauthorized()
             def success(self):
+                web.ctx.orm.commit()
                 raise web.ok()
 
         deactivate_passenger.add_subscriber(logger,
@@ -107,7 +108,7 @@ class AlightPassengerController(ParamAuthorizableController):
         deactivate_passenger.perform(web.ctx.logger, web.ctx.orm,
                                      PassengersRepository, passenger_id,
                                      self.current_user,
-                                     NotifyDriversAlitPassenger)
+                                     NotifyDriversAlitPassengerTask)
 
 
 
