@@ -40,7 +40,7 @@ def NotifyDriverRideCancelledTask(driver_name, driver_id):
     notify_drivers.perform(logger, DriversRepository, [driver_id],
                               push_adapter, 'drivers',
                               json.dumps({
-                                  'channel': 'drivers',
+                                  'channel': 'channel',
                                   'alert': 'Oh noes, %(name)s just cancelled '
                                            'her drive request!' \
                                                    % dict(name=driver_name)
@@ -66,7 +66,7 @@ def NotifyDriversTask(passenger_name):
                                     NotifyDriversSubscriber())
     notify_drivers.perform(logger, DriversRepository, push_adapter, 'drivers',
                            json.dumps({
-                               'channel': 'drivers',
+                               'channel': 'channel',
                                'alert': 'Hei, %(name)s is looking '
                                         'for a lift!' \
                                                 % dict(name=passenger_name)
@@ -92,7 +92,7 @@ def NotifyDriversAlitPassengerTask(passenger_name, driver_ids):
                                     NotifyDriversSubscriber())
     notify_drivers.perform(logger, DriversRepository, push_adapter, 'drivers',
                            json.dumps({
-                               'channel': 'drivers',
+                               'channel': 'channel',
                                'alert': '%(name)s is so thankful '
                                         'for the ride!' \
                                                 % dict(name=passenger_name)
@@ -118,7 +118,7 @@ def NotifyDriversDeactivatedPassengerTask(passenger_name, driver_ids):
                                     NotifyDriversSubscriber())
     notify_drivers.perform(logger, DriversRepository, push_adapter, 'drivers',
                            json.dumps({
-                               'channel': 'drivers',
+                               'channel': 'channel',
                                'alert': 'Oh no, %(name)s is no more '
                                         'looking for a ride!' \
                                                 % dict(name=passenger_name)
@@ -147,7 +147,7 @@ def NotifyPassengerTask(driver_name, passenger_id):
     notify_passengers.perform(logger, PassengersRepository, [passenger_id],
                               push_adapter, 'passengers',
                               json.dumps({
-                                  'channel': 'passengers',
+                                  'channel': 'channel',
                                   'alert': 'Yeah, %(name)s has offered '
                                            'to give you a ride!' \
                                                    % dict(name=driver_name)
@@ -174,7 +174,7 @@ def NotifyPassengersDeactivatedDriverTask(driver_name, passenger_ids):
     notify_passengers.perform(logger, PassengersRepository, passenger_ids,
                               push_adapter, 'drivers',
                               json.dumps({
-                                  'channel': 'drivers',
+                                  'channel': 'channel',
                                   'alert': 'Oh no, %(name)s is no more '
                                            'looking for a ride!' \
                                                    % dict(name=driver_name)
@@ -204,7 +204,7 @@ def NotifyPassengerRideCancelledTask(driver_name, passenger_id):
     notify_passengers.perform(logger, PassengersRepository, [passenger_id],
                               push_adapter, 'passengers',
                               json.dumps({
-                                  'channel': 'passengers',
+                                  'channel': 'channel',
                                   'alert': 'Oh noes, %(name)s just cancelled '
                                            'her drive request!' \
                                                    % dict(name=driver_name)
