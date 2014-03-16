@@ -259,6 +259,7 @@ class AcceptDriveRequestWorkflow(Publisher):
         request_acceptor = DriveRequestAcceptor()
         passengers_matcher = MultiplePassengerMatcher()
         task_submitter = TaskSubmitter()
+        request_future = Future()
 
         class PassengerGetterSubscriber(object):
             def passenger_not_found(self, passenger_id):
@@ -277,13 +278,15 @@ class AcceptDriveRequestWorkflow(Publisher):
             def drive_request_not_found(self, driver_id, passenger_id):
                 outer.publish('not_found') # XXX Bad request?!
             def drive_request_accepted(self, request):
+                request_future.set(request)
                 orm.add(request)
                 passengers_matcher.perform([request.passenger])
 
         class PassengersMatcherSubscriber(object):
             def passengers_matched(self, passengers):
                 orm.add(passengers[0])
-                task_submitter.
+                task_submitter.perform(task, passengers[0].user.name,
+                                       request_future.get().driver_id)
                 outer.publish('success')
 
         class TaskSubmitterSubscriber(object):
