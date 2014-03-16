@@ -233,7 +233,7 @@ class CancelDriveRequestWorkflow(Publisher):
             def drive_request_cancelled(self, request):
                 orm.add(request)
                 task_submitter.perform(task, passenger_future.get().user.name,
-                                       request.passenger_id)
+                                       request.driver_id)
 
         class TaskSubmitterSubscriber(object):
             def task_created(self, task_id):

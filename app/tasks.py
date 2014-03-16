@@ -23,15 +23,16 @@ from app.workflows.passengers import NotifyPassengersWorkflow
 @celery.task
 def NotifyDriverDriveRequestAccepted(passenger_name, driver_id):
     return notify_driver(driver_id,
-                         '%(name)s just accepted ' \
-                         'your drive request!' % dict(name=passenger_name))
+                         '%(name)s just accepted your drive request!' \
+                         % dict(name=passenger_name))
 
 
 @celery.task
-def NotifyDriverDriveRequestCancelledByPassengerTask(passenger_name, driver_id):
+def NotifyDriverDriveRequestCancelledByPassengerTask(passenger_name,
+                                                     driver_id):
     return notify_driver(driver_id,
-                         '%(name)s just cancelled ' \
-                         'her drive request!' % dict(name=passenger_name))
+                         '%(name)s just cancelled her drive request!' \
+                         % dict(name=passenger_name))
 
 
 def notify_driver(driver_id, message):
@@ -58,6 +59,7 @@ def notify_driver(driver_id, message):
                                   'alert': message
                               }))
     return ret.get()
+
 
 @celery.task
 def NotifyDriversTask(passenger_name):
