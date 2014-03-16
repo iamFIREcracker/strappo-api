@@ -57,6 +57,8 @@ def notify_driver(driver_id, message):
                               push_adapter, 'channel',
                               json.dumps({
                                   'channel': 'channel',
+                                  'badge': '+1',
+                                  'sound': 'default',
                                   'alert': message
                               }))
     return ret.get()
@@ -81,6 +83,8 @@ def NotifyDriversPassengerRegisteredTask(passenger_name):
     notify_drivers.perform(logger, DriversRepository, push_adapter, 'channel',
                            json.dumps({
                                'channel': 'channel',
+                               'badge': '+1',
+                               'sound': 'default',
                                'alert': 'Hei, %(name)s is looking '
                                         'for a lift!' \
                                                 % dict(name=passenger_name)
@@ -108,6 +112,8 @@ def NotifyDriversPassengerAlitTask(passenger_name, driver_ids):
                            'channel',
                            json.dumps({
                                'channel': 'channel',
+                               'badge': '+1',
+                               'sound': 'default',
                                'alert': '%(name)s has arrived at destination!'
                                         % dict(name=passenger_name)
                            }))
@@ -134,6 +140,8 @@ def NotifyDriversDeactivatedPassengerTask(passenger_name, driver_ids):
                            'channel',
                            json.dumps({
                                'channel': 'channel',
+                               'badge': '+1',
+                               'sound': 'default',
                                'alert': 'Oh no, %(name)s is no more '
                                         'looking for a ride!' \
                                                 % dict(name=passenger_name)
@@ -163,6 +171,8 @@ def NotifyPassengerDriveRequestPending(driver_name, passenger_id):
                               push_adapter, 'channel',
                               json.dumps({
                                   'channel': 'channel',
+                                  'badge': '+1',
+                                  'sound': 'default',
                                   'alert': 'Yeah, %(name)s has offered '
                                            'to give you a ride!' \
                                                    % dict(name=driver_name)
@@ -190,6 +200,8 @@ def NotifyPassengersDriverDeactivatedTask(driver_name, passenger_ids):
                               push_adapter, 'channel',
                               json.dumps({
                                   'channel': 'channel',
+                                  'badge': '+1',
+                                  'sound': 'default',
                                   'alert': 'Oh no, %(name)s cannot drive '
                                            'you around anymore!' \
                                                    % dict(name=driver_name)
@@ -220,6 +232,8 @@ def NotifyPassengerDriveRequestCancelledTask(driver_name, passenger_id):
                               push_adapter, 'channel',
                               json.dumps({
                                   'channel': 'channel',
+                                  'badge': '+1',
+                                  'sound': 'default',
                                   'alert': 'Oh noes, %(name)s just cancelled '
                                            'her drive request!' \
                                                    % dict(name=driver_name)
