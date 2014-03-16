@@ -62,7 +62,7 @@ def notify_driver(driver_id, message):
 
 
 @celery.task
-def NotifyDriversTask(passenger_name):
+def NotifyDriversPassengerRegisteredTask(passenger_name):
     logger = create_logger()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
@@ -77,7 +77,7 @@ def NotifyDriversTask(passenger_name):
 
     notify_drivers.add_subscriber(logging_subscriber,
                                     NotifyDriversSubscriber())
-    notify_drivers.perform(logger, DriversRepository, push_adapter, 'drivers',
+    notify_drivers.perform(logger, DriversRepository, push_adapter, 'channel',
                            json.dumps({
                                'channel': 'channel',
                                'alert': 'Hei, %(name)s is looking '
@@ -88,7 +88,7 @@ def NotifyDriversTask(passenger_name):
 
 
 @celery.task
-def NotifyDriversAlitPassengerTask(passenger_name, driver_ids):
+def NotifyDriversPassengerAlitTask(passenger_name, driver_ids):
     logger = create_logger()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
@@ -103,7 +103,7 @@ def NotifyDriversAlitPassengerTask(passenger_name, driver_ids):
 
     notify_drivers.add_subscriber(logging_subscriber,
                                     NotifyDriversSubscriber())
-    notify_drivers.perform(logger, DriversRepository, push_adapter, 'drivers',
+    notify_drivers.perform(logger, DriversRepository, push_adapter, 'channel',
                            json.dumps({
                                'channel': 'channel',
                                'alert': '%(name)s is so thankful '
@@ -215,7 +215,7 @@ def NotifyPassengerDriveRequestCancelledTask(driver_name, passenger_id):
     notify_passengers.add_subscriber(logging_subscriber,
                                     NotifyPassengerSubscriber())
     notify_passengers.perform(logger, PassengersRepository, [passenger_id],
-                              push_adapter, 'passengers',
+                              push_adapter, 'channel',
                               json.dumps({
                                   'channel': 'channel',
                                   'alert': 'Oh noes, %(name)s just cancelled '
