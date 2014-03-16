@@ -51,7 +51,7 @@ def notify_driver(driver_id, message):
 
     notify_driver.add_subscriber(logging_subscriber,
                                     NotifyDriverSubscriber())
-    notify_driver.perform(logger, DriversRepository, [driver_id],
+    notify_driver.perform(logger, DriversRepository, driver_id,
                               push_adapter, 'channel',
                               json.dumps({
                                   'channel': 'channel',
