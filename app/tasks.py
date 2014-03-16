@@ -167,7 +167,7 @@ def NotifyPassengerDriveRequestPending(driver_name, passenger_id):
 
 
 @celery.task
-def NotifyPassengersDeactivatedDriverTask(driver_name, passenger_ids):
+def NotifyPassengersDriverDeactivatedTask(driver_name, passenger_ids):
     logger = create_logger()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
@@ -186,8 +186,8 @@ def NotifyPassengersDeactivatedDriverTask(driver_name, passenger_ids):
                               push_adapter, 'channel',
                               json.dumps({
                                   'channel': 'channel',
-                                  'alert': 'Oh no, %(name)s is no more '
-                                           'looking for a ride!' \
+                                  'alert': 'Oh no, %(name)s cannot drive '
+                                           'you around anymore!' \
                                                    % dict(name=driver_name)
                               }))
     return ret.get()
@@ -195,7 +195,7 @@ def NotifyPassengersDeactivatedDriverTask(driver_name, passenger_ids):
 
 
 @celery.task
-def NotifyPassengerRideCancelledTask(driver_name, passenger_id):
+def NotifyPassengerDriveRequestCancelledTask(driver_name, passenger_id):
     logger = create_logger()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
