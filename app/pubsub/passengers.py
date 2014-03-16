@@ -166,4 +166,4 @@ class MultiplePassengersDeactivator(Publisher):
 class PassengerACSUserIdExtractor(Publisher):
     def perform(self, passengers):
         self.publish('acs_user_ids_extracted',
-                     filter(None, [p.user.acs_id for p in passengers])
+                     filter(None, [p.user.acs_id for p in passengers]))
