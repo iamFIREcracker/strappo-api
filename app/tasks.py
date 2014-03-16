@@ -15,6 +15,7 @@ from app.weblib.pubsub import LoggingSubscriber
 from app.workflows.drive_requests import DeactivateActiveDriveRequestsWorkflow
 from app.workflows.drivers import NotifyDriverWorkflow
 from app.workflows.drivers import NotifyDriversWorkflow
+from app.workflows.drivers import NotifyAllDriversWorkflow
 from app.workflows.drivers import UnhideHiddenDriversWorkflow
 from app.workflows.passengers import DeactivateActivePassengersWorkflow
 from app.workflows.passengers import NotifyPassengersWorkflow
@@ -66,7 +67,7 @@ def NotifyDriversPassengerRegisteredTask(passenger_name):
     logger = create_logger()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
-    notify_drivers = NotifyDriversWorkflow()
+    notify_drivers = NotifyAllDriversWorkflow()
     ret = Future()
 
     class NotifyDriversSubscriber(object):
@@ -103,12 +104,12 @@ def NotifyDriversPassengerAlitTask(passenger_name, driver_ids):
 
     notify_drivers.add_subscriber(logging_subscriber,
                                     NotifyDriversSubscriber())
-    notify_drivers.perform(logger, DriversRepository, push_adapter, 'channel',
+    notify_drivers.perform(logger, DriversRepository, driver_ids, push_adapter,
+                           'channel',
                            json.dumps({
                                'channel': 'channel',
-                               'alert': '%(name)s is so thankful '
-                                        'for the ride!' \
-                                                % dict(name=passenger_name)
+                               'alert': '%(name)s has arrived at destination!'
+                                        % dict(name=passenger_name)
                            }))
     return ret.get()
 
@@ -128,8 +129,9 @@ def NotifyDriversDeactivatedPassengerTask(passenger_name, driver_ids):
             ret.set((None, None))
 
     notify_drivers.add_subscriber(logging_subscriber,
-                                    NotifyDriversSubscriber())
-    notify_drivers.perform(logger, DriversRepository, push_adapter, 'channel',
+                                  NotifyDriversSubscriber())
+    notify_drivers.perform(logger, DriversRepository, driver_ids, push_adapter,
+                           'channel',
                            json.dumps({
                                'channel': 'channel',
                                'alert': 'Oh no, %(name)s is no more '

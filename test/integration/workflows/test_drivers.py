@@ -11,7 +11,7 @@ from mock import Mock
 from app.workflows.drivers import AddDriverWorkflow
 from app.workflows.drivers import EditDriverWorkflow
 from app.workflows.drivers import HideDriverWorkflow
-from app.workflows.drivers import NotifyDriversWorkflow
+from app.workflows.drivers import NotifyAllDriversWorkflow
 from app.workflows.drivers import UnhideDriverWorkflow
 from app.workflows.drivers import UnhideHiddenDriversWorkflow
 from app.workflows.drivers import ViewDriverWorkflow
@@ -337,7 +337,7 @@ class TestNotifyDriversWorkflow(unittest.TestCase):
         repository = Mock(get_all_unhidden=MagicMock(return_value=drivers))
         push_adapter = Mock(login=MagicMock(return_value=(None, 'Error!')))
         subscriber = Mock(failure=MagicMock())
-        instance = NotifyDriversWorkflow()
+        instance = NotifyAllDriversWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
@@ -356,7 +356,7 @@ class TestNotifyDriversWorkflow(unittest.TestCase):
         push_adapter = Mock(login=MagicMock(return_value=('session_id', None)),
                             notify=MagicMock(return_value=(None, 'Error!')))
         subscriber = Mock(failure=MagicMock())
-        instance = NotifyDriversWorkflow()
+        instance = NotifyAllDriversWorkflow()
 
         # When
         instance.add_subscriber(subscriber)
@@ -374,7 +374,7 @@ class TestNotifyDriversWorkflow(unittest.TestCase):
         push_adapter = Mock(login=MagicMock(return_value=('session_id', None)),
                             notify=MagicMock(return_value=(None, None)))
         subscriber = Mock(success=MagicMock())
-        instance = NotifyDriversWorkflow()
+        instance = NotifyAllDriversWorkflow()
 
         # When
         instance.add_subscriber(subscriber)

@@ -24,6 +24,12 @@ class HiddenDriversGetter(Publisher):
         self.publish('hidden_drivers_found', repository.get_all_hidden())
 
 
+class MultipleDriversWithIdGetter(Publisher):
+    def perform(self, repository, driver_ids):
+        self.publish('drivers_found',
+                     filter(None, [repository.get(id) for id in driver_ids]))
+
+
 class DriverWithIdGetter(Publisher):
     def perform(self, repository, driver_id):
         """Search for a driver identified by ``driver_id``.
