@@ -8,8 +8,8 @@ from app.controllers import ParamAuthorizableController
 from app.repositories.drivers import DriversRepository
 from app.repositories.drive_requests import DriveRequestsRepository
 from app.tasks import NotifyPassengerDriveRequestPending
-from app.tasks import NotifyPassengerRideCancelledTask
-from app.tasks import NotifyPassengersDeactivatedDriverTask
+from app.tasks import NotifyPassengerDriveRequestCancelledTask
+from app.tasks import NotifyPassengersDriverDeactivatedTask
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.request_decorators import api
@@ -69,7 +69,7 @@ class DeactivateDriverController(ParamAuthorizableController):
         deactivate_driver.perform(web.ctx.logger, web.ctx.orm,
                                   DriversRepository, driver_id,
                                   self.current_user,
-                                  NotifyPassengersDeactivatedDriverTask)
+                                  NotifyPassengersDriverDeactivatedTask)
 
 
 class CancelDriveOfferController(ParamAuthorizableController):
@@ -95,7 +95,7 @@ class CancelDriveOfferController(ParamAuthorizableController):
                                    DriversRepository, self.current_user.id,
                                    driver_id, DriveRequestsRepository,
                                    drive_request_id,
-                                   NotifyPassengerRideCancelledTask)
+                                   NotifyPassengerDriveRequestCancelledTask)
 
 
 class ViewDriverController(ParamAuthorizableController):
