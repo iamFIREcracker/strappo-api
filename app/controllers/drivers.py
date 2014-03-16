@@ -7,7 +7,7 @@ import app.weblib
 from app.controllers import ParamAuthorizableController
 from app.repositories.drivers import DriversRepository
 from app.repositories.drive_requests import DriveRequestsRepository
-from app.tasks import NotifyPassengerTask
+from app.tasks import NotifyPassengerRideRequestPending
 from app.tasks import NotifyPassengerRideCancelledTask
 from app.tasks import NotifyPassengersDeactivatedDriverTask
 from app.weblib.pubsub import Future
@@ -216,4 +216,5 @@ class AcceptPassengerController(ParamAuthorizableController):
         add_drive_request.perform(web.ctx.orm, web.ctx.logger,
                                   DriversRepository, self.current_user.id,
                                   driver_id, DriveRequestsRepository,
-                                  passenger_id, NotifyPassengerTask)
+                                  passenger_id,
+                                  NotifyPassengerRideRequestPending)
