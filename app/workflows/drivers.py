@@ -336,7 +336,7 @@ class NotifyDriverWorkflow(Publisher):
         acs_session_creator.add_subscriber(logger,
                                            ACSSessionCreatorSubscriber())
         acs_notifier.add_subscriber(logger, ACSNotifierSubscriber())
-        driver_getter.perform(repository)
+        driver_getter.perform(repository, driver_id)
 
 
 class NotifyDriversWorkflow(Publisher):
