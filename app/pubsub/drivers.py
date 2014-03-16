@@ -180,4 +180,4 @@ class DriversACSUserIdExtractor(Publisher):
         published, together with the list of the extracted ACS user ids.
         """
         self.publish('acs_user_ids_extracted',
-                     [d.user.acs_id for d in drivers])
+                     filter(None, [d.user.acs_id for d in drivers]))
