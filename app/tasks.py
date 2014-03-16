@@ -21,14 +21,14 @@ from app.workflows.passengers import NotifyPassengersWorkflow
 
 
 @celery.task
-def NotifyDriverRideAcceptedTask(passenger_name, driver_id):
+def NotifyDriverDriveRequestAccepted(passenger_name, driver_id):
     return notify_driver(driver_id,
                          '%(name)s just accepted ' \
                          'your drive request!' % dict(name=passenger_name))
 
 
 @celery.task
-def NotifyDriverRideCancelledTask(passenger_name, driver_id):
+def NotifyDriverDriveRequestCancelledByPassengerTask(passenger_name, driver_id):
     return notify_driver(driver_id,
                          '%(name)s just cancelled ' \
                          'her drive request!' % dict(name=passenger_name))
@@ -138,7 +138,7 @@ def NotifyDriversDeactivatedPassengerTask(passenger_name, driver_ids):
 
 
 @celery.task
-def NotifyPassengerRideRequestPending(driver_name, passenger_id):
+def NotifyPassengerDriveRequestPending(driver_name, passenger_id):
     logger = create_logger()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
