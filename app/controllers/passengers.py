@@ -7,7 +7,8 @@ import app.weblib
 from app.controllers import ParamAuthorizableController
 from app.repositories.passengers import PassengersRepository
 from app.repositories.drive_requests import DriveRequestsRepository
-from app.tasks import NotifyDriverRideCancelledTask
+from app.tasks import NotifyDriverDriveRequestCancelledByPassengerTask
+from app.tasks import NotifyDriverDriveRequestAccepted
 from app.tasks import NotifyDriversTask
 from app.tasks import NotifyDriversAlitPassengerTask
 from app.tasks import NotifyDriversDeactivatedPassengerTask
@@ -155,11 +156,12 @@ class AcceptDriverController(ParamAuthorizableController):
                 raise app.weblib.nocontent()
 
         accept_drive_request.add_subscriber(logger,
-                                           AcceptDriveRequestSubscriber())
+                                            AcceptDriveRequestSubscriber())
         accept_drive_request.perform(web.ctx.orm, web.ctx.logger,
                                      PassengersRepository, passenger_id,
                                      self.current_user.id,
-                                     DriveRequestsRepository, driver_id)
+                                     DriveRequestsRepository, driver_id,
+                                     NotifyDriverDriveRequestAccepted)
 
 
 class CancelDriveRequestController(ParamAuthorizableController):
@@ -185,4 +187,4 @@ class CancelDriveRequestController(ParamAuthorizableController):
                                      PassengersRepository, self.current_user.id,
                                      passenger_id, DriveRequestsRepository,
                                      drive_request_id,
-                                     NotifyDriverRideCancelledTask)
+                                     NotifyDriverDriveRequestCancelledByPassengerTask)

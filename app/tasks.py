@@ -13,6 +13,7 @@ from app.weblib.logging import create_logger
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
 from app.workflows.drive_requests import DeactivateActiveDriveRequestsWorkflow
+from app.workflows.drivers import NotifyDriverWorkflow
 from app.workflows.drivers import NotifyDriversWorkflow
 from app.workflows.drivers import UnhideHiddenDriversWorkflow
 from app.workflows.passengers import DeactivateActivePassengersWorkflow
@@ -20,11 +21,24 @@ from app.workflows.passengers import NotifyPassengersWorkflow
 
 
 @celery.task
-def NotifyDriverRideCancelledTask(driver_name, driver_id):
+def NotifyDriverDriveRequestAccepted(passenger_name, driver_id):
+    return notify_driver(driver_id,
+                         '%(name)s just accepted ' \
+                         'your drive request!' % dict(name=passenger_name))
+
+
+@celery.task
+def NotifyDriverDriveRequestCancelledByPassengerTask(passenger_name, driver_id):
+    return notify_driver(driver_id,
+                         '%(name)s just cancelled ' \
+                         'her drive request!' % dict(name=passenger_name))
+
+
+def notify_driver(driver_id, message):
     logger = create_logger()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
-    notify_drivers = NotifyDriversWorkflow()
+    notify_driver = NotifyDriverWorkflow()
     ret = Future()
 
     class NotifyDriverSubscriber(object):
@@ -35,18 +49,15 @@ def NotifyDriverRideCancelledTask(driver_name, driver_id):
         def success(self):
             ret.set((None, None))
 
-    notify_drivers.add_subscriber(logging_subscriber,
+    notify_driver.add_subscriber(logging_subscriber,
                                     NotifyDriverSubscriber())
-    notify_drivers.perform(logger, DriversRepository, [driver_id],
-                              push_adapter, 'drivers',
+    notify_driver.perform(logger, DriversRepository, [driver_id],
+                              push_adapter, 'channel',
                               json.dumps({
                                   'channel': 'channel',
-                                  'alert': 'Oh noes, %(name)s just cancelled '
-                                           'her drive request!' \
-                                                   % dict(name=driver_name)
+                                  'alert': message
                               }))
     return ret.get()
-
 
 @celery.task
 def NotifyDriversTask(passenger_name):
@@ -127,7 +138,7 @@ def NotifyDriversDeactivatedPassengerTask(passenger_name, driver_ids):
 
 
 @celery.task
-def NotifyPassengerTask(driver_name, passenger_id):
+def NotifyPassengerDriveRequestPending(driver_name, passenger_id):
     logger = create_logger()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()

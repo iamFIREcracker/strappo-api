@@ -295,6 +295,50 @@ class UnhideDriverWorkflow(Publisher):
         driver_getter.perform(repository, driver_id)
 
 
+class NotifyDriverWorkflow(Publisher):
+    def perform(self, logger, repository, driver_id, push_adapter, channel,
+                payload):
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        driver_getter = DriverWithIdGetter()
+        acs_ids_extractor = DriversACSUserIdExtractor()
+        acs_session_creator = ACSSessionCreator()
+        acs_notifier = ACSUserIdsNotifier()
+        user_ids_future = Future()
+
+        class DriverGetterSubscriber(object):
+            def driver_not_found(self, driver_id):
+                outer.publish('driver_not_found', driver_id)
+            def driver_found(self, driver):
+                acs_ids_extractor.perform([driver])
+
+        class ACSUserIdsExtractorSubscriber(object):
+            def acs_user_ids_extracted(self, user_ids):
+                user_ids_future.set(user_ids)
+                acs_session_creator.perform(push_adapter)
+
+        class ACSSessionCreatorSubscriber(object):
+            def acs_session_not_created(self, error):
+                outer.publish('failure', error)
+            def acs_session_created(self, session_id):
+                acs_notifier.perform(push_adapter, session_id, channel,
+                                     user_ids_future.get(), payload)
+
+        class ACSNotifierSubscriber(object):
+            def acs_user_ids_not_notified(self, error):
+                outer.publish('failure', error)
+            def acs_user_ids_notified(self):
+                outer.publish('success')
+
+        driver_getter.add_subscriber(logger, DriverGetterSubscriber())
+        acs_ids_extractor.add_subscriber(logger,
+                                         ACSUserIdsExtractorSubscriber())
+        acs_session_creator.add_subscriber(logger,
+                                           ACSSessionCreatorSubscriber())
+        acs_notifier.add_subscriber(logger, ACSNotifierSubscriber())
+        driver_getter.perform(repository)
+
+
 class NotifyDriversWorkflow(Publisher):
     """Defines a workflow to notify all the drivers that a new passenger is
     looking for a passage.

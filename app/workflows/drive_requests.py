@@ -251,13 +251,14 @@ class AcceptDriveRequestWorkflow(Publisher):
     """Defines a workflow to mark a drive request as accepted."""
 
     def perform(self, orm, logger, passengers_repository, passenger_id, user_id, 
-                requests_repository, driver_id):
+                requests_repository, driver_id, task):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         passenger_getter = PassengerWithIdGetter()
         authorizer = PassengerWithUserIdAuthorizer()
         request_acceptor = DriveRequestAcceptor()
         passengers_matcher = MultiplePassengerMatcher()
+        task_submitter = TaskSubmitter()
 
         class PassengerGetterSubscriber(object):
             def passenger_not_found(self, passenger_id):
@@ -282,6 +283,11 @@ class AcceptDriveRequestWorkflow(Publisher):
         class PassengersMatcherSubscriber(object):
             def passengers_matched(self, passengers):
                 orm.add(passengers[0])
+                task_submitter.
+                outer.publish('success')
+
+        class TaskSubmitterSubscriber(object):
+            def task_created(self, task_id):
                 outer.publish('success')
 
         passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
@@ -289,6 +295,7 @@ class AcceptDriveRequestWorkflow(Publisher):
         request_acceptor.add_subscriber(logger,
                                         DriveRequestAcceptorSubscriber())
         passengers_matcher.add_subscriber(logger, PassengersMatcherSubscriber())
+        task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         passenger_getter.perform(passengers_repository, passenger_id)
 
 
@@ -314,6 +321,3 @@ class DeactivateActiveDriveRequestsWorkflow(Publisher):
         requests_deactivator.add_subscriber(logger,
                                             DriveRequestsDeactivatorSubscriber())
         requests_getter.perform(repository)
-
-
-
