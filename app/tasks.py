@@ -116,7 +116,7 @@ def NotifyDriversDeactivatedPassengerTask(passenger_name, driver_ids):
 
     notify_drivers.add_subscriber(logging_subscriber,
                                     NotifyDriversSubscriber())
-    notify_drivers.perform(logger, DriversRepository, push_adapter, 'drivers',
+    notify_drivers.perform(logger, DriversRepository, push_adapter, 'channel',
                            json.dumps({
                                'channel': 'channel',
                                'alert': 'Oh no, %(name)s is no more '
@@ -145,7 +145,7 @@ def NotifyPassengerTask(driver_name, passenger_id):
     notify_passengers.add_subscriber(logging_subscriber,
                                     NotifyPassengerSubscriber())
     notify_passengers.perform(logger, PassengersRepository, [passenger_id],
-                              push_adapter, 'passengers',
+                              push_adapter, 'channel',
                               json.dumps({
                                   'channel': 'channel',
                                   'alert': 'Yeah, %(name)s has offered '
@@ -172,7 +172,7 @@ def NotifyPassengersDeactivatedDriverTask(driver_name, passenger_ids):
     notify_passengers.add_subscriber(logging_subscriber,
                                      NotifyPassengersSubscriber())
     notify_passengers.perform(logger, PassengersRepository, passenger_ids,
-                              push_adapter, 'drivers',
+                              push_adapter, 'channel',
                               json.dumps({
                                   'channel': 'channel',
                                   'alert': 'Oh no, %(name)s is no more '
