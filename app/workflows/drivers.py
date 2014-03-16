@@ -5,7 +5,6 @@
 import app.forms.drivers as drivers_forms
 from app.pubsub import ACSSessionCreator
 from app.pubsub import ACSUserIdsNotifier
-from app.pubsub.drive_requests import AcceptedDriveRequestsFilter
 from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.drivers import DriverCreator
 from app.pubsub.drivers import DriverHider
@@ -16,6 +15,7 @@ from app.pubsub.drivers import DriversACSUserIdExtractor
 from app.pubsub.drivers import DriverWithUserIdAuthorizer
 from app.pubsub.drivers import DriverLinkedToPassengerWithUserIdAuthorizer
 from app.pubsub.drivers import HiddenDriversGetter
+from app.pubsub.drivers import MultipleDriversWithIdGetter
 from app.pubsub.drivers import MultipleDriversDeactivator
 from app.pubsub.drivers import MultipleDriversUnhider
 from app.pubsub.drivers import UnhiddenDriversGetter
@@ -340,10 +340,48 @@ class NotifyDriverWorkflow(Publisher):
 
 
 class NotifyDriversWorkflow(Publisher):
-    """Defines a workflow to notify all the drivers that a new passenger is
-    looking for a passage.
-    """
+    def perform(self, logger, repository, driver_ids, push_adapter, channel,
+                payload):
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        drivers_getter = MultipleDriversWithIdGetter()
+        acs_ids_extractor = DriversACSUserIdExtractor()
+        acs_session_creator = ACSSessionCreator()
+        acs_notifier = ACSUserIdsNotifier()
+        user_ids_future = Future()
 
+        class DriversGetterSubscriber(object):
+            def drivers_found(self, drivers):
+                acs_ids_extractor.perform(drivers)
+
+        class ACSUserIdsExtractorSubscriber(object):
+            def acs_user_ids_extracted(self, user_ids):
+                user_ids_future.set(user_ids)
+                acs_session_creator.perform(push_adapter)
+
+        class ACSSessionCreatorSubscriber(object):
+            def acs_session_not_created(self, error):
+                outer.publish('failure', error)
+            def acs_session_created(self, session_id):
+                acs_notifier.perform(push_adapter, session_id, channel,
+                                     user_ids_future.get(), payload)
+
+        class ACSNotifierSubscriber(object):
+            def acs_user_ids_not_notified(self, error):
+                outer.publish('failure', error)
+            def acs_user_ids_notified(self):
+                outer.publish('success')
+
+        drivers_getter.add_subscriber(logger, DriversGetterSubscriber())
+        acs_ids_extractor.add_subscriber(logger,
+                                         ACSUserIdsExtractorSubscriber())
+        acs_session_creator.add_subscriber(logger,
+                                           ACSSessionCreatorSubscriber())
+        acs_notifier.add_subscriber(logger, ACSNotifierSubscriber())
+        drivers_getter.perform(repository, driver_ids)
+
+
+class NotifyAllDriversWorkflow(Publisher):
     def perform(self, logger, repository, push_adapter, channel, payload):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)

@@ -9,8 +9,8 @@ from app.repositories.passengers import PassengersRepository
 from app.repositories.drive_requests import DriveRequestsRepository
 from app.tasks import NotifyDriverDriveRequestCancelledByPassengerTask
 from app.tasks import NotifyDriverDriveRequestAccepted
-from app.tasks import NotifyDriversTask
-from app.tasks import NotifyDriversAlitPassengerTask
+from app.tasks import NotifyDriversPassengerRegisteredTask
+from app.tasks import NotifyDriversPassengerAlitTask
 from app.tasks import NotifyDriversDeactivatedPassengerTask
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
@@ -62,7 +62,7 @@ class AddPassengerController(ParamAuthorizableController):
         add_passenger.add_subscriber(logger, AddPassengerSubscriber())
         add_passenger.perform(web.ctx.orm, web.ctx.logger, web.input(),
                               PassengersRepository, self.current_user,
-                              NotifyDriversTask)
+                              NotifyDriversPassengerRegisteredTask)
         return ret.get()
 
 
@@ -109,7 +109,7 @@ class AlightPassengerController(ParamAuthorizableController):
         deactivate_passenger.perform(web.ctx.logger, web.ctx.orm,
                                      PassengersRepository, passenger_id,
                                      self.current_user,
-                                     NotifyDriversAlitPassengerTask)
+                                     NotifyDriversPassengerAlitTask)
 
 
 
