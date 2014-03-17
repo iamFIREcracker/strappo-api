@@ -150,7 +150,7 @@ def NotifyDriversDeactivatedPassengerTask(passenger_name, driver_ids):
 
 
 @celery.task
-def NotifyPassengerDriveRequestPending(driver_name, passenger_id):
+def NotifyPassengerDriveRequestPending(request):
     logger = create_logger()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
@@ -167,15 +167,17 @@ def NotifyPassengerDriveRequestPending(driver_name, passenger_id):
 
     notify_passengers.add_subscriber(logging_subscriber,
                                     NotifyPassengerSubscriber())
-    notify_passengers.perform(logger, PassengersRepository, [passenger_id],
+    notify_passengers.perform(logger, PassengersRepository,
+                              [request['passenger']['id']],
                               push_adapter, 'channel',
                               json.dumps({
                                   'channel': 'channel',
-                                  'badge': '+1',
                                   'sound': 'default',
+                                  'type': 'new',
+                                  'drive_request': request,
                                   'alert': 'Yeah, %(name)s has offered '
                                            'to give you a ride!' \
-                                                   % dict(name=driver_name)
+                                                   % dict(name=request['driver']['user']['name'])
                               }))
     return ret.get()
 
