@@ -214,7 +214,8 @@ class AcceptPassengerController(ParamAuthorizableController):
 
         add_drive_request.add_subscriber(logger, AddDriveRequestSubscriber())
         add_drive_request.perform(web.ctx.orm, web.ctx.logger,
-                                  DriversRepository, self.current_user.id,
-                                  driver_id, DriveRequestsRepository,
-                                  passenger_id,
+                                  self.current_user.id,
+                                  DriversRepository, driver_id,
+                                  PassengersRepository, passenger_id,
+                                  DriveRequestsRepository,
                                   NotifyPassengerDriveRequestPending)
