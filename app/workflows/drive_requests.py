@@ -110,6 +110,7 @@ class AddDriveRequestWorkflow(Publisher):
         authorizer = DriverWithUserIdAuthorizer()
         driver_validator = DriverWithoutDriveRequestForPassengerValidator()
         request_creator = DriveRequestCreator()
+        requests_serializer = MultipleDriveRequestsSerializer()
         task_submitter = TaskSubmitter()
         driver_future = Future()
 
@@ -136,8 +137,11 @@ class AddDriveRequestWorkflow(Publisher):
         class DriveRequestCreatorSubscriber(object):
             def drive_request_created(self, request):
                 orm.add(request)
-                task_submitter.perform(task, driver_future.get().user.name,
-                                       request.passenger_id)
+                requests_serializer.perform([request])
+
+        class DriveRequestsSerializerSubscriber(object):
+            def drive_requests_serialized(self, requests):
+                task_submitter.perform(task, requests[0])
 
         class TaskSubmitterSubscriber(object):
             def task_created(self, task_id):
@@ -147,6 +151,8 @@ class AddDriveRequestWorkflow(Publisher):
         authorizer.add_subscriber(logger, AuthorizerSubscriber())
         driver_validator.add_subscriber(logger, DriverValidatorSubscriber())
         request_creator.add_subscriber(logger, DriveRequestCreatorSubscriber())
+        requests_serializer.add_subscriber(logger,
+                                           DriveRequestsSerializerSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         driver_getter.perform(drivers_repository, driver_id)
 
