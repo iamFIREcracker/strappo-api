@@ -7,6 +7,7 @@ import app.weblib
 from app.controllers import ParamAuthorizableController
 from app.repositories.drivers import DriversRepository
 from app.repositories.drive_requests import DriveRequestsRepository
+from app.repositories.passengers import PassengersRepository
 from app.tasks import NotifyPassengerDriveRequestPending
 from app.tasks import NotifyPassengerDriveRequestCancelledTask
 from app.tasks import NotifyPassengersDriverDeactivatedTask
