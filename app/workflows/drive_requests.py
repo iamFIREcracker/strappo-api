@@ -102,8 +102,9 @@ class ListActiveDriveRequestsWorkflow(Publisher):
 class AddDriveRequestWorkflow(Publisher):
     """Defines a workflow to create a new ride request."""
 
-    def perform(self, orm, logger, drivers_repository, user_id, driver_id,
-                requests_repository, passenger_id, task):
+    def perform(self, orm, logger, user_id, drivers_repository, driver_id,
+                passengers_repository, passenger_id, requests_repository,
+                task):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         driver_getter = DeepDriverWithIdGetter()
@@ -163,7 +164,8 @@ class AddDriveRequestWorkflow(Publisher):
         driver_validator.add_subscriber(logger, DriverValidatorSubscriber())
         passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
         request_creator.add_subscriber(logger, DriveRequestCreatorSubscriber())
-        request_serializer.add_subscriber(logger, DriveRequestSerializerSubscriber())
+        request_serializer.add_subscriber(logger,
+                                          DriveRequestSerializerSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         driver_getter.perform(drivers_repository, driver_id)
 
