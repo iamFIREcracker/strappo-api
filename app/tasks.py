@@ -177,7 +177,7 @@ def NotifyPassengerDriveRequestPending(request):
                                   'drive_request': request,
                                   'alert': 'Yeah, %(name)s has offered '
                                            'to give you a ride!' \
-                                                   % dict(name=request['request']['user']['name'])
+                                                   % dict(name=request['driver']['user']['name'])
                               }))
     return ret.get()
 
