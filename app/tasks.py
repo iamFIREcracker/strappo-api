@@ -173,7 +173,7 @@ def NotifyPassengerDriveRequestPending(request):
                               json.dumps({
                                   'channel': 'channel',
                                   'sound': 'default',
-                                  'type': 'new',
+                                  'kind': 'drive_request_pending',
                                   'drive_request': request,
                                   'alert': 'Yeah, %(name)s has offered '
                                            'to give you a ride!' \
