@@ -107,12 +107,14 @@ class AddDriveRequestWorkflow(Publisher):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         driver_getter = DeepDriverWithIdGetter()
+        passenger_getter = PassengerWithIdGetter()
         authorizer = DriverWithUserIdAuthorizer()
         driver_validator = DriverWithoutDriveRequestForPassengerValidator()
         request_creator = DriveRequestCreator()
-        requests_serializer = MultipleDriveRequestsSerializer()
+        request_serializer = MultipleDriveRequestsSerializer()
         task_submitter = TaskSubmitter()
         driver_future = Future()
+        passenger_future = Future()
 
         class DriverGetterSubscriber(object):
             def driver_not_found(self, driver_id):
@@ -131,15 +133,24 @@ class AddDriveRequestWorkflow(Publisher):
             def invalid_driver(self, errors):
                 outer.publish('success')
             def valid_driver(self, driver):
+                passenger_getter.perform(passengers_repository, passenger_id)
+
+        class PassengerGetterSubscriber(object):
+            def passenger_not_found(self, passenger_id):
+                outer.publish('not_found', passenger_id)
+            def passenger_found(self, passenger):
+                passenger_future.set(passenger)
                 request_creator.perform(requests_repository, driver_id,
                                         passenger_id)
 
         class DriveRequestCreatorSubscriber(object):
             def drive_request_created(self, request):
                 orm.add(request)
-                requests_serializer.perform([request])
+                request.driver = driver_future.get()
+                request.passenger = passenger_future.get()
+                request_serializer.perform([request])
 
-        class DriveRequestsSerializerSubscriber(object):
+        class DriveRequestSerializerSubscriber(object):
             def drive_requests_serialized(self, requests):
                 task_submitter.perform(task, requests[0])
 
@@ -150,9 +161,9 @@ class AddDriveRequestWorkflow(Publisher):
         driver_getter.add_subscriber(logger, DriverGetterSubscriber())
         authorizer.add_subscriber(logger, AuthorizerSubscriber())
         driver_validator.add_subscriber(logger, DriverValidatorSubscriber())
+        passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
         request_creator.add_subscriber(logger, DriveRequestCreatorSubscriber())
-        requests_serializer.add_subscriber(logger,
-                                           DriveRequestsSerializerSubscriber())
+        request_serializer.add_subscriber(logger, DriveRequestSerializerSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         driver_getter.perform(drivers_repository, driver_id)
 
