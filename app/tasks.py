@@ -65,7 +65,7 @@ def notify_driver(driver_id, message):
 
 
 @celery.task
-def NotifyDriversPassengerRegisteredTask(passenger_name):
+def NotifyDriversPassengerRegisteredTask(passenger):
     logger = create_logger()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
@@ -84,10 +84,11 @@ def NotifyDriversPassengerRegisteredTask(passenger_name):
                            json.dumps({
                                'channel': 'channel',
                                'badge': '+1',
+                               'kind': 'unmatched_passenger',
+                               'passenger': passenger,
                                'sound': 'default',
-                               'alert': 'Hei, %(name)s is looking '
-                                        'for a lift!' \
-                                                % dict(name=passenger_name)
+                               'alert': 'Hei, %(name)s is looking for a lift!' \
+                                                % dict(name=passenger['user']['name'])
                            }))
     return ret.get()
 
