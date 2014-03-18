@@ -66,6 +66,7 @@ class AddPassengerWorkflow(Publisher):
         passenger_getter = PassengerWithIdGetter()
         passenger_creator = PassengerCreator()
         passenger_updater = PassengerUpdater()
+        passenger_serializer = PassengerSerializer()
         task_submitter = TaskSubmitter()
         passenger_future = Future()
         passenger_id_future = Future()
@@ -110,7 +111,12 @@ class AddPassengerWorkflow(Publisher):
             def passenger_updated(self, passenger):
                 passenger_id_future.set(passenger.id)
                 orm.add(passenger)
-                task_submitter.perform(task, user.name)
+                passenger.user = user
+                passenger_serializer.perform(passenger)
+
+        class PassengerSerializerSubscriber(object):
+            def passenger_serialized(self, passenger):
+                task_submitter.perform(task, passenger)
 
         class TaskSubmitterSubscriber(object):
             def task_created(self, task_id):
@@ -121,6 +127,8 @@ class AddPassengerWorkflow(Publisher):
         passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
         passenger_creator.add_subscriber(logger, PassengerCreatorSubscriber())
         passenger_updater.add_subscriber(logger, PassengerUpdaterSubscriber())
+        passenger_serializer.add_subscriber(logger,
+                                            PassengerSerializerSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         user_validator.perform(user)
 
