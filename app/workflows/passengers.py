@@ -105,7 +105,8 @@ class AddPassengerWorkflow(Publisher):
             def passenger_created(self, passenger):
                 passenger_id_future.set(passenger.id)
                 orm.add(passenger)
-                task_submitter.perform(task, user.name)
+                passenger.user = user
+                passenger_serializer.perform(passenger)
 
         class PassengerUpdaterSubscriber(object):
             def passenger_updated(self, passenger):
