@@ -22,21 +22,40 @@ from app.workflows.passengers import NotifyPassengersWorkflow
 
 
 @celery.task
-def NotifyDriverDriveRequestAccepted(passenger_name, driver_id):
-    return notify_driver(driver_id,
-                         '%(name)s just accepted your drive request!' \
-                         % dict(name=passenger_name))
+def NotifyDriverDriveRequestAccepted(request):
+    logger = create_logger()
+    logging_subscriber = LoggingSubscriber(logger)
+    push_adapter = TitaniumPushNotificationsAdapter()
+    notify_driver = NotifyDriverWorkflow()
+    ret = Future()
+
+    class NotifyDriverSubscriber(object):
+        def driver_not_found(self, driver_id):
+            ret.set((None, 'Driver not found: %(driver_id)s' % locals()))
+        def failure(self, error):
+            ret.set((None, error))
+        def success(self):
+            ret.set((None, None))
+
+    notify_driver.add_subscriber(logging_subscriber,
+                                    NotifyDriverSubscriber())
+    notify_driver.perform(logger, DriversRepository, request['driver']['id'],
+                              push_adapter, 'channel',
+                              json.dumps({
+                                  'channel': 'channel',
+                                  'badge': '+1',
+                                  'kind': 'matched_passenger',
+                                  'drive_request': request,
+                                  'sound': 'default',
+                                  'alert': '%(name)s just accepted your drive request!' \
+                                  % dict(name=request['passenger']['user']['name'])
+                              }))
+    return ret.get()
 
 
 @celery.task
 def NotifyDriverDriveRequestCancelledByPassengerTask(passenger_name,
                                                      driver_id):
-    return notify_driver(driver_id,
-                         '%(name)s just cancelled her drive request!' \
-                         % dict(name=passenger_name))
-
-
-def notify_driver(driver_id, message):
     logger = create_logger()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
@@ -59,7 +78,8 @@ def notify_driver(driver_id, message):
                                   'channel': 'channel',
                                   'badge': '+1',
                                   'sound': 'default',
-                                  'alert': message
+                                  'alert': '%(name)s just cancelled her drive request!' \
+                                  % dict(name=passenger_name)
                               }))
     return ret.get()
 
