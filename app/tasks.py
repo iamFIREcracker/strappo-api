@@ -193,9 +193,10 @@ def NotifyPassengerDriveRequestPending(request):
                               push_adapter, 'channel',
                               json.dumps({
                                   'channel': 'channel',
-                                  'sound': 'default',
+                                  'badge': '+1',
                                   'kind': 'pending_drive_request',
                                   'drive_request': request,
+                                  'sound': 'default',
                                   'alert': 'Yeah, %(name)s has offered '
                                            'to give you a ride!' \
                                                    % dict(name=request['driver']['user']['name'])
