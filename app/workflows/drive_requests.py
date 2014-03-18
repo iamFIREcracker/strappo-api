@@ -277,7 +277,9 @@ class AcceptDriveRequestWorkflow(Publisher):
         authorizer = PassengerWithUserIdAuthorizer()
         request_acceptor = DriveRequestAcceptor()
         passengers_matcher = MultiplePassengerMatcher()
+        request_serializer = MultipleDriveRequestsSerializer()
         task_submitter = TaskSubmitter()
+        passenger_future = Future()
         request_future = Future()
 
         class PassengerGetterSubscriber(object):
@@ -303,10 +305,15 @@ class AcceptDriveRequestWorkflow(Publisher):
 
         class PassengersMatcherSubscriber(object):
             def passengers_matched(self, passengers):
+                passenger_future.set(passengers[0])
                 orm.add(passengers[0])
-                task_submitter.perform(task, passengers[0].user.name,
-                                       request_future.get().driver_id)
-                outer.publish('success')
+                request = request_future.get()
+                request.passenger = passengers[0]
+                request_serializer.perform([request])
+
+        class DriveRequestsSerializerSubscriber(object):
+            def drive_requests_serialized(self, requests):
+                task_submitter.perform(task, requests[0])
 
         class TaskSubmitterSubscriber(object):
             def task_created(self, task_id):
@@ -317,6 +324,8 @@ class AcceptDriveRequestWorkflow(Publisher):
         request_acceptor.add_subscriber(logger,
                                         DriveRequestAcceptorSubscriber())
         passengers_matcher.add_subscriber(logger, PassengersMatcherSubscriber())
+        request_serializer.add_subscriber(logger,
+                                          DriveRequestsSerializerSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         passenger_getter.perform(passengers_repository, passenger_id)
 
