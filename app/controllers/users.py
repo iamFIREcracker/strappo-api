@@ -1,13 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import json
-import urllib
-import urllib2
-import uuid
-
 import web
-from web.utils import storage
 
 from app.controllers import ParamAuthorizableController
 from app.repositories.users import UsersRepository
