@@ -130,3 +130,22 @@ class DriveRequest(Base):
                'passenger_id=%(passenger_id)s, '\
                'accepted=%(accepted)s, '\
                'active=%(active)s>' % self.__dict__
+
+
+class Trace(Base):
+    __tablename__ = 'trace'
+
+    id = Column(String, default=uuid, primary_key=True)
+    user_id = Column(String, ForeignKey('user.id'))
+    level = Column(String)
+    date = Column(String)
+    message = Column(Text)
+    created = Column(DateTime, default=datetime.now)
+    updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    def __repr__(self):
+        return '<Trace id=%(id)s, user_id=%(user_id)s, '\
+                'level=%(level)s, date=%(date)s, '\
+                'message=%(message)s>' % self.__dict__
+
+
