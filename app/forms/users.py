@@ -17,4 +17,6 @@ add = form.Form(
                 form.Textbox('name', form.notnull, description='Name',
                              placeholder='John Smith'),
                 form.Textbox('avatar', validurl, description='Avatar',
-                             placeholder='http://...'))
+                             placeholder='http://...'),
+                form.Textbox('locale', form.notnull)
+)

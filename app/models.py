@@ -38,6 +38,7 @@ class User(Base):
                             # tests.
     name = Column(String, nullable=False)
     avatar = Column(String, nullable=True)
+    locale = Column(String, nullable=False)
     deleted = Column(Boolean, default=False, nullable=False)
     created = Column(DateTime, default=datetime.now)
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
