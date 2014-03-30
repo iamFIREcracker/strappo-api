@@ -25,6 +25,7 @@ from app.pubsub.drivers import MultipleDriversUnhider
 from app.pubsub.drivers import UnhiddenDriversGetter
 from app.pubsub.users import UserWithoutDriverValidator
 from app.weblib.forms import describe_invalid_form
+from app.weblib.forms import describe_invalid_form_localized
 from app.weblib.pubsub import FormValidator
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import Publisher
@@ -36,7 +37,7 @@ from app.weblib.pubsub import TaskSubmitter
 class AddDriverWorkflow(Publisher):
     """Defines a workflow to add a new driver."""
 
-    def perform(self, orm, logger, params, repository, user):
+    def perform(self, gettext, orm, logger, params, repository, user):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         user_validator = UserWithoutDriverValidator()
@@ -52,13 +53,15 @@ class AddDriverWorkflow(Publisher):
             def valid_user(self, user):
                 driver_future.set(None)
                 form_validator.perform(drivers_forms.add(), params,
-                                       describe_invalid_form)
+                                       describe_invalid_form_localized(gettext,
+                                                                       user.locale))
 
         class DriverGetterSubscriber(object):
             def driver_found(self, driver):
                 driver_future.set(driver)
                 form_validator.perform(drivers_forms.add(), params,
-                                       describe_invalid_form)
+                                       describe_invalid_form_localized(gettext,
+                                                                       user.locale))
 
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):

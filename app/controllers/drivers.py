@@ -44,8 +44,8 @@ class AddDriverController(ParamAuthorizableController):
                 raise app.weblib.created(url)
 
         add_driver.add_subscriber(logger, AddDriverSubscriber())
-        add_driver.perform(web.ctx.orm, web.ctx.logger, web.input(),
-                           DriversRepository, self.current_user)
+        add_driver.perform(web.ctx.gettext, web.ctx.orm, web.ctx.logger,
+                           web.input(), DriversRepository, self.current_user)
         return ret.get()
 
 

@@ -26,6 +26,7 @@ from app.pubsub.passengers import PassengerLinkedToDriverWithUserIdAuthorizer
 from app.pubsub.passengers import UnmatchedPassengersGetter
 from app.pubsub.users import UserWithoutPassengerValidator
 from app.weblib.forms import describe_invalid_form
+from app.weblib.forms import describe_invalid_form_localized
 from app.weblib.pubsub import FormValidator
 from app.weblib.pubsub import Publisher
 from app.weblib.pubsub import LoggingSubscriber
@@ -61,7 +62,7 @@ class ListUnmatchedPassengersWorkflow(Publisher):
 class AddPassengerWorkflow(Publisher):
     """Defines a workflow to add a new passenger."""
 
-    def perform(self, orm, logger, params, repository, user, task):
+    def perform(self, gettext, orm, logger, params, repository, user, task):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         user_validator = UserWithoutPassengerValidator()
@@ -80,13 +81,15 @@ class AddPassengerWorkflow(Publisher):
             def valid_user(self, user):
                 passenger_future.set(None)
                 form_validator.perform(passengers_forms.add(), params,
-                                    describe_invalid_form)
+                                       describe_invalid_form_localized(gettext,
+                                                                       user.locale))
 
         class PassengerGetterSubscriber(object):
             def passenger_found(self, passenger):
                 passenger_future.set(passenger)
                 form_validator.perform(passengers_forms.add(), params,
-                                       describe_invalid_form)
+                                       describe_invalid_form_localized(gettext,
+                                                                       user.locale))
 
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
