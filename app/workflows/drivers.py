@@ -399,7 +399,7 @@ class NotifyDriversWorkflow(Publisher):
 
         drivers_getter.add_subscriber(logger, DriversGetterSubscriber())
         locales_extractor.add_subscriber(logger, LocalesExtractorSubscriber())
-        PAYLOADS_CREATOR.add_subscriber(logger, PayloadsCreatorSubscriber())
+        payloads_creator.add_subscriber(logger, PayloadsCreatorSubscriber())
         acs_ids_extractor.add_subscriber(logger,
                                          ACSUserIdsExtractorSubscriber())
         acs_session_creator.add_subscriber(logger,
