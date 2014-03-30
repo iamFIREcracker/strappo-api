@@ -38,7 +38,7 @@ class ViewUserController(ParamAuthorizableController):
 class LoginUserController(ParamAuthorizableController):
     @api
     def POST(self):
-        data = web.input(acs_id=None, facebook_token=None)
+        data = web.input(acs_id=None, facebook_token=None, locale=None)
         logger = LoggingSubscriber(web.ctx.logger)
         login_authorized = LoginUserWorkflow()
         ret = Future()
@@ -57,5 +57,5 @@ class LoginUserController(ParamAuthorizableController):
         login_authorized.add_subscriber(logger, LoginAuthorizedSubscriber())
         login_authorized.perform(web.ctx.orm, web.ctx.logger, UsersRepository,
                                  data.acs_id, FacebookAdapter(),
-                                 data.facebook_token)
+                                 data.facebook_token, data.locale)
         return ret.get()

@@ -38,6 +38,7 @@ class User(Base):
                             # tests.
     name = Column(String, nullable=False)
     avatar = Column(String, nullable=True)
+    locale = Column(String, nullable=False)
     deleted = Column(Boolean, default=False, nullable=False)
     created = Column(DateTime, default=datetime.now)
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
@@ -52,7 +53,7 @@ class User(Base):
 
     def __repr__(self):
         return '<User id=%(id)s, acs_id=%(acs_id)s, name=%(name)s, '\
-               'avatar=%(avatar)s>' % self.__dict__
+               'avatar=%(avatar)s, locale=%(locale)s>' % self.__dict__
 
 
 class Token(Base):

@@ -180,6 +180,7 @@ class CancelDriveOfferWorkflow(Publisher):
         driver_getter = DriverWithIdGetter()
         authorizer = DriverWithUserIdAuthorizer()
         request_cancellor = DriveRequestCancellorByDriverId()
+        requests_serializer = MultipleDriveRequestsSerializer()
         task_submitter = TaskSubmitter()
         driver_future = Future()
 
@@ -203,8 +204,11 @@ class CancelDriveOfferWorkflow(Publisher):
 
             def drive_request_cancelled(self, request):
                 orm.add(request)
-                task_submitter.perform(task, driver_future.get().user.name,
-                                       request.passenger_id)
+                requests_serializer.perform([request])
+
+        class DriveRequestsSerializerSubscriber(object):
+            def drive_requests_serialized(self, requests):
+                task_submitter.perform(task, requests[0])
 
         class TaskSubmitterSubscriber(object):
             def task_created(self, task_id):
@@ -214,6 +218,8 @@ class CancelDriveOfferWorkflow(Publisher):
         authorizer.add_subscriber(logger, AuthorizerSubscriber())
         request_cancellor.add_subscriber(logger,
                                          DriveRequestCancellorSubscriber())
+        requests_serializer.add_subscriber(logger,
+                                           DriveRequestsSerializerSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         driver_getter.perform(drivers_repository, driver_id)
 
@@ -228,6 +234,7 @@ class CancelDriveRequestWorkflow(Publisher):
         passenger_getter = PassengerWithIdGetter()
         authorizer = PassengerWithUserIdAuthorizer()
         request_cancellor = DriveRequestCancellorByPassengerId()
+        requests_serializer = MultipleDriveRequestsSerializer()
         task_submitter = TaskSubmitter()
         passenger_future = Future()
 
@@ -251,8 +258,11 @@ class CancelDriveRequestWorkflow(Publisher):
 
             def drive_request_cancelled(self, request):
                 orm.add(request)
-                task_submitter.perform(task, passenger_future.get().user.name,
-                                       request.driver_id)
+                requests_serializer.perform([request])
+
+        class DriveRequestsSerializerSubscriber(object):
+            def drive_requests_serialized(self, requests):
+                task_submitter.perform(task, requests[0])
 
         class TaskSubmitterSubscriber(object):
             def task_created(self, task_id):
@@ -262,6 +272,8 @@ class CancelDriveRequestWorkflow(Publisher):
         authorizer.add_subscriber(logger, AuthorizerSubscriber())
         request_cancellor.add_subscriber(logger,
                                          DriveRequestCancellorSubscriber())
+        requests_serializer.add_subscriber(logger,
+                                           DriveRequestsSerializerSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         passenger_getter.perform(passengers_repository, passenger_id)
 

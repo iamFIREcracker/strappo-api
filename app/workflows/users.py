@@ -48,7 +48,7 @@ class LoginUserWorkflow(Publisher):
     """Defines a workflow managing the user login process."""
 
     def perform(self, orm, logger, repository, acs_id, facebook_adapter,
-                facebook_token):
+                facebook_token, locale):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         already_registered = AlreadyRegisteredVerifier()
@@ -70,7 +70,8 @@ class LoginUserWorkflow(Publisher):
             def profile_found(self, profile):
                 params = storage(acs_id=acs_id,
                                  name=profile['name'],
-                                 avatar=profile['avatar'])
+                                 avatar=profile['avatar'],
+                                 locale=locale)
                 form_validator.perform(user_forms.add(), params,
                                        describe_invalid_form)
 
@@ -80,7 +81,7 @@ class LoginUserWorkflow(Publisher):
                               dict(success=False, errors=errors))
             def valid_form(self, form):
                 user_creator.perform(repository, form.d.acs_id, form.d.name,
-                                     form.d.avatar)
+                                     form.d.avatar, form.d.locale)
 
         class UserCreatorSubscriber(object):
             def user_created(self, user):

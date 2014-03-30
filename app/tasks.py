@@ -9,6 +9,7 @@ from app.repositories.drivers import DriversRepository
 from app.repositories.passengers import PassengersRepository
 from app.weblib.adapters.push.titanium import TitaniumPushNotificationsAdapter
 from app.weblib.db import create_session
+from app.weblib.gettext import create_gettext
 from app.weblib.logging import create_logger
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
@@ -24,10 +25,14 @@ from app.workflows.passengers import NotifyPassengersWorkflow
 @celery.task
 def NotifyDriverDriveRequestAccepted(request):
     logger = create_logger()
+    gettext = create_gettext()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
     notify_driver = NotifyDriverWorkflow()
     ret = Future()
+    alert = gettext('alert_matched_passenger',
+                    lang=request['driver']['user']['locale']) % \
+            dict(name=request['passenger']['user']['name'])
 
     class NotifyDriverSubscriber(object):
         def driver_not_found(self, driver_id):
@@ -38,29 +43,30 @@ def NotifyDriverDriveRequestAccepted(request):
             ret.set((None, None))
 
     notify_driver.add_subscriber(logging_subscriber,
-                                    NotifyDriverSubscriber())
+                                 NotifyDriverSubscriber())
     notify_driver.perform(logger, DriversRepository, request['driver']['id'],
-                              push_adapter, 'channel',
-                              json.dumps({
-                                  'channel': 'channel',
-                                  'badge': '+1',
-                                  'kind': 'matched_passenger',
-                                  'drive_request': request,
-                                  'sound': 'default',
-                                  'alert': '%(name)s just accepted your drive request!' \
-                                  % dict(name=request['passenger']['user']['name'])
-                              }))
+                          push_adapter, 'channel',
+                          json.dumps({
+                              'channel': 'channel',
+                              'kind': 'matched_passenger',
+                              'drive_request': request,
+                              'sound': 'default',
+                              'alert': alert
+                          }))
     return ret.get()
 
 
 @celery.task
-def NotifyDriverDriveRequestCancelledByPassengerTask(passenger_name,
-                                                     driver_id):
+def NotifyDriverDriveRequestCancelledByPassengerTask(request):
     logger = create_logger()
+    gettext = create_gettext()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
     notify_driver = NotifyDriverWorkflow()
     ret = Future()
+    alert = gettext('alert_cancelled_drive_request_by_passenger',
+                    lang=request['driver']['user']['locale']) % \
+            dict(name=request['passenger']['user']['name'])
 
     class NotifyDriverSubscriber(object):
         def driver_not_found(self, driver_id):
@@ -71,83 +77,36 @@ def NotifyDriverDriveRequestCancelledByPassengerTask(passenger_name,
             ret.set((None, None))
 
     notify_driver.add_subscriber(logging_subscriber,
-                                    NotifyDriverSubscriber())
-    notify_driver.perform(logger, DriversRepository, driver_id,
-                              push_adapter, 'channel',
-                              json.dumps({
-                                  'channel': 'channel',
-                                  'badge': '+1',
-                                  'sound': 'default',
-                                  'alert': '%(name)s just cancelled her drive request!' \
-                                  % dict(name=passenger_name)
-                              }))
+                                 NotifyDriverSubscriber())
+    notify_driver.perform(logger, DriversRepository, request['driver']['id'],
+                          push_adapter, 'channel',
+                          json.dumps({
+                              'channel': 'channel',
+                              'sound': 'default',
+                              'alert': alert
+                          }))
     return ret.get()
 
 
 @celery.task
 def NotifyDriversPassengerRegisteredTask(passenger):
     logger = create_logger()
+    gettext = create_gettext()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
     notify_drivers = NotifyAllDriversWorkflow()
     ret = Future()
 
-    class NotifyDriversSubscriber(object):
-        def failure(self, error):
-            ret.set((None, error))
-        def success(self):
-            ret.set((None, None))
-
-    notify_drivers.add_subscriber(logging_subscriber,
-                                    NotifyDriversSubscriber())
-    notify_drivers.perform(logger, DriversRepository, push_adapter, 'channel',
-                           json.dumps({
-                               'channel': 'channel',
-                               'badge': '+1',
-                               'kind': 'unmatched_passenger',
-                               'passenger': passenger,
-                               'sound': 'default',
-                               'alert': 'Hei, %(name)s is looking for a lift!' \
-                                                % dict(name=passenger['user']['name'])
-                           }))
-    return ret.get()
-
-
-@celery.task
-def NotifyDriversPassengerAlitTask(passenger_name, driver_ids):
-    logger = create_logger()
-    logging_subscriber = LoggingSubscriber(logger)
-    push_adapter = TitaniumPushNotificationsAdapter()
-    notify_drivers = NotifyDriversWorkflow()
-    ret = Future()
-
-    class NotifyDriversSubscriber(object):
-        def failure(self, error):
-            ret.set((None, error))
-        def success(self):
-            ret.set((None, None))
-
-    notify_drivers.add_subscriber(logging_subscriber,
-                                    NotifyDriversSubscriber())
-    notify_drivers.perform(logger, DriversRepository, driver_ids, push_adapter,
-                           'channel',
-                           json.dumps({
-                               'channel': 'channel',
-                               'badge': '+1',
-                               'sound': 'default',
-                               'alert': '%(name)s has arrived at destination!'
-                                        % dict(name=passenger_name)
-                           }))
-    return ret.get()
-
-
-@celery.task
-def NotifyDriversDeactivatedPassengerTask(passenger_name, driver_ids):
-    logger = create_logger()
-    logging_subscriber = LoggingSubscriber(logger)
-    push_adapter = TitaniumPushNotificationsAdapter()
-    notify_drivers = NotifyDriversWorkflow()
-    ret = Future()
+    def payload_factory(lang):
+        alert = gettext('alert_unmatched_passenger', lang=lang) % \
+                dict(name=passenger['user']['name'])
+        return json.dumps({
+            'channel': 'channel',
+            'kind': 'unmatched_passenger',
+            'passenger': passenger,
+            'sound': 'default',
+            'alert': alert
+        })
 
     class NotifyDriversSubscriber(object):
         def failure(self, error):
@@ -157,26 +116,92 @@ def NotifyDriversDeactivatedPassengerTask(passenger_name, driver_ids):
 
     notify_drivers.add_subscriber(logging_subscriber,
                                   NotifyDriversSubscriber())
-    notify_drivers.perform(logger, DriversRepository, driver_ids, push_adapter,
-                           'channel',
-                           json.dumps({
-                               'channel': 'channel',
-                               'badge': '+1',
-                               'sound': 'default',
-                               'alert': 'Oh no, %(name)s is no more '
-                                        'looking for a ride!' \
-                                                % dict(name=passenger_name)
-                           }))
+    notify_drivers.perform(logger, DriversRepository, push_adapter, 'channel',
+                           payload_factory)
+    return ret.get()
+
+
+@celery.task
+def NotifyDriversPassengerAlitTask(requests):
+    logger = create_logger()
+    gettext = create_gettext()
+    logging_subscriber = LoggingSubscriber(logger)
+    push_adapter = TitaniumPushNotificationsAdapter()
+    notify_drivers = NotifyDriversWorkflow()
+    ret = Future()
+
+    def payload_factory(lang):
+        # If we are invoked it means there is at least one passenger
+        # in the list of requests, so the following operation should
+        # be safe!
+        alert = gettext('alert_alit_passenger', lang=lang) % \
+                dict(name=requests[0]['passenger']['user']['name'])
+        return json.dumps({
+            'channel': 'channel',
+            'sound': 'default',
+            'alert': alert
+        })
+
+    class NotifyDriversSubscriber(object):
+        def failure(self, error):
+            ret.set((None, error))
+        def success(self):
+            ret.set((None, None))
+
+    notify_drivers.add_subscriber(logging_subscriber,
+                                  NotifyDriversSubscriber())
+    notify_drivers.perform(logger, DriversRepository,
+                           [r['driver']['id'] for r in requests],
+                           push_adapter, 'channel', payload_factory)
+    return ret.get()
+
+
+@celery.task
+def NotifyDriversDeactivatedPassengerTask(requests):
+    logger = create_logger()
+    gettext = create_gettext()
+    logging_subscriber = LoggingSubscriber(logger)
+    push_adapter = TitaniumPushNotificationsAdapter()
+    notify_drivers = NotifyDriversWorkflow()
+    ret = Future()
+
+    def payload_factory(lang):
+        # If we are invoked it means there is at least one passenger
+        # in the list of requests, so the following operation should
+        # be safe!
+        alert = gettext('alert_deactivated_passenger', lang=lang) % \
+                dict(name=requests[0]['passenger']['user']['name'])
+        return json.dumps({
+            'channel': 'channel',
+            'sound': 'default',
+            'alert': alert
+        })
+
+    class NotifyDriversSubscriber(object):
+        def failure(self, error):
+            ret.set((None, error))
+        def success(self):
+            ret.set((None, None))
+
+    notify_drivers.add_subscriber(logging_subscriber,
+                                  NotifyDriversSubscriber())
+    notify_drivers.perform(logger, DriversRepository,
+                           [r['driver']['id'] for r in requests],
+                           push_adapter, 'channel', payload_factory)
     return ret.get()
 
 
 @celery.task
 def NotifyPassengerDriveRequestPending(request):
     logger = create_logger()
+    gettext = create_gettext()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
     notify_passengers = NotifyPassengersWorkflow()
     ret = Future()
+    alert = gettext('alert_pending_drive_request',
+                    lang=request['passenger']['user']['locale']) % \
+            dict(name=request['driver']['user']['name'])
 
     class NotifyPassengerSubscriber(object):
         def passenger_not_found(self, passenger_id):
@@ -193,24 +218,34 @@ def NotifyPassengerDriveRequestPending(request):
                               push_adapter, 'channel',
                               json.dumps({
                                   'channel': 'channel',
-                                  'badge': '+1',
                                   'kind': 'pending_drive_request',
                                   'drive_request': request,
                                   'sound': 'default',
-                                  'alert': 'Yeah, %(name)s has offered '
-                                           'to give you a ride!' \
-                                                   % dict(name=request['driver']['user']['name'])
+                                  'alert': alert
                               }))
     return ret.get()
 
 
 @celery.task
-def NotifyPassengersDriverDeactivatedTask(driver_name, passenger_ids):
+def NotifyPassengersDriverDeactivatedTask(requests):
     logger = create_logger()
+    gettext = create_gettext()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
     notify_passengers = NotifyPassengersWorkflow()
     ret = Future()
+
+    def payload_factory(lang):
+        # If we are invoked it means there is at least one passenger
+        # in the list of requests, so the following operation should
+        # be safe!
+        alert = gettext('alert_deactivated_driver', lang=lang) % \
+                dict(name=requests[0]['driver']['user']['name'])
+        return json.dumps({
+            'channel': 'channel',
+            'sound': 'default',
+            'alert': alert
+        })
 
     class NotifyPassengersSubscriber(object):
         def failure(self, error):
@@ -220,27 +255,24 @@ def NotifyPassengersDriverDeactivatedTask(driver_name, passenger_ids):
 
     notify_passengers.add_subscriber(logging_subscriber,
                                      NotifyPassengersSubscriber())
-    notify_passengers.perform(logger, PassengersRepository, passenger_ids,
-                              push_adapter, 'channel',
-                              json.dumps({
-                                  'channel': 'channel',
-                                  'badge': '+1',
-                                  'sound': 'default',
-                                  'alert': 'Oh no, %(name)s cannot drive '
-                                           'you around anymore!' \
-                                                   % dict(name=driver_name)
-                              }))
+    notify_passengers.perform(logger, PassengersRepository,
+                              [r['passenger']['id'] for r in requests],
+                              push_adapter, 'channel', payload_factory)
     return ret.get()
 
 
 
 @celery.task
-def NotifyPassengerDriveRequestCancelledTask(driver_name, passenger_id):
+def NotifyPassengerDriveRequestCancelledTask(request):
     logger = create_logger()
+    gettext = create_gettext()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
     notify_passengers = NotifyPassengersWorkflow()
     ret = Future()
+    alert = gettext('alert_cancelled_drive_request_by_driver',
+                    lang=request['driver']['user']['locale']) % \
+            dict(name=request['driver']['user']['name'])
 
     class NotifyPassengerSubscriber(object):
         def passenger_not_found(self, passenger_id):
@@ -252,69 +284,66 @@ def NotifyPassengerDriveRequestCancelledTask(driver_name, passenger_id):
 
     notify_passengers.add_subscriber(logging_subscriber,
                                     NotifyPassengerSubscriber())
-    notify_passengers.perform(logger, PassengersRepository, [passenger_id],
-                              push_adapter, 'channel',
-                              json.dumps({
+    notify_passengers.perform(logger, PassengersRepository,
+                              [request['passenger']['id']], push_adapter,
+                              'channel', json.dumps({
                                   'channel': 'channel',
-                                  'badge': '+1',
                                   'sound': 'default',
-                                  'alert': 'Oh noes, %(name)s just cancelled '
-                                           'her drive request!' \
-                                                   % dict(name=driver_name)
+                                  'alert': alert
                               }))
     return ret.get()
 
 
-@celery.task
-def DeactivateActivePassengers():
-    logger = create_logger()
-    orm = create_session()
-    logging_subscriber = LoggingSubscriber(logger)
-    deactivate_passengers = DeactivateActivePassengersWorkflow()
-    ret = Future()
-
-    class DeactivatePassengersSubscriber(object):
-        def success(self, passengers):
-            orm.commit()
-            ret.set(passengers)
-
-    deactivate_passengers.add_subscriber(logging_subscriber,
-                                         DeactivatePassengersSubscriber())
-    deactivate_passengers.perform(logger, orm, PassengersRepository)
-    return ret.get()
-
-
-@celery.task
-def DeactivateActiveDriveRequests():
-    logger = create_logger()
-    orm = create_session()
-    logging_subscriber = LoggingSubscriber(logger)
-    deactivate_drive_requests = DeactivateActiveDriveRequestsWorkflow()
-    ret = Future()
-
-    class DeactivateDriveRequestsSubscriber(object):
-        def success(self, drive_requests):
-            orm.commit()
-            ret.set(drive_requests)
-
-    deactivate_drive_requests.add_subscriber(logging_subscriber,
-                                             DeactivateDriveRequestsSubscriber())
-    deactivate_drive_requests.perform(logger, orm, DriveRequestsRepository)
-    return ret.get()
-
-
-@celery.task
-def UnhideHiddenDrivers():
-    logger = create_logger()
-    orm = create_session()
-    logging_subscriber = LoggingSubscriber(logger)
-    unhide_drivers = UnhideHiddenDriversWorkflow()
-    ret = Future()
-
-    class UnhideDriversSubscriber(object):
-        def success(self, drivers):
-            orm.commit()
-            ret.set(drivers)
-
-    unhide_drivers.add_subscriber(logger, UnhideDriversSubscriber())
-    unhide_drivers.perform(logger, orm, DriversRepository)
+#@celery.task
+#def DeactivateActivePassengers():
+#    logger = create_logger()
+#    orm = create_session()
+#    logging_subscriber = LoggingSubscriber(logger)
+#    deactivate_passengers = DeactivateActivePassengersWorkflow()
+#    ret = Future()
+#
+#    class DeactivatePassengersSubscriber(object):
+#        def success(self, passengers):
+#            orm.commit()
+#            ret.set(passengers)
+#
+#    deactivate_passengers.add_subscriber(logging_subscriber,
+#                                         DeactivatePassengersSubscriber())
+#    deactivate_passengers.perform(logger, orm, PassengersRepository)
+#    return ret.get()
+#
+#
+#@celery.task
+#def DeactivateActiveDriveRequests():
+#    logger = create_logger()
+#    orm = create_session()
+#    logging_subscriber = LoggingSubscriber(logger)
+#    deactivate_drive_requests = DeactivateActiveDriveRequestsWorkflow()
+#    ret = Future()
+#
+#    class DeactivateDriveRequestsSubscriber(object):
+#        def success(self, drive_requests):
+#            orm.commit()
+#            ret.set(drive_requests)
+#
+#    deactivate_drive_requests.add_subscriber(logging_subscriber,
+#                                             DeactivateDriveRequestsSubscriber())
+#    deactivate_drive_requests.perform(logger, orm, DriveRequestsRepository)
+#    return ret.get()
+#
+#
+#@celery.task
+#def UnhideHiddenDrivers():
+#    logger = create_logger()
+#    orm = create_session()
+#    logging_subscriber = LoggingSubscriber(logger)
+#    unhide_drivers = UnhideHiddenDriversWorkflow()
+#    ret = Future()
+#
+#    class UnhideDriversSubscriber(object):
+#        def success(self, drivers):
+#            orm.commit()
+#            ret.set(drivers)
+#
+#    unhide_drivers.add_subscriber(logger, UnhideDriversSubscriber())
+#    unhide_drivers.perform(logger, orm, DriversRepository)

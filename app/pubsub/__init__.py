@@ -33,3 +33,22 @@ class ACSUserIdsNotifier(Publisher):
             self.publish('acs_user_ids_not_notified', error)
         else:
             self.publish('acs_user_ids_notified')
+
+class ACSPayloadsForUserIdNotifier(Publisher):
+    def perform(self, push_adapter, session_id, channel, tuples):
+        errors = []
+        for (user_id, payload) in tuples:
+            (_, error) = push_adapter.notify(session_id, channel,
+                                             [user_id], payload)
+            if error:
+                errors += [error]
+        if errors:
+            self.publish('acs_user_ids_not_notified', errors)
+        else:
+            self.publish('acs_user_ids_notified')
+
+
+class PayloadsByLocaleCreator(Publisher):
+    def perform(self, payload_factory, locales):
+        self.publish('payloads_created',
+                     [payload_factory(l) for l in locales])

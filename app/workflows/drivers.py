@@ -5,13 +5,17 @@
 import app.forms.drivers as drivers_forms
 from app.pubsub import ACSSessionCreator
 from app.pubsub import ACSUserIdsNotifier
+from app.pubsub import ACSPayloadsForUserIdNotifier
+from app.pubsub import PayloadsByLocaleCreator
 from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
+from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
 from app.pubsub.drivers import DriverCreator
 from app.pubsub.drivers import DriverHider
 from app.pubsub.drivers import DriverUpdater
 from app.pubsub.drivers import DriverSerializer
 from app.pubsub.drivers import DriverWithIdGetter
 from app.pubsub.drivers import DriversACSUserIdExtractor
+from app.pubsub.drivers import DriversLocaleExtractor
 from app.pubsub.drivers import DriverWithUserIdAuthorizer
 from app.pubsub.drivers import DriverLinkedToPassengerWithUserIdAuthorizer
 from app.pubsub.drivers import HiddenDriversGetter
@@ -97,6 +101,7 @@ class DeactivateDriverWorkflow(Publisher):
         with_user_id_authorizer = DriverWithUserIdAuthorizer()
         drivers_deactivator = MultipleDriversDeactivator()
         requests_deactivator = MultipleDriveRequestsDeactivator()
+        requests_serializer = MultipleDriveRequestsSerializer()
         task_submitter = TaskSubmitter()
 
         class DriverGetterSubscriber(object):
@@ -119,8 +124,11 @@ class DeactivateDriverWorkflow(Publisher):
         class DriveRequestsDeactivatorSubscriber(object):
             def drive_requests_hid(self, requests):
                 orm.add_all(requests)
-                task_submitter.perform(task, user.name,
-                                       [r.passenger_id for r in requests])
+                requests_serializer.perform(requests)
+
+        class DriveRequestSerializerSubscriber(object):
+            def drive_requests_serialized(self, requests):
+                task_submitter.perform(task, requests)
 
         class TaskSubmitterSubscriber(object):
             def task_created(self, task_id):
@@ -133,6 +141,8 @@ class DeactivateDriverWorkflow(Publisher):
                                               DriversDeactivatorSubscriber())
         requests_deactivator.\
                 add_subscriber(logger, DriveRequestsDeactivatorSubscriber())
+        requests_serializer.add_subscriber(logger,
+                                           DriveRequestSerializerSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         driver_getter.perform(repository, driver_id)
 
@@ -341,18 +351,32 @@ class NotifyDriverWorkflow(Publisher):
 
 class NotifyDriversWorkflow(Publisher):
     def perform(self, logger, repository, driver_ids, push_adapter, channel,
-                payload):
+                payload_factory):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         drivers_getter = MultipleDriversWithIdGetter()
+        locales_extractor = DriversLocaleExtractor()
+        payloads_creator = PayloadsByLocaleCreator()
         acs_ids_extractor = DriversACSUserIdExtractor()
         acs_session_creator = ACSSessionCreator()
-        acs_notifier = ACSUserIdsNotifier()
+        acs_notifier = ACSPayloadsForUserIdNotifier()
+        drivers_future = Future()
+        payloads_future = Future()
         user_ids_future = Future()
 
         class DriversGetterSubscriber(object):
             def drivers_found(self, drivers):
-                acs_ids_extractor.perform(drivers)
+                drivers_future.set(drivers)
+                locales_extractor.perform(drivers)
+
+        class LocalesExtractorSubscriber(object):
+            def locales_extracted(self, locales):
+                payloads_creator.perform(payload_factory, locales)
+
+        class PayloadsCreatorSubscriber(object):
+            def payloads_created(self, payloads):
+                payloads_future.set(payloads)
+                acs_ids_extractor.perform(drivers_future.get())
 
         class ACSUserIdsExtractorSubscriber(object):
             def acs_user_ids_extracted(self, user_ids):
@@ -364,7 +388,8 @@ class NotifyDriversWorkflow(Publisher):
                 outer.publish('failure', error)
             def acs_session_created(self, session_id):
                 acs_notifier.perform(push_adapter, session_id, channel,
-                                     user_ids_future.get(), payload)
+                                     zip(user_ids_future.get(),
+                                         payloads_future.get()))
 
         class ACSNotifierSubscriber(object):
             def acs_user_ids_not_notified(self, error):
@@ -373,6 +398,8 @@ class NotifyDriversWorkflow(Publisher):
                 outer.publish('success')
 
         drivers_getter.add_subscriber(logger, DriversGetterSubscriber())
+        locales_extractor.add_subscriber(logger, LocalesExtractorSubscriber())
+        PAYLOADS_CREATOR.add_subscriber(logger, PayloadsCreatorSubscriber())
         acs_ids_extractor.add_subscriber(logger,
                                          ACSUserIdsExtractorSubscriber())
         acs_session_creator.add_subscriber(logger,
@@ -382,18 +409,33 @@ class NotifyDriversWorkflow(Publisher):
 
 
 class NotifyAllDriversWorkflow(Publisher):
-    def perform(self, logger, repository, push_adapter, channel, payload):
+    def perform(self, logger, repository, push_adapter, channel,
+                payload_factory):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         drivers_getter = UnhiddenDriversGetter()
+        locales_extractor = DriversLocaleExtractor()
+        payloads_creator = PayloadsByLocaleCreator()
         acs_ids_extractor = DriversACSUserIdExtractor()
         acs_session_creator = ACSSessionCreator()
-        acs_notifier = ACSUserIdsNotifier()
+        acs_notifier = ACSPayloadsForUserIdNotifier()
+        drivers_future = Future()
+        payloads_future = Future()
         user_ids_future = Future()
 
         class DriversGetterSubscriber(object):
             def unhidden_drivers_found(self, drivers):
-                acs_ids_extractor.perform(drivers)
+                drivers_future.set(drivers)
+                locales_extractor.perform(drivers)
+
+        class LocalesExtractorSubscriber(object):
+            def locales_extracted(self, locales):
+                payloads_creator.perform(payload_factory, locales)
+
+        class PayloadsCreatorSubscriber(object):
+            def payloads_created(self, payloads):
+                payloads_future.set(payloads)
+                acs_ids_extractor.perform(drivers_future.get())
 
         class ACSUserIdsExtractorSubscriber(object):
             def acs_user_ids_extracted(self, user_ids):
@@ -405,7 +447,8 @@ class NotifyAllDriversWorkflow(Publisher):
                 outer.publish('failure', error)
             def acs_session_created(self, session_id):
                 acs_notifier.perform(push_adapter, session_id, channel,
-                                     user_ids_future.get(), payload)
+                                     zip(user_ids_future.get(),
+                                         payloads_future.get()))
 
         class ACSNotifierSubscriber(object):
             def acs_user_ids_not_notified(self, error):
@@ -414,6 +457,8 @@ class NotifyAllDriversWorkflow(Publisher):
                 outer.publish('success')
 
         drivers_getter.add_subscriber(logger, DriversGetterSubscriber())
+        locales_extractor.add_subscriber(logger, LocalesExtractorSubscriber())
+        payloads_creator.add_subscriber(logger, PayloadsCreatorSubscriber())
         acs_ids_extractor.add_subscriber(logger,
                                          ACSUserIdsExtractorSubscriber())
         acs_session_creator.add_subscriber(logger,
