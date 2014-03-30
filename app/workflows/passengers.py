@@ -4,16 +4,19 @@
 
 import app.forms.passengers as passengers_forms
 from app.pubsub import ACSSessionCreator
-from app.pubsub import ACSUserIdsNotifier
+from app.pubsub import ACSPayloadsForUserIdNotifier
+from app.pubsub import PayloadsByLocaleCreator
 from app.pubsub.drive_requests import AcceptedDriveRequestsFilter
 from app.pubsub.drive_requests import DriveRequestCancellorByDriverId
 from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
+from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
 from app.pubsub.passengers import ActivePassengersGetter
 from app.pubsub.passengers import PassengerWithIdGetter
 from app.pubsub.passengers import MultiplePassengersWithIdGetter
 from app.pubsub.passengers import MultiplePassengersDeactivator
 from app.pubsub.passengers import MultiplePassengersSerializer
-from app.pubsub.passengers import PassengerACSUserIdExtractor
+from app.pubsub.passengers import PassengersACSUserIdExtractor
+from app.pubsub.passengers import PassengerLocaleExtractor
 from app.pubsub.passengers import PassengerCreator
 from app.pubsub.passengers import PassengerUpdater
 from app.pubsub.passengers import PassengerWithIdGetter
@@ -184,18 +187,32 @@ class NotifyPassengersWorkflow(Publisher):
     """
 
     def perform(self, logger, repository, passenger_ids, push_adapter, channel,
-                payload):
+                payload_factory):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         passengers_getter = MultiplePassengersWithIdGetter()
-        acs_id_extractor = PassengerACSUserIdExtractor()
+        locales_extractor = PassengerLocaleExtractor()
+        payloads_creator = PayloadsByLocaleCreator()
+        acs_ids_extractor = PassengersACSUserIdExtractor()
         acs_session_creator = ACSSessionCreator()
-        acs_notifier = ACSUserIdsNotifier()
+        acs_notifier = ACSPayloadsForUserIdNotifier()
+        passengers_future = Future()
+        payloads_future = Future()
         user_ids_future = Future()
 
         class PassengerGetterSubscriber(object):
             def passengers_found(self, passengers):
-                acs_id_extractor.perform(passengers)
+                passengers_future.set(passengers)
+                locales_extractor.perform(passengers)
+
+        class LocalesExtractorSubscriber(object):
+            def locales_extracted(self, locales):
+                payloads_creator.perform(payload_factory, locales)
+
+        class PayloadsCreatorSubscriber(object):
+            def payloads_created(self, payloads):
+                payloads_future.set(payloads)
+                acs_ids_extractor.perform(passengers_future.get())
 
         class ACSUserIdExtractorSubscriber(object):
             def acs_user_ids_extracted(self, user_ids):
@@ -207,7 +224,8 @@ class NotifyPassengersWorkflow(Publisher):
                 outer.publish('failure', error)
             def acs_session_created(self, session_id):
                 acs_notifier.perform(push_adapter, session_id, channel,
-                                     user_ids_future.get(), payload)
+                                     zip(user_ids_future.get(),
+                                         payloads_future.get()))
 
         class ACSNotifierSubscriber(object):
             def acs_user_ids_not_notified(self, error):
@@ -216,8 +234,10 @@ class NotifyPassengersWorkflow(Publisher):
                 outer.publish('success')
 
         passengers_getter.add_subscriber(logger, PassengerGetterSubscriber())
-        acs_id_extractor.add_subscriber(logger,
-                                        ACSUserIdExtractorSubscriber())
+        locales_extractor.add_subscriber(logger, LocalesExtractorSubscriber())
+        payloads_creator.add_subscriber(logger, PayloadsCreatorSubscriber())
+        acs_ids_extractor.add_subscriber(logger,
+                                         ACSUserIdExtractorSubscriber())
         acs_session_creator.add_subscriber(logger,
                                            ACSSessionCreatorSubscriber())
         acs_notifier.add_subscriber(logger, ACSNotifierSubscriber())
@@ -234,6 +254,7 @@ class DeactivatePassengerWorkflow(Publisher):
         with_user_id_authorizer = PassengerWithUserIdAuthorizer()
         passengers_deactivator = MultiplePassengersDeactivator()
         requests_deactivator = MultipleDriveRequestsDeactivator()
+        requests_serializer = MultipleDriveRequestsSerializer()
         task_submitter = TaskSubmitter()
 
         class PassengerGetterSubscriber(object):
@@ -256,8 +277,11 @@ class DeactivatePassengerWorkflow(Publisher):
         class DriveRequestsDeactivatorSubscriber(object):
             def drive_requests_hid(self, requests):
                 orm.add_all(requests)
-                task_submitter.perform(task, user.name,
-                                       [r.driver_id for r in requests])
+                requests_serializer.perform(requests)
+
+        class DriveRequestSerializerSubscriber(object):
+            def drive_requests_serialized(self, requests):
+                task_submitter.perform(task, requests)
 
         class TaskSubmitterSubscriber(object):
             def task_created(self, task_id):
@@ -270,6 +294,8 @@ class DeactivatePassengerWorkflow(Publisher):
                                               PassengersDeactivatorSubscriber())
         requests_deactivator.\
                 add_subscriber(logger, DriveRequestsDeactivatorSubscriber())
+        requests_serializer.add_subscriber(logger,
+                                           DriveRequestSerializerSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         passenger_getter.perform(repository, passenger_id)
 

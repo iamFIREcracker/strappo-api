@@ -29,11 +29,13 @@ web.config.TITANIUM_PASSWORD = config.TITANIUM_PASSWORD
 def app_factory():
     """App factory."""
     import weblib.db
+    import weblib.gettext
     from app.urls import URLS
     from app.weblib.app_processors import load_logger
     from app.weblib.app_processors import load_path_url
     from app.weblib.app_processors import load_render
     from app.weblib.app_processors import load_session
+    from app.weblib.app_processors import load_gettext
     from app.weblib.app_processors import load_and_manage_orm
 
     views = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'views')
@@ -41,11 +43,13 @@ def app_factory():
     dbpath = web.config.DATABASE_URL.replace('sqlite:///', '')
     db = web.database(dbn='sqlite', db=dbpath)
     session = web.session.Session(app, web.session.DBStore(db, 'session'))
+    gettext = weblib.gettext.create_gettext()
 
     app.add_processor(web.loadhook(load_logger))
     app.add_processor(web.loadhook(load_path_url))
     app.add_processor(web.loadhook(load_render(views)))
     app.add_processor(web.loadhook(load_session(session)))
+    app.add_processor(web.loadhook(load_gettext(gettext)))
     app.add_processor(load_and_manage_orm(weblib.db.create_session()))
 
     return app

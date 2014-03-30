@@ -53,7 +53,7 @@ class User(Base):
 
     def __repr__(self):
         return '<User id=%(id)s, acs_id=%(acs_id)s, name=%(name)s, '\
-               'avatar=%(avatar)s>' % self.__dict__
+               'avatar=%(avatar)s, locale=%(locale)s>' % self.__dict__
 
 
 class Token(Base):

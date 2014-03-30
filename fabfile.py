@@ -252,6 +252,10 @@ def prerequisites():
 
 
 @task
+def i18nupdate():
+    cmd('./make_strings.sh')
+
+@task
 def bootstrap():
     ''' Configure the app '''
     print(cyan("Prerequisites..."))
@@ -273,6 +277,9 @@ def bootstrap():
     print(cyan('Initialize database...'))
     dbupdate()
 
+    print(cyan('Recreate i18n strings...'))
+    i18nupdate()
+
     restart()
 
 @task
@@ -293,6 +300,9 @@ def update():
 
     print(cyan('Updating database...'))
     dbupdate()
+
+    print(cyan('Recreate i18n strings...'))
+    i18nupdate()
 
     restart()
 

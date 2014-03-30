@@ -81,7 +81,7 @@ class LoginUserWorkflow(Publisher):
                               dict(success=False, errors=errors))
             def valid_form(self, form):
                 user_creator.perform(repository, form.d.acs_id, form.d.name,
-                                     form.d.avatar)
+                                     form.d.avatar, form.d.locale)
 
         class UserCreatorSubscriber(object):
             def user_created(self, user):
