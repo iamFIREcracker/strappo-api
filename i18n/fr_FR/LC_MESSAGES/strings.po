@@ -27,7 +27,7 @@ msgid "alert_unmatched_passenger"
 msgstr "Coucou, %(name)s cherche un conducteur!"
 
 msgid "alert_alit_passenger"
-msgstr "%(name)s est arrivé(e) à destination!"j
+msgstr "%(name)s est arrivé(e) à destination!"
 
 msgid "alert_deactivated_passenger"
 msgstr "%(name)s ne cherche plus un conducteur!"
