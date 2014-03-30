@@ -18,25 +18,25 @@ msgid "integer_required"
 msgstr "Integer required"
 
 msgid "alert_matched_passenger"
-msgstr "%(name)s a bien accepté ton offre de lui conduire!”
+msgstr "%(name)s a bien accepté ton offre de lui conduire!"
 
 msgid "alert_cancelled_drive_request_by_passenger"
-msgstr "%(name)s n’a plus besoin que tu lui conduises!”
+msgstr "%(name)s n’a plus besoin que tu lui conduises!"
 
 msgid "alert_unmatched_passenger"
-msgstr “Coucou, %(name)s cherche un conducteur!”
+msgstr "Coucou, %(name)s cherche un conducteur!"
 
 msgid "alert_alit_passenger"
-msgstr "%(name)s est arrivé(e) à destination!”
+msgstr "%(name)s est arrivé(e) à destination!"j
 
 msgid "alert_deactivated_passenger"
-msgstr "%(name)s ne cherche plus un conducteur!”
+msgstr "%(name)s ne cherche plus un conducteur!"
 
 msgid "alert_pending_drive_request"
 msgstr "%(name)s s’est offert(e) de te conduire!"
 
 msgid "alert_deactivated_driver"
-msgstr “Ah Mince! %(name)s ne peut plus te conduire!”
+msgstr "Ah Mince! %(name)s ne peut plus te conduire!"
 
 msgid "alert_cancelled_drive_request_by_driver"
-msgstr “Ah Mince! %(name)s ne peut plus te conduire!"
+msgstr "Ah Mince! %(name)s ne peut plus te conduire!"
