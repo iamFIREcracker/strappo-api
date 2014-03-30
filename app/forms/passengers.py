@@ -3,14 +3,10 @@
 
 from web import form
 
-
-__all__ = ['add']
-
-
-validint = form.Validator('Should be an integer', int)
+from app.forms import integer
+from app.forms import required
 
 
-add = form.Form(form.Textbox('origin', form.notnull, description='Origin'),
-                form.Textbox('destination', form.notnull,
-                             description='Destination'),
-                form.Textbox('seats', form.notnull, description='Buddies'))
+add = form.Form(form.Textbox('origin', required),
+                form.Textbox('destination', required),
+                form.Textbox('seats', integer))

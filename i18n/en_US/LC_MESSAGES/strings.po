@@ -11,6 +11,12 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+msgid "required"
+msgstr "Required"
+
+msgid "integer_required"
+msgstr "Integer required"
+
 msgid "alert_matched_passenger"
 msgstr "%(name)s just accepted your drive request!"
 

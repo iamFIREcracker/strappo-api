@@ -17,3 +17,10 @@ def describe_invalid_form(form):
     """
     return dict((i.name, i.note) for i in form.inputs if i.note is not None)
 
+
+def describe_invalid_form_localized(gettext, lang):
+    def inner(form):
+        return dict((i.name, gettext(i.note, lang=lang))
+                    for i in form.inputs if i.note is not None)
+    return inner
+
