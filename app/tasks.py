@@ -199,9 +199,17 @@ def NotifyPassengerDriveRequestPending(request):
     push_adapter = TitaniumPushNotificationsAdapter()
     notify_passengers = NotifyPassengersWorkflow()
     ret = Future()
-    alert = gettext('alert_pending_drive_request',
-                    lang=request['passenger']['user']['locale']) % \
+
+    def payload_factory(lang):
+        alert = gettext('alert_pending_drive_request', lang=lang) % \
             dict(name=request['driver']['user']['name'])
+        return json.dumps({
+            'channel': 'channel',
+            'kind': 'pending_drive_request',
+            'drive_request': request,
+            'sound': 'default',
+            'alert': alert
+        })
 
     class NotifyPassengerSubscriber(object):
         def passenger_not_found(self, passenger_id):
@@ -215,14 +223,7 @@ def NotifyPassengerDriveRequestPending(request):
                                     NotifyPassengerSubscriber())
     notify_passengers.perform(logger, PassengersRepository,
                               [request['passenger']['id']],
-                              push_adapter, 'channel',
-                              json.dumps({
-                                  'channel': 'channel',
-                                  'kind': 'pending_drive_request',
-                                  'drive_request': request,
-                                  'sound': 'default',
-                                  'alert': alert
-                              }))
+                              push_adapter, 'channel', payload_factory)
     return ret.get()
 
 
@@ -270,9 +271,16 @@ def NotifyPassengerDriveRequestCancelledTask(request):
     push_adapter = TitaniumPushNotificationsAdapter()
     notify_passengers = NotifyPassengersWorkflow()
     ret = Future()
-    alert = gettext('alert_cancelled_drive_request_by_driver',
-                    lang=request['driver']['user']['locale']) % \
-            dict(name=request['driver']['user']['name'])
+
+    def payload_factory(lang):
+        alert = gettext('alert_cancelled_drive_request_by_driver',
+                        lang=lang) % \
+                dict(name=request['driver']['user']['name'])
+        return json.dumps({
+            'channel': 'channel',
+            'sound': 'default',
+            'alert': alert
+        })
 
     class NotifyPassengerSubscriber(object):
         def passenger_not_found(self, passenger_id):
@@ -286,11 +294,7 @@ def NotifyPassengerDriveRequestCancelledTask(request):
                                     NotifyPassengerSubscriber())
     notify_passengers.perform(logger, PassengersRepository,
                               [request['passenger']['id']], push_adapter,
-                              'channel', json.dumps({
-                                  'channel': 'channel',
-                                  'sound': 'default',
-                                  'alert': alert
-                              }))
+                              'channel', payload_factory)
     return ret.get()
 
 
