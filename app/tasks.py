@@ -4,6 +4,7 @@
 import json
 
 from app.celery import celery
+from app.pubsub.notifications import notificationid_for_user
 from app.repositories.drive_requests import DriveRequestsRepository
 from app.repositories.drivers import DriversRepository
 from app.repositories.passengers import PassengersRepository
@@ -11,6 +12,7 @@ from app.weblib.adapters.push.titanium import TitaniumPushNotificationsAdapter
 from app.weblib.db import create_session
 from app.weblib.gettext import create_gettext
 from app.weblib.logging import create_logger
+from app.weblib.redis import create_redis
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
 from app.workflows.drive_requests import DeactivateActiveDriveRequestsWorkflow
@@ -26,6 +28,7 @@ from app.workflows.passengers import NotifyPassengersWorkflow
 def NotifyDriverDriveRequestAccepted(request):
     logger = create_logger()
     gettext = create_gettext()
+    redis = create_redis()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
     notify_driver = NotifyDriverWorkflow()
@@ -33,6 +36,8 @@ def NotifyDriverDriveRequestAccepted(request):
     alert = gettext('alert_matched_passenger',
                     lang=request['driver']['user']['locale']) % \
             dict(name=request['passenger']['user']['name'])
+    badge = redis.\
+            incr(notificationid_for_user(request['passenger']['user']['id']))
 
     class NotifyDriverSubscriber(object):
         def driver_not_found(self, driver_id):
@@ -47,6 +52,7 @@ def NotifyDriverDriveRequestAccepted(request):
     notify_driver.perform(logger, DriversRepository, request['driver']['id'],
                           push_adapter, 'channel',
                           json.dumps({
+                              'badge': badge,
                               'channel': 'channel',
                               'kind': 'matched_passenger',
                               'drive_request': request,
@@ -60,6 +66,7 @@ def NotifyDriverDriveRequestAccepted(request):
 def NotifyDriverDriveRequestCancelledByPassengerTask(request):
     logger = create_logger()
     gettext = create_gettext()
+    redis = create_redis()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
     notify_driver = NotifyDriverWorkflow()
@@ -67,6 +74,8 @@ def NotifyDriverDriveRequestCancelledByPassengerTask(request):
     alert = gettext('alert_cancelled_drive_request_by_passenger',
                     lang=request['driver']['user']['locale']) % \
             dict(name=request['passenger']['user']['name'])
+    badge = redis.\
+            incr(notificationid_for_user(request['driver']['user']['id']))
 
     class NotifyDriverSubscriber(object):
         def driver_not_found(self, driver_id):
@@ -81,6 +90,7 @@ def NotifyDriverDriveRequestCancelledByPassengerTask(request):
     notify_driver.perform(logger, DriversRepository, request['driver']['id'],
                           push_adapter, 'channel',
                           json.dumps({
+                              'badge': badge,
                               'channel': 'channel',
                               'sound': 'default',
                               'alert': alert
@@ -92,15 +102,19 @@ def NotifyDriverDriveRequestCancelledByPassengerTask(request):
 def NotifyDriversPassengerRegisteredTask(passenger):
     logger = create_logger()
     gettext = create_gettext()
+    redis = create_redis()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
     notify_drivers = NotifyAllDriversWorkflow()
     ret = Future()
 
-    def payload_factory(lang):
-        alert = gettext('alert_unmatched_passenger', lang=lang) % \
+    def payload_factory(user):
+        alert = gettext('alert_unmatched_passenger', lang=user['locale']) % \
                 dict(name=passenger['user']['name'])
+        badge = redis.\
+                incr(notificationid_for_user(user['id']))
         return json.dumps({
+            'badge': badge,
             'channel': 'channel',
             'kind': 'unmatched_passenger',
             'passenger': passenger,
@@ -125,18 +139,22 @@ def NotifyDriversPassengerRegisteredTask(passenger):
 def NotifyDriversPassengerAlitTask(requests):
     logger = create_logger()
     gettext = create_gettext()
+    redis = create_redis()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
     notify_drivers = NotifyDriversWorkflow()
     ret = Future()
 
-    def payload_factory(lang):
+    def payload_factory(user):
         # If we are invoked it means there is at least one passenger
         # in the list of requests, so the following operation should
         # be safe!
-        alert = gettext('alert_alit_passenger', lang=lang) % \
+        alert = gettext('alert_alit_passenger', lang=user['locale']) % \
                 dict(name=requests[0]['passenger']['user']['name'])
+        badge = redis.\
+                incr(notificationid_for_user(user['id']))
         return json.dumps({
+            'badge': badge,
             'channel': 'channel',
             'sound': 'default',
             'alert': alert
@@ -160,18 +178,22 @@ def NotifyDriversPassengerAlitTask(requests):
 def NotifyDriversDeactivatedPassengerTask(requests):
     logger = create_logger()
     gettext = create_gettext()
+    redis = create_redis()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
     notify_drivers = NotifyDriversWorkflow()
     ret = Future()
 
-    def payload_factory(lang):
+    def payload_factory(user):
         # If we are invoked it means there is at least one passenger
         # in the list of requests, so the following operation should
         # be safe!
-        alert = gettext('alert_deactivated_passenger', lang=lang) % \
+        alert = gettext('alert_deactivated_passenger', lang=user['locale']) % \
                 dict(name=requests[0]['passenger']['user']['name'])
+        badge = redis.\
+                incr(notificationid_for_user(user['id']))
         return json.dumps({
+            'badge': badge,
             'channel': 'channel',
             'sound': 'default',
             'alert': alert
@@ -195,15 +217,19 @@ def NotifyDriversDeactivatedPassengerTask(requests):
 def NotifyPassengerDriveRequestPending(request):
     logger = create_logger()
     gettext = create_gettext()
+    redis = create_redis()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
     notify_passengers = NotifyPassengersWorkflow()
     ret = Future()
 
-    def payload_factory(lang):
-        alert = gettext('alert_pending_drive_request', lang=lang) % \
+    def payload_factory(user):
+        alert = gettext('alert_pending_drive_request', lang=user['locale']) % \
             dict(name=request['driver']['user']['name'])
+        badge = redis.\
+                incr(notificationid_for_user(user['id']))
         return json.dumps({
+            'badge': badge,
             'channel': 'channel',
             'kind': 'pending_drive_request',
             'drive_request': request,
@@ -231,18 +257,22 @@ def NotifyPassengerDriveRequestPending(request):
 def NotifyPassengersDriverDeactivatedTask(requests):
     logger = create_logger()
     gettext = create_gettext()
+    redis = create_redis()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
     notify_passengers = NotifyPassengersWorkflow()
     ret = Future()
 
-    def payload_factory(lang):
+    def payload_factory(user):
         # If we are invoked it means there is at least one passenger
         # in the list of requests, so the following operation should
         # be safe!
-        alert = gettext('alert_deactivated_driver', lang=lang) % \
+        alert = gettext('alert_deactivated_driver', lang=user['locale']) % \
                 dict(name=requests[0]['driver']['user']['name'])
+        badge = redis.\
+                incr(notificationid_for_user(user['id']))
         return json.dumps({
+            'badge': badge,
             'channel': 'channel',
             'sound': 'default',
             'alert': alert
@@ -267,16 +297,20 @@ def NotifyPassengersDriverDeactivatedTask(requests):
 def NotifyPassengerDriveRequestCancelledTask(request):
     logger = create_logger()
     gettext = create_gettext()
+    redis = create_redis()
     logging_subscriber = LoggingSubscriber(logger)
     push_adapter = TitaniumPushNotificationsAdapter()
     notify_passengers = NotifyPassengersWorkflow()
     ret = Future()
 
-    def payload_factory(lang):
+    def payload_factory(user):
         alert = gettext('alert_cancelled_drive_request_by_driver',
-                        lang=lang) % \
+                        lang=user['lang']) % \
                 dict(name=request['driver']['user']['name'])
+        badge = redis.\
+                incr(notificationid_for_user(user['id']))
         return json.dumps({
+            'badge': badge,
             'channel': 'channel',
             'sound': 'default',
             'alert': alert

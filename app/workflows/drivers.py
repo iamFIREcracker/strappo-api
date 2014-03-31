@@ -6,7 +6,7 @@ import app.forms.drivers as drivers_forms
 from app.pubsub import ACSSessionCreator
 from app.pubsub import ACSUserIdsNotifier
 from app.pubsub import ACSPayloadsForUserIdNotifier
-from app.pubsub import PayloadsByLocaleCreator
+from app.pubsub import PayloadsByUserCreator
 from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
 from app.pubsub.drivers import DriverCreator
@@ -15,7 +15,6 @@ from app.pubsub.drivers import DriverUpdater
 from app.pubsub.drivers import DriverSerializer
 from app.pubsub.drivers import DriverWithIdGetter
 from app.pubsub.drivers import DriversACSUserIdExtractor
-from app.pubsub.drivers import DriversLocaleExtractor
 from app.pubsub.drivers import DriverWithUserIdAuthorizer
 from app.pubsub.drivers import DriverLinkedToPassengerWithUserIdAuthorizer
 from app.pubsub.drivers import HiddenDriversGetter
@@ -369,8 +368,7 @@ class NotifyDriversWorkflow(Publisher):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         drivers_getter = MultipleDriversWithIdGetter()
-        locales_extractor = DriversLocaleExtractor()
-        payloads_creator = PayloadsByLocaleCreator()
+        payloads_creator = PayloadsByUserCreator()
         acs_ids_extractor = DriversACSUserIdExtractor()
         acs_session_creator = ACSSessionCreator()
         acs_notifier = ACSPayloadsForUserIdNotifier()
@@ -381,11 +379,8 @@ class NotifyDriversWorkflow(Publisher):
         class DriversGetterSubscriber(object):
             def drivers_found(self, drivers):
                 drivers_future.set(drivers)
-                locales_extractor.perform(drivers)
-
-        class LocalesExtractorSubscriber(object):
-            def locales_extracted(self, locales):
-                payloads_creator.perform(payload_factory, locales)
+                payloads_creator.perform(payload_factory,
+                                         [d.user for d in drivers])
 
         class PayloadsCreatorSubscriber(object):
             def payloads_created(self, payloads):
@@ -412,7 +407,6 @@ class NotifyDriversWorkflow(Publisher):
                 outer.publish('success')
 
         drivers_getter.add_subscriber(logger, DriversGetterSubscriber())
-        locales_extractor.add_subscriber(logger, LocalesExtractorSubscriber())
         payloads_creator.add_subscriber(logger, PayloadsCreatorSubscriber())
         acs_ids_extractor.add_subscriber(logger,
                                          ACSUserIdsExtractorSubscriber())
@@ -428,8 +422,7 @@ class NotifyAllDriversWorkflow(Publisher):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         drivers_getter = UnhiddenDriversGetter()
-        locales_extractor = DriversLocaleExtractor()
-        payloads_creator = PayloadsByLocaleCreator()
+        payloads_creator = PayloadsByUserCreator()
         acs_ids_extractor = DriversACSUserIdExtractor()
         acs_session_creator = ACSSessionCreator()
         acs_notifier = ACSPayloadsForUserIdNotifier()
@@ -440,11 +433,8 @@ class NotifyAllDriversWorkflow(Publisher):
         class DriversGetterSubscriber(object):
             def unhidden_drivers_found(self, drivers):
                 drivers_future.set(drivers)
-                locales_extractor.perform(drivers)
-
-        class LocalesExtractorSubscriber(object):
-            def locales_extracted(self, locales):
-                payloads_creator.perform(payload_factory, locales)
+                payloads_creator.perform(payload_factory,
+                                         [d.user for d in drivers])
 
         class PayloadsCreatorSubscriber(object):
             def payloads_created(self, payloads):
@@ -471,7 +461,6 @@ class NotifyAllDriversWorkflow(Publisher):
                 outer.publish('success')
 
         drivers_getter.add_subscriber(logger, DriversGetterSubscriber())
-        locales_extractor.add_subscriber(logger, LocalesExtractorSubscriber())
         payloads_creator.add_subscriber(logger, PayloadsCreatorSubscriber())
         acs_ids_extractor.add_subscriber(logger,
                                          ACSUserIdsExtractorSubscriber())
