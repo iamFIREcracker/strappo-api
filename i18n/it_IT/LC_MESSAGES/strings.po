@@ -1,0 +1,42 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-03-29 12:09+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "required"
+msgstr "Obbligatorio"
+
+msgid "integer_required"
+msgstr "Deve essere intero"
+
+msgid "alert_matched_passenger"
+msgstr "%(name)s ha accettato il tuo passaggio!"
+
+msgid "alert_cancelled_drive_request_by_passenger"
+msgstr "%(name)s non ha più bisogno di uno strappo!"
+
+msgid "alert_unmatched_passenger"
+msgstr "Hei, %(name)s stà cercando uno strappo!"
+
+msgid "alert_alit_passenger"
+msgstr "%(name)s è arrivato a destinazione!"
+
+msgid "alert_deactivated_passenger"
+msgstr "%(name)s non ha più bisogno di uno strappo!"
+
+msgid "alert_pending_drive_request"
+msgstr "%(name)s ti ha offerto un passaggio!"
+
+msgid "alert_deactivated_driver"
+msgstr "Oh no, %(name)s non ti puo più offrire un passaggio!"
+
+msgid "alert_cancelled_drive_request_by_driver"
+msgstr "Oh no, %(name)s non ti puo più offrire un passaggio!"
