@@ -109,10 +109,10 @@ def NotifyDriversPassengerRegisteredTask(passenger):
     ret = Future()
 
     def payload_factory(user):
-        alert = gettext('alert_unmatched_passenger', lang=user['locale']) % \
+        alert = gettext('alert_unmatched_passenger', lang=user.locale) % \
                 dict(name=passenger['user']['name'])
         badge = redis.\
-                incr(notificationid_for_user(user['id']))
+                incr(notificationid_for_user(user.id))
         return json.dumps({
             'badge': badge,
             'channel': 'channel',
@@ -149,10 +149,10 @@ def NotifyDriversPassengerAlitTask(requests):
         # If we are invoked it means there is at least one passenger
         # in the list of requests, so the following operation should
         # be safe!
-        alert = gettext('alert_alit_passenger', lang=user['locale']) % \
+        alert = gettext('alert_alit_passenger', lang=user.locale) % \
                 dict(name=requests[0]['passenger']['user']['name'])
         badge = redis.\
-                incr(notificationid_for_user(user['id']))
+                incr(notificationid_for_user(user.id))
         return json.dumps({
             'badge': badge,
             'channel': 'channel',
@@ -188,10 +188,10 @@ def NotifyDriversDeactivatedPassengerTask(requests):
         # If we are invoked it means there is at least one passenger
         # in the list of requests, so the following operation should
         # be safe!
-        alert = gettext('alert_deactivated_passenger', lang=user['locale']) % \
+        alert = gettext('alert_deactivated_passenger', lang=user.locale) % \
                 dict(name=requests[0]['passenger']['user']['name'])
         badge = redis.\
-                incr(notificationid_for_user(user['id']))
+                incr(notificationid_for_user(user.id))
         return json.dumps({
             'badge': badge,
             'channel': 'channel',
@@ -224,10 +224,10 @@ def NotifyPassengerDriveRequestPending(request):
     ret = Future()
 
     def payload_factory(user):
-        alert = gettext('alert_pending_drive_request', lang=user['locale']) % \
+        alert = gettext('alert_pending_drive_request', lang=user.locale) % \
             dict(name=request['driver']['user']['name'])
         badge = redis.\
-                incr(notificationid_for_user(user['id']))
+                incr(notificationid_for_user(user.id))
         return json.dumps({
             'badge': badge,
             'channel': 'channel',
@@ -267,10 +267,10 @@ def NotifyPassengersDriverDeactivatedTask(requests):
         # If we are invoked it means there is at least one passenger
         # in the list of requests, so the following operation should
         # be safe!
-        alert = gettext('alert_deactivated_driver', lang=user['locale']) % \
+        alert = gettext('alert_deactivated_driver', lang=user.locale) % \
                 dict(name=requests[0]['driver']['user']['name'])
         badge = redis.\
-                incr(notificationid_for_user(user['id']))
+                incr(notificationid_for_user(user.id))
         return json.dumps({
             'badge': badge,
             'channel': 'channel',
@@ -305,10 +305,10 @@ def NotifyPassengerDriveRequestCancelledTask(request):
 
     def payload_factory(user):
         alert = gettext('alert_cancelled_drive_request_by_driver',
-                        lang=user['lang']) % \
+                        lang=user.lang) % \
                 dict(name=request['driver']['user']['name'])
         badge = redis.\
-                incr(notificationid_for_user(user['id']))
+                incr(notificationid_for_user(user.id))
         return json.dumps({
             'badge': badge,
             'channel': 'channel',
