@@ -23,6 +23,7 @@ from app.pubsub.drivers import MultipleDriversWithIdGetter
 from app.pubsub.drivers import MultipleDriversDeactivator
 from app.pubsub.drivers import MultipleDriversUnhider
 from app.pubsub.drivers import UnhiddenDriversGetter
+from app.pubsub.notifications import NotificationsResetter
 from app.pubsub.users import UserWithoutDriverValidator
 from app.weblib.forms import describe_invalid_form
 from app.weblib.forms import describe_invalid_form_localized
@@ -37,7 +38,7 @@ from app.weblib.pubsub import TaskSubmitter
 class AddDriverWorkflow(Publisher):
     """Defines a workflow to add a new driver."""
 
-    def perform(self, gettext, orm, logger, params, repository, user):
+    def perform(self, gettext, orm, logger, redis, params, repository, user):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         user_validator = UserWithoutDriverValidator()
@@ -45,7 +46,9 @@ class AddDriverWorkflow(Publisher):
         driver_getter = DriverWithIdGetter()
         driver_creator = DriverCreator()
         driver_updater = DriverUpdater()
+        notifications_resetter = NotificationsResetter()
         driver_future = Future()
+        driver_id_future = Future()
 
         class UserValidatorSubscriber(object):
             def invalid_user(self, errors):
@@ -80,18 +83,26 @@ class AddDriverWorkflow(Publisher):
         class DriverCreatorSubscriber(object):
             def driver_created(self, driver):
                 orm.add(driver)
-                outer.publish('success', driver.id)
+                driver_id_future.set(driver.id)
+                notifications_resetter.perform(redis, user.id)
 
         class DriverUpdaterSubscriber(object):
             def driver_updated(self, driver):
                 orm.add(driver)
-                outer.publish('success', driver.id)
+                driver_id_future.set(driver.id)
+                notifications_resetter.perform(redis, user.id)
+
+        class NotificationsResetterSubscriber(object):
+            def notifications_reset(self, recordid):
+                outer.publish('success', driver_id_future.get())
 
         user_validator.add_subscriber(logger, UserValidatorSubscriber())
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
         driver_getter.add_subscriber(logger, DriverGetterSubscriber())
         driver_creator.add_subscriber(logger, DriverCreatorSubscriber())
         driver_updater.add_subscriber(logger, DriverUpdaterSubscriber())
+        notifications_resetter.\
+                add_subscriber(logger, NotificationsResetterSubscriber())
         user_validator.perform(user)
 
 class DeactivateDriverWorkflow(Publisher):

@@ -10,6 +10,7 @@ from app.pubsub.drive_requests import AcceptedDriveRequestsFilter
 from app.pubsub.drive_requests import DriveRequestCancellorByDriverId
 from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
+from app.pubsub.notifications import NotificationsResetter
 from app.pubsub.passengers import ActivePassengersGetter
 from app.pubsub.passengers import PassengerWithIdGetter
 from app.pubsub.passengers import MultiplePassengersWithIdGetter
@@ -62,7 +63,8 @@ class ListUnmatchedPassengersWorkflow(Publisher):
 class AddPassengerWorkflow(Publisher):
     """Defines a workflow to add a new passenger."""
 
-    def perform(self, gettext, orm, logger, params, repository, user, task):
+    def perform(self, gettext, orm, logger, redis, params,
+                repository, user, task):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         user_validator = UserWithoutPassengerValidator()
@@ -71,9 +73,11 @@ class AddPassengerWorkflow(Publisher):
         passenger_creator = PassengerCreator()
         passenger_updater = PassengerUpdater()
         passenger_serializer = PassengerSerializer()
+        notifications_resetter = NotificationsResetter()
         task_submitter = TaskSubmitter()
         passenger_future = Future()
         passenger_id_future = Future()
+        passenger_serialized_future = Future()
 
         class UserValidatorSubscriber(object):
             def invalid_user(self, errors):
@@ -123,7 +127,12 @@ class AddPassengerWorkflow(Publisher):
 
         class PassengerSerializerSubscriber(object):
             def passenger_serialized(self, passenger):
-                task_submitter.perform(task, passenger)
+                passenger_serialized_future.set(passenger)
+                notifications_resetter.perform(redis, user.id)
+
+        class NotificationsResetterSubscriber(object):
+            def notifications_reset(self, recordid):
+                task_submitter.perform(task, passenger_serialized_future.get())
 
         class TaskSubmitterSubscriber(object):
             def task_created(self, task_id):
@@ -136,6 +145,8 @@ class AddPassengerWorkflow(Publisher):
         passenger_updater.add_subscriber(logger, PassengerUpdaterSubscriber())
         passenger_serializer.add_subscriber(logger,
                                             PassengerSerializerSubscriber())
+        notifications_resetter.\
+                add_subscriber(logger, NotificationsResetterSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         user_validator.perform(user)
 
