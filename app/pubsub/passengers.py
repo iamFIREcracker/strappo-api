@@ -163,12 +163,6 @@ class MultiplePassengersDeactivator(Publisher):
         self.publish('passengers_hid', [deactivate(p) for p in passengers])
 
 
-class PassengerLocaleExtractor(Publisher):
-    def perform(self, passengers):
-        self.publish('locales_extracted',
-                     filter(None, [p.user.locale for p in passengers]))
-
-
 class PassengersACSUserIdExtractor(Publisher):
     def perform(self, passengers):
         self.publish('acs_user_ids_extracted',

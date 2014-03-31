@@ -48,7 +48,7 @@ class ACSPayloadsForUserIdNotifier(Publisher):
             self.publish('acs_user_ids_notified')
 
 
-class PayloadsByLocaleCreator(Publisher):
-    def perform(self, payload_factory, locales):
+class PayloadsByUserCreator(Publisher):
+    def perform(self, payload_factory, users):
         self.publish('payloads_created',
-                     [payload_factory(l) for l in locales])
+                     [payload_factory(u) for u in users])

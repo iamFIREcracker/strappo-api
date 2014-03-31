@@ -53,6 +53,12 @@ def load_gettext(gettext):
         web.ctx.gettext = gettext
     return inner
 
+def load_redis(redis):
+    '''Load a Redis client object into the shared context.'''
+    def inner():
+        web.ctx.redis = redis
+    return inner
+
 def load_and_manage_orm(ormfactory):
     '''Load ORM database connection and manage exceptions properly.'''
     def inner(handler):

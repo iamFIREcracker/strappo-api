@@ -5,18 +5,18 @@
 import app.forms.passengers as passengers_forms
 from app.pubsub import ACSSessionCreator
 from app.pubsub import ACSPayloadsForUserIdNotifier
-from app.pubsub import PayloadsByLocaleCreator
+from app.pubsub import PayloadsByUserCreator
 from app.pubsub.drive_requests import AcceptedDriveRequestsFilter
 from app.pubsub.drive_requests import DriveRequestCancellorByDriverId
 from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
+from app.pubsub.notifications import NotificationsResetter
 from app.pubsub.passengers import ActivePassengersGetter
 from app.pubsub.passengers import PassengerWithIdGetter
 from app.pubsub.passengers import MultiplePassengersWithIdGetter
 from app.pubsub.passengers import MultiplePassengersDeactivator
 from app.pubsub.passengers import MultiplePassengersSerializer
 from app.pubsub.passengers import PassengersACSUserIdExtractor
-from app.pubsub.passengers import PassengerLocaleExtractor
 from app.pubsub.passengers import PassengerCreator
 from app.pubsub.passengers import PassengerUpdater
 from app.pubsub.passengers import PassengerWithIdGetter
@@ -62,7 +62,8 @@ class ListUnmatchedPassengersWorkflow(Publisher):
 class AddPassengerWorkflow(Publisher):
     """Defines a workflow to add a new passenger."""
 
-    def perform(self, gettext, orm, logger, params, repository, user, task):
+    def perform(self, gettext, orm, logger, redis, params,
+                repository, user, task):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         user_validator = UserWithoutPassengerValidator()
@@ -71,9 +72,11 @@ class AddPassengerWorkflow(Publisher):
         passenger_creator = PassengerCreator()
         passenger_updater = PassengerUpdater()
         passenger_serializer = PassengerSerializer()
+        notifications_resetter = NotificationsResetter()
         task_submitter = TaskSubmitter()
         passenger_future = Future()
         passenger_id_future = Future()
+        passenger_serialized_future = Future()
 
         class UserValidatorSubscriber(object):
             def invalid_user(self, errors):
@@ -123,7 +126,12 @@ class AddPassengerWorkflow(Publisher):
 
         class PassengerSerializerSubscriber(object):
             def passenger_serialized(self, passenger):
-                task_submitter.perform(task, passenger)
+                passenger_serialized_future.set(passenger)
+                notifications_resetter.perform(redis, user.id)
+
+        class NotificationsResetterSubscriber(object):
+            def notifications_reset(self, recordid):
+                task_submitter.perform(task, passenger_serialized_future.get())
 
         class TaskSubmitterSubscriber(object):
             def task_created(self, task_id):
@@ -136,6 +144,8 @@ class AddPassengerWorkflow(Publisher):
         passenger_updater.add_subscriber(logger, PassengerUpdaterSubscriber())
         passenger_serializer.add_subscriber(logger,
                                             PassengerSerializerSubscriber())
+        notifications_resetter.\
+                add_subscriber(logger, NotificationsResetterSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         user_validator.perform(user)
 
@@ -194,8 +204,7 @@ class NotifyPassengersWorkflow(Publisher):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         passengers_getter = MultiplePassengersWithIdGetter()
-        locales_extractor = PassengerLocaleExtractor()
-        payloads_creator = PayloadsByLocaleCreator()
+        payloads_creator = PayloadsByUserCreator()
         acs_ids_extractor = PassengersACSUserIdExtractor()
         acs_session_creator = ACSSessionCreator()
         acs_notifier = ACSPayloadsForUserIdNotifier()
@@ -206,11 +215,8 @@ class NotifyPassengersWorkflow(Publisher):
         class PassengerGetterSubscriber(object):
             def passengers_found(self, passengers):
                 passengers_future.set(passengers)
-                locales_extractor.perform(passengers)
-
-        class LocalesExtractorSubscriber(object):
-            def locales_extracted(self, locales):
-                payloads_creator.perform(payload_factory, locales)
+                payloads_creator.perform(payload_factory,
+                                         [p.user for p in passengers])
 
         class PayloadsCreatorSubscriber(object):
             def payloads_created(self, payloads):
@@ -237,7 +243,6 @@ class NotifyPassengersWorkflow(Publisher):
                 outer.publish('success')
 
         passengers_getter.add_subscriber(logger, PassengerGetterSubscriber())
-        locales_extractor.add_subscriber(logger, LocalesExtractorSubscriber())
         payloads_creator.add_subscriber(logger, PayloadsCreatorSubscriber())
         acs_ids_extractor.add_subscriber(logger,
                                          ACSUserIdExtractorSubscriber())

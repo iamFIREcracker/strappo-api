@@ -6,7 +6,7 @@ import app.forms.drivers as drivers_forms
 from app.pubsub import ACSSessionCreator
 from app.pubsub import ACSUserIdsNotifier
 from app.pubsub import ACSPayloadsForUserIdNotifier
-from app.pubsub import PayloadsByLocaleCreator
+from app.pubsub import PayloadsByUserCreator
 from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
 from app.pubsub.drivers import DriverCreator
@@ -15,7 +15,6 @@ from app.pubsub.drivers import DriverUpdater
 from app.pubsub.drivers import DriverSerializer
 from app.pubsub.drivers import DriverWithIdGetter
 from app.pubsub.drivers import DriversACSUserIdExtractor
-from app.pubsub.drivers import DriversLocaleExtractor
 from app.pubsub.drivers import DriverWithUserIdAuthorizer
 from app.pubsub.drivers import DriverLinkedToPassengerWithUserIdAuthorizer
 from app.pubsub.drivers import HiddenDriversGetter
@@ -23,6 +22,7 @@ from app.pubsub.drivers import MultipleDriversWithIdGetter
 from app.pubsub.drivers import MultipleDriversDeactivator
 from app.pubsub.drivers import MultipleDriversUnhider
 from app.pubsub.drivers import UnhiddenDriversGetter
+from app.pubsub.notifications import NotificationsResetter
 from app.pubsub.users import UserWithoutDriverValidator
 from app.weblib.forms import describe_invalid_form
 from app.weblib.forms import describe_invalid_form_localized
@@ -37,7 +37,7 @@ from app.weblib.pubsub import TaskSubmitter
 class AddDriverWorkflow(Publisher):
     """Defines a workflow to add a new driver."""
 
-    def perform(self, gettext, orm, logger, params, repository, user):
+    def perform(self, gettext, orm, logger, redis, params, repository, user):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         user_validator = UserWithoutDriverValidator()
@@ -45,7 +45,9 @@ class AddDriverWorkflow(Publisher):
         driver_getter = DriverWithIdGetter()
         driver_creator = DriverCreator()
         driver_updater = DriverUpdater()
+        notifications_resetter = NotificationsResetter()
         driver_future = Future()
+        driver_id_future = Future()
 
         class UserValidatorSubscriber(object):
             def invalid_user(self, errors):
@@ -80,18 +82,26 @@ class AddDriverWorkflow(Publisher):
         class DriverCreatorSubscriber(object):
             def driver_created(self, driver):
                 orm.add(driver)
-                outer.publish('success', driver.id)
+                driver_id_future.set(driver.id)
+                notifications_resetter.perform(redis, user.id)
 
         class DriverUpdaterSubscriber(object):
             def driver_updated(self, driver):
                 orm.add(driver)
-                outer.publish('success', driver.id)
+                driver_id_future.set(driver.id)
+                notifications_resetter.perform(redis, user.id)
+
+        class NotificationsResetterSubscriber(object):
+            def notifications_reset(self, recordid):
+                outer.publish('success', driver_id_future.get())
 
         user_validator.add_subscriber(logger, UserValidatorSubscriber())
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
         driver_getter.add_subscriber(logger, DriverGetterSubscriber())
         driver_creator.add_subscriber(logger, DriverCreatorSubscriber())
         driver_updater.add_subscriber(logger, DriverUpdaterSubscriber())
+        notifications_resetter.\
+                add_subscriber(logger, NotificationsResetterSubscriber())
         user_validator.perform(user)
 
 class DeactivateDriverWorkflow(Publisher):
@@ -358,8 +368,7 @@ class NotifyDriversWorkflow(Publisher):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         drivers_getter = MultipleDriversWithIdGetter()
-        locales_extractor = DriversLocaleExtractor()
-        payloads_creator = PayloadsByLocaleCreator()
+        payloads_creator = PayloadsByUserCreator()
         acs_ids_extractor = DriversACSUserIdExtractor()
         acs_session_creator = ACSSessionCreator()
         acs_notifier = ACSPayloadsForUserIdNotifier()
@@ -370,11 +379,8 @@ class NotifyDriversWorkflow(Publisher):
         class DriversGetterSubscriber(object):
             def drivers_found(self, drivers):
                 drivers_future.set(drivers)
-                locales_extractor.perform(drivers)
-
-        class LocalesExtractorSubscriber(object):
-            def locales_extracted(self, locales):
-                payloads_creator.perform(payload_factory, locales)
+                payloads_creator.perform(payload_factory,
+                                         [d.user for d in drivers])
 
         class PayloadsCreatorSubscriber(object):
             def payloads_created(self, payloads):
@@ -401,7 +407,6 @@ class NotifyDriversWorkflow(Publisher):
                 outer.publish('success')
 
         drivers_getter.add_subscriber(logger, DriversGetterSubscriber())
-        locales_extractor.add_subscriber(logger, LocalesExtractorSubscriber())
         payloads_creator.add_subscriber(logger, PayloadsCreatorSubscriber())
         acs_ids_extractor.add_subscriber(logger,
                                          ACSUserIdsExtractorSubscriber())
@@ -417,8 +422,7 @@ class NotifyAllDriversWorkflow(Publisher):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         drivers_getter = UnhiddenDriversGetter()
-        locales_extractor = DriversLocaleExtractor()
-        payloads_creator = PayloadsByLocaleCreator()
+        payloads_creator = PayloadsByUserCreator()
         acs_ids_extractor = DriversACSUserIdExtractor()
         acs_session_creator = ACSSessionCreator()
         acs_notifier = ACSPayloadsForUserIdNotifier()
@@ -429,11 +433,8 @@ class NotifyAllDriversWorkflow(Publisher):
         class DriversGetterSubscriber(object):
             def unhidden_drivers_found(self, drivers):
                 drivers_future.set(drivers)
-                locales_extractor.perform(drivers)
-
-        class LocalesExtractorSubscriber(object):
-            def locales_extracted(self, locales):
-                payloads_creator.perform(payload_factory, locales)
+                payloads_creator.perform(payload_factory,
+                                         [d.user for d in drivers])
 
         class PayloadsCreatorSubscriber(object):
             def payloads_created(self, payloads):
@@ -460,7 +461,6 @@ class NotifyAllDriversWorkflow(Publisher):
                 outer.publish('success')
 
         drivers_getter.add_subscriber(logger, DriversGetterSubscriber())
-        locales_extractor.add_subscriber(logger, LocalesExtractorSubscriber())
         payloads_creator.add_subscriber(logger, PayloadsCreatorSubscriber())
         acs_ids_extractor.add_subscriber(logger,
                                          ACSUserIdsExtractorSubscriber())

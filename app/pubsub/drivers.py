@@ -172,12 +172,6 @@ class DriverSerializer(Publisher):
         self.publish('driver_serialized', d)
 
 
-class DriversLocaleExtractor(Publisher):
-    def perform(self, drivers):
-        self.publish('locales_extracted',
-                     filter(None, [d.user.locale for d in drivers]))
-
-
 class DriversACSUserIdExtractor(Publisher):
     def perform(self, drivers):
         """Extract ACS user IDs associated with the input list of drivers.
