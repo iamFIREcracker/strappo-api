@@ -12,6 +12,7 @@ from app.controllers.drivers import EditDriverController
 from app.controllers.drivers import HideDriverController
 from app.controllers.drivers import UnhideDriverController
 from app.controllers.drivers import ViewDriverController
+from app.controllers.notifications import ResetNotificationsController
 from app.controllers.passengers import AcceptDriverController
 from app.controllers.passengers import AddPassengerController
 from app.controllers.passengers import AlightPassengerController
@@ -43,6 +44,8 @@ URLS = (
     '/1/drive_requests/active', ListActiveDriveRequestsController,
 
     '/1/traces/add', AddTracesController,
+
+    '/1/notifications/reset', ResetNotificationsController,
 
     '/1/destinations', ListDestinationsController,
     '/1/destinations/predefined', ListPredefinedDestinationsController,
