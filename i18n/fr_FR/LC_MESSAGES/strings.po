@@ -12,10 +12,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 msgid "required"
-msgstr "Required"
+msgstr "Requis"
 
 msgid "integer_required"
-msgstr "Integer required"
+msgstr "Nombre entier requis"
 
 msgid "alert_matched_passenger"
 msgstr "%(name)s a bien accepté ton offre de lui conduire!"
