@@ -52,10 +52,10 @@ def NotifyDriverDriveRequestAccepted(request):
     notify_driver.perform(logger, DriversRepository, request['driver']['id'],
                           push_adapter, 'channel',
                           json.dumps({
-                              #'badge': badge,
+                              'badge': badge,
                               'channel': 'channel',
-                              #'kind': 'matched_passenger',
-                              #'drive_request': request,
+                              'kind': 'matched_passenger',
+                              'drive_request': request,
                               'sound': 'default',
                               'alert': alert
                           }))
@@ -90,7 +90,7 @@ def NotifyDriverDriveRequestCancelledByPassengerTask(request):
     notify_driver.perform(logger, DriversRepository, request['driver']['id'],
                           push_adapter, 'channel',
                           json.dumps({
-                              #'badge': badge,
+                              'badge': badge,
                               'channel': 'channel',
                               'sound': 'default',
                               'alert': alert
@@ -114,10 +114,10 @@ def NotifyDriversPassengerRegisteredTask(passenger):
         badge = redis.\
                 incr(notificationid_for_user(user.id))
         return json.dumps({
-            #'badge': badge,
+            'badge': badge,
             'channel': 'channel',
-            #'kind': 'unmatched_passenger',
-            #'passenger': passenger,
+            'kind': 'unmatched_passenger',
+            'passenger': passenger,
             'sound': 'default',
             'alert': alert
         })
@@ -154,7 +154,7 @@ def NotifyDriversPassengerAlitTask(requests):
         badge = redis.\
                 incr(notificationid_for_user(user.id))
         return json.dumps({
-            #'badge': badge,
+            'badge': badge,
             'channel': 'channel',
             'sound': 'default',
             'alert': alert
@@ -193,7 +193,7 @@ def NotifyDriversDeactivatedPassengerTask(requests):
         badge = redis.\
                 incr(notificationid_for_user(user.id))
         return json.dumps({
-            #'badge': badge,
+            'badge': badge,
             'channel': 'channel',
             'sound': 'default',
             'alert': alert
@@ -229,10 +229,10 @@ def NotifyPassengerDriveRequestPending(request):
         badge = redis.\
                 incr(notificationid_for_user(user.id))
         return json.dumps({
-            #'badge': badge,
+            'badge': badge,
             'channel': 'channel',
-            #'kind': 'pending_drive_request',
-            #'drive_request': request,
+            'kind': 'pending_drive_request',
+            'drive_request': request,
             'sound': 'default',
             'alert': alert
         })
@@ -272,7 +272,7 @@ def NotifyPassengersDriverDeactivatedTask(requests):
         badge = redis.\
                 incr(notificationid_for_user(user.id))
         return json.dumps({
-            #'badge': badge,
+            'badge': badge,
             'channel': 'channel',
             'sound': 'default',
             'alert': alert
@@ -310,7 +310,7 @@ def NotifyPassengerDriveRequestCancelledTask(request):
         badge = redis.\
                 incr(notificationid_for_user(user.id))
         return json.dumps({
-            #'badge': badge,
+            'badge': badge,
             'channel': 'channel',
             'sound': 'default',
             'alert': alert
