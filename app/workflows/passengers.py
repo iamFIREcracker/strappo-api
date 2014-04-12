@@ -127,6 +127,9 @@ class AddPassengerWorkflow(Publisher):
         class PassengerSerializerSubscriber(object):
             def passenger_serialized(self, passenger):
                 passenger_serialized_future.set(passenger)
+                # This is ugly as hell, but if we don't do that sqlalchemy
+                # would complain we trying to persist a detached instance!
+                passenger.user = None
                 notifications_resetter.perform(redis, user.id)
 
         class NotificationsResetterSubscriber(object):
