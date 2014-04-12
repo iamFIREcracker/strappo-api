@@ -55,7 +55,7 @@ def NotifyDriverDriveRequestAccepted(request):
                               'badge': badge,
                               'channel': 'channel',
                               'kind': 'matched_passenger',
-                              'drive_request': request,
+                              'drive_request': request['id'],
                               'sound': 'default',
                               'alert': alert
                           }))
@@ -117,7 +117,7 @@ def NotifyDriversPassengerRegisteredTask(passenger):
             'badge': badge,
             'channel': 'channel',
             'kind': 'unmatched_passenger',
-            'passenger': passenger,
+            'passenger': passenger['id'],
             'sound': 'default',
             'alert': alert
         })
@@ -232,7 +232,7 @@ def NotifyPassengerDriveRequestPending(request):
             'badge': badge,
             'channel': 'channel',
             'kind': 'pending_drive_request',
-            'drive_request': request,
+            'drive_request': request['id'],
             'sound': 'default',
             'alert': alert
         })
