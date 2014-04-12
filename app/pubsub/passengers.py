@@ -57,6 +57,12 @@ class PassengerCreator(Publisher):
         self.publish('passenger_created', passenger)
 
 
+class PassengerCopier(Publisher):
+    def perform(self, repository, other):
+        passenger = repository.copy(other)
+        self.publish('passenger_copied', passenger)
+
+
 class PassengerUpdater(Publisher):
     def perform(self, passenger, origin, destination, seats):
         passenger.origin = origin

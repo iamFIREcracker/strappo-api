@@ -18,6 +18,7 @@ from app.pubsub.passengers import MultiplePassengersDeactivator
 from app.pubsub.passengers import MultiplePassengersSerializer
 from app.pubsub.passengers import PassengersACSUserIdExtractor
 from app.pubsub.passengers import PassengerCreator
+from app.pubsub.passengers import PassengerCopier
 from app.pubsub.passengers import PassengerUpdater
 from app.pubsub.passengers import PassengerWithIdGetter
 from app.pubsub.passengers import PassengerSerializer
@@ -71,6 +72,7 @@ class AddPassengerWorkflow(Publisher):
         passenger_getter = PassengerWithIdGetter()
         passenger_creator = PassengerCreator()
         passenger_updater = PassengerUpdater()
+        passenger_copier = PassengerCopier()
         passenger_serializer = PassengerSerializer()
         notifications_resetter = NotificationsResetter()
         task_submitter = TaskSubmitter()
@@ -114,22 +116,22 @@ class AddPassengerWorkflow(Publisher):
             def passenger_created(self, passenger):
                 passenger_id_future.set(passenger.id)
                 orm.add(passenger)
-                passenger.user = user
-                passenger_serializer.perform(passenger)
+                passenger_copier.perform(repository, passenger)
 
         class PassengerUpdaterSubscriber(object):
             def passenger_updated(self, passenger):
                 passenger_id_future.set(passenger.id)
                 orm.add(passenger)
+                passenger_copier.perform(repository, passenger)
+
+        class PassengerCopierSubscriber(object):
+            def passenger_copied(self, passenger):
                 passenger.user = user
                 passenger_serializer.perform(passenger)
 
         class PassengerSerializerSubscriber(object):
             def passenger_serialized(self, passenger):
                 passenger_serialized_future.set(passenger)
-                # This is ugly as hell, but if we don't do that sqlalchemy
-                # would complain we trying to persist a detached instance!
-                passenger.user = None
                 notifications_resetter.perform(redis, user.id)
 
         class NotificationsResetterSubscriber(object):
@@ -145,6 +147,7 @@ class AddPassengerWorkflow(Publisher):
         passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
         passenger_creator.add_subscriber(logger, PassengerCreatorSubscriber())
         passenger_updater.add_subscriber(logger, PassengerUpdaterSubscriber())
+        passenger_copier.add_subscriber(logger, PassengerCopierSubscriber())
         passenger_serializer.add_subscriber(logger,
                                             PassengerSerializerSubscriber())
         notifications_resetter.\

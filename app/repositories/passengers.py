@@ -18,6 +18,15 @@ class PassengersRepository(object):
                                 filter(Passenger.active == True).\
                                 first(),
                         Passenger.session)
+
+    @staticmethod
+    def copy(other):
+        passenger = Passenger(id=other.id, user_id=other.user_id,
+                              origin=other.origin,
+                              destination=other.destination, seats=other.seats,
+                              matched=other.matched, active=other.active)
+        return passenger
+
     @staticmethod
     def get_all_unmatched():
         return [expunged(p, Passenger.session)
