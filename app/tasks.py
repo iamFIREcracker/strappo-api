@@ -305,7 +305,7 @@ def NotifyPassengerDriveRequestCancelledTask(request):
 
     def payload_factory(user):
         alert = gettext('alert_cancelled_drive_request_by_driver',
-                        lang=user.lang) % \
+                        lang=user.locale) % \
                 dict(name=request['driver']['user']['name'])
         badge = redis.\
                 incr(notificationid_for_user(user.id))
