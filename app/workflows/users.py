@@ -88,7 +88,8 @@ class LoginUserWorkflow(Publisher):
                                      form.d.avatar, form.d.locale)
             def already_registered(self, user):
                 form = form_future.get()
-                user_updater.perform(form.d.name, form.d.avatar, form.d.locale)
+                user_updater.perform(user, form.d.name, form.d.avatar,
+                                     form.d.locale)
 
         class UserCreatorSubscriber(object):
             def user_created(self, user):
