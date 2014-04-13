@@ -52,8 +52,9 @@ class User(Base):
                                               "Passenger.active == True)")
 
     def __repr__(self):
-        return u'<User id=%(id)s, acs_id=%(acs_id)s, name=%(name)s, '\
+        data = u'<User id=%(id)s, acs_id=%(acs_id)s, name=%(name)s, '\
                 'avatar=%(avatar)s, locale=%(locale)s>' % self.__dict__
+        return data.encode('utf-8')
 
 
 class Token(Base):
@@ -65,7 +66,8 @@ class Token(Base):
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     def __repr__(self):
-        return u'<Token id=%(id)s, user_id=%(user_id)s>' % self.__dict__
+        data = u'<Token id=%(id)s, user_id=%(user_id)s>' % self.__dict__
+        return data.encode('utf-8')
 
 
 class Driver(Base):
@@ -85,10 +87,11 @@ class Driver(Base):
                                                    "DriveRequest.active == True)")
 
     def __repr__(self):
-        return u'<Driver id=%(id)s, user_id=%(user_id)s, '\
+        data = u'<Driver id=%(id)s, user_id=%(user_id)s, '\
                 'license_plate=%(license_plate)s, '\
                 'telephone=%(telephone)s, hidden=%(hidden)s, '\
                 'active=%(active)s>' % self.__dict__
+        return data.encode('utf-8')
 
 
 class Passenger(Base):
@@ -109,10 +112,11 @@ class Passenger(Base):
                                                    "DriveRequest.active == True)")
 
     def __repr__(self):
-        return u'<Passenger id=%(id)s, user_id=%(user_id)s, '\
+        data = u'<Passenger id=%(id)s, user_id=%(user_id)s, '\
                 'origin=%(origin)s, destination=%(destination)s, '\
                 'seats=%(seats)d, matched=%(matched)s, '\
                 'active=%(active)s>' % self.__dict__
+        return data.encode('utf-8')
 
 
 class DriveRequest(Base):
@@ -127,10 +131,11 @@ class DriveRequest(Base):
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     def __repr__(self):
-        return u'<DriveRequest id=%(id)s, driver_id=%(driver_id)s, '\
+        data = u'<DriveRequest id=%(id)s, driver_id=%(driver_id)s, '\
                 'passenger_id=%(passenger_id)s, '\
                 'accepted=%(accepted)s, '\
                 'active=%(active)s>' % self.__dict__
+        return data.encode('utf-8')
 
 
 class Trace(Base):
@@ -145,8 +150,7 @@ class Trace(Base):
     updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     def __repr__(self):
-        return u'<Trace id=%(id)s, user_id=%(user_id)s, '\
+        data = u'<Trace id=%(id)s, user_id=%(user_id)s, '\
                 'level=%(level)s, date=%(date)s, '\
                 'message=%(message)s>' % self.__dict__
-
-
+        return data.encode('utf-8')
