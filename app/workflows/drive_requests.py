@@ -16,6 +16,7 @@ from app.pubsub.drivers import DriverWithIdGetter
 from app.pubsub.drivers import DriverWithUserIdAuthorizer
 from app.pubsub.drivers import DriverWithoutDriveRequestForPassengerValidator
 from app.pubsub.passengers import MultiplePassengerMatcher
+from app.pubsub.passengers import PassengerUnmatcher
 from app.pubsub.passengers import PassengerWithIdGetter
 from app.pubsub.passengers import PassengerWithUserIdAuthorizer
 from app.weblib.pubsub import Future
@@ -180,9 +181,11 @@ class CancelDriveOfferWorkflow(Publisher):
         driver_getter = DriverWithIdGetter()
         authorizer = DriverWithUserIdAuthorizer()
         request_cancellor = DriveRequestCancellorByDriverId()
+        passenger_unmatcher = PassengerUnmatcher()
         requests_serializer = MultipleDriveRequestsSerializer()
         task_submitter = TaskSubmitter()
         driver_future = Future()
+        request_future = Future()
 
         class DriverGetterSubscriber(object):
             def driver_not_found(self, driver_id):
@@ -201,10 +204,15 @@ class CancelDriveOfferWorkflow(Publisher):
         class DriveRequestCancellorSubscriber(object):
             def drive_request_not_found(self, drive_request_id, driver_id):
                 outer.publish('success')
-
             def drive_request_cancelled(self, request):
                 orm.add(request)
-                requests_serializer.perform([request])
+                request_future.set(request)
+                passenger_unmatcher(request.passenger)
+
+        class PassengerUnmatcherSubscriber(object):
+            def passenger_unmatched(self, passenger):
+                orm.add(passenger)
+                requests_serializer.perform([request_future.get()])
 
         class DriveRequestsSerializerSubscriber(object):
             def drive_requests_serialized(self, requests):
@@ -218,6 +226,8 @@ class CancelDriveOfferWorkflow(Publisher):
         authorizer.add_subscriber(logger, AuthorizerSubscriber())
         request_cancellor.add_subscriber(logger,
                                          DriveRequestCancellorSubscriber())
+        passenger_unmatcher.add_subscriber(logger,
+                                           PassengerUnmatcherSubscriber())
         requests_serializer.add_subscriber(logger,
                                            DriveRequestsSerializerSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
