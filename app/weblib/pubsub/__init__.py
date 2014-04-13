@@ -150,5 +150,6 @@ class FacebookProfileGetter(Publisher):
         if error is not None:
             self.publish('profile_not_found', error)
         else:
+            data['name'] = adapter.name(data['first_name'], data['last_name'])
             data['avatar'] = adapter.avatar(data['id'])
             self.publish('profile_found', data)

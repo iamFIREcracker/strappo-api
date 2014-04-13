@@ -19,5 +19,10 @@ class FacebookAdapter(object):
 
     AVATAR = 'https://graph.facebook.com/%(id)s/picture?width=200&height=200'
 
+    def name(self, first_name, last_name):
+        if last_name:
+            last_name = last_name[0] + '.'
+        return ' '.join([first_name, last_name])
+
     def avatar(self, user_id):
         return self.AVATAR % dict(id=user_id)
