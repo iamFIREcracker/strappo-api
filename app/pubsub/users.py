@@ -31,7 +31,7 @@ class AlreadyRegisteredVerifier(Publisher):
         """
         user = repository.with_acs_id(acs_id)
         if user is not None:
-            self.publish('already_registered', user.id)
+            self.publish('already_registered', user)
         else:
             self.publish('not_registered', acs_id)
 
@@ -112,6 +112,19 @@ class UserCreator(Publisher):
         """
         user = repository.add(acs_id, name, avatar, locale)
         self.publish('user_created', user)
+
+
+class UserUpdater(Publisher):
+    def perform(self, user, name, avatar, locale):
+        """Creates a new user with the specified set of properties.
+
+        On success a 'user_created' message will be published toghether
+        with the created user.
+        """
+        user.name = name
+        user.avatar = avatar
+        user.locale = locale
+        self.publish('user_updated', user)
 
 
 def serialize(user):

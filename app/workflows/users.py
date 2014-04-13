@@ -8,6 +8,7 @@ from app.pubsub.users import AlreadyRegisteredVerifier
 from app.pubsub.users import TokenRefresher
 from app.pubsub.users import TokenSerializer
 from app.pubsub.users import UserCreator
+from app.pubsub.users import UserUpdater
 from app.pubsub.users import UserWithIdGetter
 from app.pubsub.users import UserSerializer
 from app.weblib.forms import describe_invalid_form
@@ -15,6 +16,7 @@ from app.weblib.pubsub import FacebookProfileGetter
 from app.weblib.pubsub import FormValidator
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.pubsub import Publisher
+from app.weblib.pubsub import Future
 
 
 
@@ -51,18 +53,14 @@ class LoginUserWorkflow(Publisher):
                 facebook_token, locale):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
-        already_registered = AlreadyRegisteredVerifier()
         profile_getter = FacebookProfileGetter()
         form_validator = FormValidator()
+        already_registered = AlreadyRegisteredVerifier()
         user_creator = UserCreator()
+        user_updater = UserUpdater()
         token_refresher = TokenRefresher()
         token_serializer = TokenSerializer()
-
-        class AlreadyRegisteredVerifierSubscriber(object):
-            def not_registered(self, acs_id):
-                profile_getter.perform(facebook_adapter, facebook_token)
-            def already_registered(self, user_id):
-                token_refresher.perform(repository, user_id)
+        form_future = Future()
 
         class ProfileGetterSubscriber(object):
             def profile_not_found(self, error):
@@ -80,11 +78,25 @@ class LoginUserWorkflow(Publisher):
                 outer.publish('invalid_form',
                               dict(success=False, errors=errors))
             def valid_form(self, form):
+                form_future.set(form)
+                already_registered.perform(repository, acs_id)
+
+        class AlreadyRegisteredVerifierSubscriber(object):
+            def not_registered(self, acs_id):
+                form = form_future.get()
                 user_creator.perform(repository, form.d.acs_id, form.d.name,
                                      form.d.avatar, form.d.locale)
+            def already_registered(self, user):
+                form = form_future.get()
+                user_updater.perform(form.d.name, form.d.avatar, form.d.locale)
 
         class UserCreatorSubscriber(object):
             def user_created(self, user):
+                orm.add(user)
+                token_refresher.perform(repository, user.id)
+
+        class UserUpdaterSubscriber(object):
+            def user_updated(self, user):
                 orm.add(user)
                 token_refresher.perform(repository, user.id)
 
@@ -97,11 +109,12 @@ class LoginUserWorkflow(Publisher):
             def token_serialized(self, blob):
                 outer.publish('success', blob)
 
-        already_registered.add_subscriber(logger,
-                                          AlreadyRegisteredVerifierSubscriber())
         profile_getter.add_subscriber(logger, ProfileGetterSubscriber())
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
+        already_registered.add_subscriber(logger,
+                                          AlreadyRegisteredVerifierSubscriber())
         user_creator.add_subscriber(logger, UserCreatorSubscriber())
+        user_updater.add_subscriber(logger, UserUpdaterSubscriber())
         token_refresher.add_subscriber(logger, TokenRefresherSubscriber())
         token_serializer.add_subscriber(logger, TokenSerializerSubscriber())
-        already_registered.perform(repository, acs_id)
+        profile_getter.perform(facebook_adapter, facebook_token)
