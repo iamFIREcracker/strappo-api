@@ -17,7 +17,7 @@ class FacebookAdapter(object):
         except urllib2.HTTPError as e:
             return (None, ('Unable to contact the server', url, str(e)))
 
-    AVATAR = 'https://graph.facebook.com/%(id)s/picture?type=large'
+    AVATAR = 'https://graph.facebook.com/%(id)s/picture?width=200&height=200'
 
     def avatar(self, user_id):
         return self.AVATAR % dict(id=user_id)
