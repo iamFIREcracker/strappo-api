@@ -312,6 +312,7 @@ def NotifyPassengerDriveRequestCancelledTask(request):
         return json.dumps({
             'badge': badge,
             'channel': 'channel',
+            'kind': 'cancelled_drive_request',
             'sound': 'default',
             'alert': alert
         })
