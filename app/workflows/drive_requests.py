@@ -207,7 +207,7 @@ class CancelDriveOfferWorkflow(Publisher):
             def drive_request_cancelled(self, request):
                 orm.add(request)
                 request_future.set(request)
-                passenger_unmatcher(request.passenger)
+                passenger_unmatcher.perform(request.passenger)
 
         class PassengerUnmatcherSubscriber(object):
             def passenger_unmatched(self, passenger):
