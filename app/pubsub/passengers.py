@@ -142,6 +142,14 @@ class MultiplePassengersSerializer(Publisher):
                      [_serialize(p) for p in passengers])
 
 
+class PassengerUnmatcher(Publisher):
+    def perform(self, passenger):
+        def unmatch(p):
+            p.matched = False
+            return p
+        self.publish('passenger_unmatched', unmatch(passenger))
+
+
 class MultiplePassengerMatcher(Publisher):
     def perform(self, passengers):
         """Sets the 'matched' property of the given list of passengers to
