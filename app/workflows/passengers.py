@@ -104,12 +104,20 @@ class AddPassengerWorkflow(Publisher):
                 if passenger is None:
                     passenger_creator.perform(repository, user.id,
                                               form.d.origin,
+                                              float(form.d.origin_latitude),
+                                              float(form.d.origin_longitude),
                                               form.d.destination,
+                                              float(form.d.destination_latitude),
+                                              float(form.d.destination_longitude),
                                               int(form.d.seats))
                 else:
                     passenger_updater.perform(passenger,
                                               form.d.origin,
+                                              float(form.d.origin_latitude),
+                                              float(form.d.origin_longitude),
                                               form.d.destination,
+                                              float(form.d.destination_latitude),
+                                              float(form.d.destination_longitude),
                                               int(form.d.seats))
 
         class PassengerCreatorSubscriber(object):

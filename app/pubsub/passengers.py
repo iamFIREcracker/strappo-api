@@ -47,13 +47,18 @@ class ActivePassengersGetter(Publisher):
 
 
 class PassengerCreator(Publisher):
-    def perform(self, repository, user_id, origin, destination, seats):
+    def perform(self, repository, user_id, origin, origin_latitude,
+                origin_longitude, destination, destination_latitude,
+                destination_longitude, seats):
         """Creates a new passenger with the specified set of properties.
 
         On success a 'passenger_created' message will be published toghether
         with the created user.
         """
-        passenger = repository.add(user_id, origin, destination, seats)
+        passenger = repository.add(user_id, origin, origin_latitude,
+                                   origin_longitude, destination,
+                                   destination_latitude, destination_longitude,
+                                   seats)
         self.publish('passenger_created', passenger)
 
 
@@ -64,9 +69,15 @@ class PassengerCopier(Publisher):
 
 
 class PassengerUpdater(Publisher):
-    def perform(self, passenger, origin, destination, seats):
+    def perform(self, passenger, origin, origin_latitude,
+                origin_longitude, destination, destination_latitude,
+                destination_longitude, seats):
         passenger.origin = origin
+        passenger.origin_latitude = origin_latitude
+        passenger.origin_longitude = origin_longitude
         passenger.destination = destination
+        passenger.destination_latitude = destination_latitude
+        passenger.destination_longitude = destination_longitude
         passenger.seats = seats
         self.publish('passenger_updated', passenger)
 
@@ -108,8 +119,14 @@ class PassengerLinkedToDriverWithUserIdAuthorizer(Publisher):
 def serialize(passenger):
     if passenger is None:
         return None
-    return dict(id=passenger.id, origin=passenger.origin,
-                destination=passenger.destination, seats=passenger.seats,
+    return dict(id=passenger.id,
+                origin=passenger.origin,
+                origin_latitude=passenger.origin_latitude,
+                origin_longitude=passenger.origin_longitude,
+                destination=passenger.destination,
+                destination_latitude=passenger.destination_latitude,
+                destination_longitude=passenger.destination_longitude,
+                seats=passenger.seats,
                 matched=passenger.matched)
 
 

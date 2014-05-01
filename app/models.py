@@ -10,6 +10,7 @@ from app.weblib.db import uuid
 from app.weblib.db import Boolean
 from app.weblib.db import Column
 from app.weblib.db import DateTime
+from app.weblib.db import Float
 from app.weblib.db import ForeignKey
 from app.weblib.db import Integer
 from app.weblib.db import String
@@ -100,7 +101,11 @@ class Passenger(Base):
     id = Column(String, default=uuid, primary_key=True)
     user_id = Column(String, ForeignKey('user.id'))
     origin = Column(Text)
+    origin_latitude = Column(Float)
+    origin_longitude = Column(Float)
     destination = Column(Text)
+    destination_latitude = Column(Float)
+    destination_longitude = Column(Float)
     seats = Column(Integer)
     matched = Column(Boolean, default=False)
     active = Column(Boolean, default=True)
@@ -113,9 +118,11 @@ class Passenger(Base):
 
     def __repr__(self):
         data = u'<Passenger id=%(id)s, user_id=%(user_id)s, '\
-                'origin=%(origin)s, destination=%(destination)s, '\
-                'seats=%(seats)d, matched=%(matched)s, '\
-                'active=%(active)s>' % self.__dict__
+               'origin=%(origin)s, origin_latitude=%(origin_latitude)s, '\
+               'origin_longitude=%(origin_longitude)s, '\
+               'destination=%(destination)s, destination_latitude=%(destination_latitude)s'\
+               'destination_longitude=%(destination_longitude)s, '\
+               'seats=%(seats)d, matched=%(matched)s,  active=%(active)s>' % self.__dict__
         return data.encode('utf-8')
 
 

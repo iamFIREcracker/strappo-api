@@ -21,10 +21,17 @@ class PassengersRepository(object):
 
     @staticmethod
     def copy(other):
-        passenger = Passenger(id=other.id, user_id=other.user_id,
+        passenger = Passenger(id=other.id,
+                              user_id=other.user_id,
                               origin=other.origin,
-                              destination=other.destination, seats=other.seats,
-                              matched=other.matched, active=other.active)
+                              origin_latitude=other.origin_latitude,
+                              origin_longitude=other.origin_longitude,
+                              destination=other.destination,
+                              destination_latitude=other.destination_latitude,
+                              destination_longitude=other.destination_longitude,
+                              seats=other.seats,
+                              matched=other.matched,
+                              active=other.active)
         return passenger
 
     @staticmethod

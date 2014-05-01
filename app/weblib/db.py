@@ -10,6 +10,7 @@ from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import DateTime
 from sqlalchemy import Enum
+from sqlalchemy import Float
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import String
@@ -27,8 +28,8 @@ from sqlalchemy.ext.declarative import declarative_base as _declarative_base
 
 __all__ = ['backref', 'create_engine', 'create_session', 'declarative_base',
            'func', 'init_db', 'joinedload', 'joinedload_all', 'relationship',
-           'uuid', 'Boolean', 'Column', 'DateTime', 'Enum', 'ForeignKey',
-           'Integer', 'String', 'Text', 'Time']
+           'uuid', 'Boolean', 'Column', 'DateTime', 'Enum', 'Float',
+           'ForeignKey', 'Integer', 'String', 'Text', 'Time']
 
 
 def create_engine():
