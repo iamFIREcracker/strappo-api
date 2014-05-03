@@ -50,10 +50,18 @@ class PassengersRepository(object):
                         filter(Passenger.active == True)]
 
     @staticmethod
-    def add(user_id, origin, destination, seats):
+    def add(user_id, origin, origin_latitude, origin_longitude,
+            destination, destination_latitude, destination_longitude, seats):
         id = unicode(uuid.uuid4())
-        passenger = Passenger(id=id, user_id=user_id, origin=origin,
-                              destination=destination, seats=seats,
+        passenger = Passenger(id=id,
+                              user_id=user_id,
+                              origin=origin,
+                              origin_latitude=origin_latitude,
+                              origin_longitude=origin_longitude,
+                              destination=destination,
+                              destination_latitude=destination_latitude,
+                              destination_longitude=destination_longitude,
+                              seats=seats,
                               matched=False, active=True)
         return passenger
 
