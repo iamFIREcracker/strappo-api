@@ -46,7 +46,7 @@ def dev():
 
 
 @task
-def stag():
+def stag1():
     env.env_name = 'strappo'
 
     env.user = 'app'
@@ -57,6 +57,17 @@ def stag():
     env.site_url  = 'http://localhost:8080/hello'
     env.repo_branch = 'staging'
 
+@task
+def stag():
+    env.env_name = 'strappo'
+
+    env.user = 'app'
+    env.hosts = ['188.226.177.93']
+
+    env.site_path = '/srv/www/poolit'
+    env.venv_path = '/srv/www/poolit/venv'
+    env.site_url  = 'http://localhost:8080/hello'
+    env.repo_branch = 'staging'
 
 
 def _happy():
@@ -248,7 +259,7 @@ def rtag():
 def prerequisites():
     ''' Prepare the server installing essential packages. '''
     run('sudo aptitude -q2 update')
-    run('sudo apt-get -y install git mercurial')
+    run('sudo apt-get -y install git mercurial gettext')
 
 
 @task
