@@ -317,6 +317,7 @@ def NotifyPassengerDriveRequestCancelledTask(request):
             'badge': badge,
             'channel': 'channel',
             'kind': 'cancelled_drive_request',
+            'driver': request['driver']['id'],
             'sound': 'default',
             'alert': alert
         })
