@@ -120,7 +120,7 @@ class Passenger(Base):
         data = u'<Passenger id=%(id)s, user_id=%(user_id)s, '\
                'origin=%(origin)s, origin_latitude=%(origin_latitude)s, '\
                'origin_longitude=%(origin_longitude)s, '\
-               'destination=%(destination)s, destination_latitude=%(destination_latitude)s'\
+               'destination=%(destination)s, destination_latitude=%(destination_latitude)s, '\
                'destination_longitude=%(destination_longitude)s, '\
                'seats=%(seats)d, matched=%(matched)s,  active=%(active)s>' % self.__dict__
         return data.encode('utf-8')
