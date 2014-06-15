@@ -159,6 +159,7 @@ def NotifyDriversPassengerAlitTask(requests):
             'badge': badge,
             'channel': 'channel',
             'kind': 'alighted_passenger',
+            'passenger': requests[0]['passenger']['id'],
             'sound': 'default',
             'alert': alert
         })
