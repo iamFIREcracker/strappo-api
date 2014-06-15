@@ -158,6 +158,7 @@ def NotifyDriversPassengerAlitTask(requests):
         return json.dumps({
             'badge': badge,
             'channel': 'channel',
+            'kind': 'alighted_passenger',
             'sound': 'default',
             'alert': alert
         })
