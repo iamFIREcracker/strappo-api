@@ -69,6 +69,7 @@ class LoginUserWorkflow(Publisher):
                 params = storage(acs_id=acs_id,
                                  name=profile['name'],
                                  avatar=profile['avatar'],
+                                 email=profile['email'],
                                  locale=locale)
                 form_validator.perform(user_forms.add(), params,
                                        describe_invalid_form)
@@ -85,11 +86,12 @@ class LoginUserWorkflow(Publisher):
             def not_registered(self, acs_id):
                 form = form_future.get()
                 user_creator.perform(repository, form.d.acs_id, form.d.name,
-                                     form.d.avatar, form.d.locale)
+                                     form.d.avatar, form.d.email,
+                                     form.d.locale)
             def already_registered(self, user):
                 form = form_future.get()
                 user_updater.perform(user, form.d.name, form.d.avatar,
-                                     form.d.locale)
+                                     form.d.email, form.d.locale)
 
         class UserCreatorSubscriber(object):
             def user_created(self, user):

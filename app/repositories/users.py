@@ -20,10 +20,10 @@ class UsersRepository(object):
                         User.session)
 
     @staticmethod
-    def add(acs_id, name, avatar, locale):
+    def add(acs_id, name, avatar, email, locale):
         id = unicode(uuid.uuid4())
         user = User(id=id, acs_id=acs_id, name=name, avatar=avatar,
-                    locale=locale)
+                    email=email, locale=locale)
         return user
 
     @staticmethod

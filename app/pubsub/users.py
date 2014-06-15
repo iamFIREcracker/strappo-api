@@ -104,25 +104,16 @@ class TokenSerializer(Publisher):
 
 
 class UserCreator(Publisher):
-    def perform(self, repository, acs_id, name, avatar, locale):
-        """Creates a new user with the specified set of properties.
-
-        On success a 'user_created' message will be published toghether
-        with the created user.
-        """
-        user = repository.add(acs_id, name, avatar, locale)
+    def perform(self, repository, acs_id, name, avatar, email, locale):
+        user = repository.add(acs_id, name, avatar, email, locale)
         self.publish('user_created', user)
 
 
 class UserUpdater(Publisher):
-    def perform(self, user, name, avatar, locale):
-        """Creates a new user with the specified set of properties.
-
-        On success a 'user_created' message will be published toghether
-        with the created user.
-        """
+    def perform(self, user, name, avatar, email, locale):
         user.name = name
         user.avatar = avatar
+        user.email = email
         user.locale = locale
         self.publish('user_updated', user)
 
