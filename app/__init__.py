@@ -39,14 +39,13 @@ def app_factory():
     from app.weblib.app_processors import load_gettext
     from app.weblib.app_processors import load_redis
     from app.weblib.app_processors import load_and_manage_orm
+    from app.weblib.session import RedisStore
 
+    redis = weblib.redis.create_redis()
     views = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'views')
     app = web.application(URLS, globals())
-    dbpath = web.config.DATABASE_URL.replace('sqlite:///', '')
-    db = web.database(dbn='sqlite', db=dbpath)
-    session = web.session.Session(app, web.session.DBStore(db, 'session'))
+    session = web.session.Session(app, RedisStore(redis))
     gettext = weblib.gettext.create_gettext()
-    redis = weblib.redis.create_redis()
 
     app.add_processor(web.loadhook(load_logger))
     app.add_processor(web.loadhook(load_path_url))
