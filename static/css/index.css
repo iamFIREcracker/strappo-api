@@ -1,0 +1,22 @@
+.vcenter {
+    display: inline-block;
+    vertical-align: middle;
+    float: none;
+}
+
+.hcenter {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.voffset-1 { margin-top: 2px; }
+.voffset-2 { margin-top: 5px; }
+.voffset-3 { margin-top: 10px; }
+.voffset-4 { margin-top: 15px; }
+.voffset-5 { margin-top: 30px; }
+.voffset-6 { margin-top: 40px; }
+.voffset-7 { margin-top: 60px; }
+.voffset-8 { margin-top: 80px; }
+.voffset-9 { margin-top: 100px; }
+.voffset-10 { margin-top: 150px; }
