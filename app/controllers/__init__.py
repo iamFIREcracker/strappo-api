@@ -21,3 +21,7 @@ class ParamAuthorizableController(AbstractParamAuthorizableController):
 class IndexController(object):
     def GET(self):
         return web.ctx.render.index()
+
+class TOSController(object):
+    def GET(self):
+        return web.ctx.render.tos()
