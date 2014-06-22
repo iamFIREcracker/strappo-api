@@ -18,25 +18,25 @@ msgid "integer_required"
 msgstr "Deve essere intero"
 
 msgid "alert_matched_passenger"
-msgstr "%(name)s ha accettato il tuo passaggio!"
+msgstr "%(name)s ha accettato il tuo strappo!"
 
 msgid "alert_cancelled_drive_request_by_passenger"
-msgstr "%(name)s non ha più bisogno di uno strappo!"
+msgstr "Oh no! %(name)s non ha più bisogno di uno strappo.."
 
 msgid "alert_unmatched_passenger"
-msgstr "Hei, %(name)s stà cercando uno strappo!"
+msgstr "Hei, %(name)s è in cerca di uno strappo!"
 
 msgid "alert_alit_passenger"
 msgstr "%(name)s è arrivato a destinazione!"
 
 msgid "alert_deactivated_passenger"
-msgstr "%(name)s non ha più bisogno di uno strappo!"
+msgstr "Oh no! %(name)s non ha più bisogno di uno strappo.."
 
 msgid "alert_pending_drive_request"
-msgstr "%(name)s ti ha offerto un passaggio!"
+msgstr "%(name)s ti ha appena offerto uno strappo!"
 
 msgid "alert_deactivated_driver"
-msgstr "Oh no, %(name)s non ti puo più offrire un passaggio!"
+msgstr "Oh no! %(name)s non può più offrirti uno strappo.."
 
 msgid "alert_cancelled_drive_request_by_driver"
-msgstr "Oh no, %(name)s non ti puo più offrire un passaggio!"
+msgstr "Oh no! %(name)s non può più offrirti uno strappo.."
