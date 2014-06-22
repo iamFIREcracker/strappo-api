@@ -57,6 +57,7 @@ def NotifyDriverDriveRequestAccepted(request):
                               'kind': 'matched_passenger',
                               'drive_request': request['id'],
                               'sound': 'default',
+                              'icon': 'notificationicon',
                               'alert': alert
                           }))
     return ret.get()
@@ -95,6 +96,7 @@ def NotifyDriverDriveRequestCancelledByPassengerTask(request):
                               'kind': 'cancelled_drive_request',
                               'passenger': request['passenger']['id'],
                               'sound': 'default',
+                              'icon': 'notificationicon',
                               'alert': alert
                           }))
     return ret.get()
@@ -162,6 +164,7 @@ def NotifyDriversPassengerAlitTask(requests):
             'kind': 'alighted_passenger',
             'passenger': requests[0]['passenger']['id'],
             'sound': 'default',
+            'icon': 'notificationicon',
             'alert': alert
         })
 
@@ -203,6 +206,7 @@ def NotifyDriversDeactivatedPassengerTask(requests):
             'kind': 'deactivated_passenger',
             'passenger': requests[0]['passenger']['id'],
             'sound': 'default',
+            'icon': 'notificationicon',
             'alert': alert
         })
 
@@ -241,6 +245,7 @@ def NotifyPassengerDriveRequestPending(request):
             'kind': 'pending_drive_request',
             'drive_request': request['id'],
             'sound': 'default',
+            'icon': 'notificationicon',
             'alert': alert
         })
 
@@ -282,6 +287,7 @@ def NotifyPassengersDriverDeactivatedTask(requests):
             'badge': badge,
             'channel': 'channel',
             'sound': 'default',
+            'icon': 'notificationicon',
             'alert': alert
         })
 
@@ -322,6 +328,7 @@ def NotifyPassengerDriveRequestCancelledTask(request):
             'kind': 'cancelled_drive_request',
             'driver': request['driver']['id'],
             'sound': 'default',
+            'icon': 'notificationicon',
             'alert': alert
         })
 
