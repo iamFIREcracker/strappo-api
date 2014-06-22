@@ -121,6 +121,7 @@ def NotifyDriversPassengerRegisteredTask(passenger):
             'kind': 'unmatched_passenger',
             'passenger': passenger['id'],
             'sound': 'default',
+            'icon': 'notificationicon',
             'alert': alert
         })
 
