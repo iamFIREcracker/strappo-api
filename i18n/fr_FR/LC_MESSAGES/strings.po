@@ -21,7 +21,7 @@ msgid "alert_matched_passenger"
 msgstr "%(name)s a bien accepté ton offre de lui conduire!"
 
 msgid "alert_cancelled_drive_request_by_passenger"
-msgstr "%(name)s n’a plus besoin que tu lui conduises!"
+msgstr "Ah Mince! %(name)s n’a plus besoin que tu lui conduises.."
 
 msgid "alert_unmatched_passenger"
 msgstr "Coucou, %(name)s cherche un conducteur!"
@@ -30,13 +30,13 @@ msgid "alert_alit_passenger"
 msgstr "%(name)s est arrivé(e) à destination!"
 
 msgid "alert_deactivated_passenger"
-msgstr "%(name)s ne cherche plus un conducteur!"
+msgstr "Ah Mince! %(name)s ne cherche plus un conducteur.."
 
 msgid "alert_pending_drive_request"
 msgstr "%(name)s s’est offert(e) de te conduire!"
 
 msgid "alert_deactivated_driver"
-msgstr "Ah Mince! %(name)s ne peut plus te conduire!"
+msgstr "Ah Mince! %(name)s ne peut plus te conduire.."
 
 msgid "alert_cancelled_drive_request_by_driver"
-msgstr "Ah Mince! %(name)s ne peut plus te conduire!"
+msgstr "Ah Mince! %(name)s ne peut plus te conduire.."

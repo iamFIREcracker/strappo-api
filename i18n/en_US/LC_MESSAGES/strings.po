@@ -21,22 +21,22 @@ msgid "alert_matched_passenger"
 msgstr "%(name)s just accepted your drive request!"
 
 msgid "alert_cancelled_drive_request_by_passenger"
-msgstr "%(name)s just cancelled her drive request!"
+msgstr "Oh no! %(name)s is no more looking for a ride.."
 
 msgid "alert_unmatched_passenger"
-msgstr "Hei, %(name)s is looking for a lift!"
+msgstr "Hei, %(name)s is looking for a ride!"
 
 msgid "alert_alit_passenger"
 msgstr "%(name)s has arrived at destination!"
 
 msgid "alert_deactivated_passenger"
-msgstr "Oh no, %(name)s is no more looking for a ride!"
+msgstr "Oh no! %(name)s is no more looking for a ride.."
 
 msgid "alert_pending_drive_request"
-msgstr "Yeah, %(name)s has offered to give you a ride!"
+msgstr "%(name)s has offered to give you a ride!"
 
 msgid "alert_deactivated_driver"
-msgstr "Oh no, %(name)s cannot drive you around anymore!"
+msgstr "Oh no! %(name)s cannot drive you around anymore.."
 
 msgid "alert_cancelled_drive_request_by_driver"
-msgstr "Oh no, %(name)s cannot drive you around anymore!"
+msgstr "Oh no! %(name)s cannot drive you around anymore.."
