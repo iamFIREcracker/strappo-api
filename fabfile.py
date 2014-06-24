@@ -32,21 +32,6 @@ def vagrant_key():
 
 @task
 def dev():
-    ''' Use virtual machine settings. '''
-    env.env_name = 'vagrant'
-
-    env.user = 'vagrant'
-    env.hosts = ['127.0.0.1:2222']
-    env.key_filename = vagrant_key()
-
-    env.site_path = '/srv/www/poolit'
-    env.venv_path = '/srv/www/poolit/venv'
-    env.site_url  = 'http://localhost:8080/hello'
-    env.repo_branch = 'develop'
-
-
-@task
-def stag1():
     env.env_name = 'strappo'
 
     env.user = 'app'
@@ -55,10 +40,10 @@ def stag1():
     env.site_path = '/srv/www/poolit'
     env.venv_path = '/srv/www/poolit/venv'
     env.site_url  = 'http://localhost:8080/hello'
-    env.repo_branch = 'staging'
+    env.repo_branch = 'develop'
 
 @task
-def stag():
+def prod():
     env.env_name = 'strappo'
 
     env.user = 'app'
@@ -68,7 +53,6 @@ def stag():
     env.venv_path = '/srv/www/poolit/venv'
     env.site_url  = 'http://localhost:8080/hello'
     env.repo_branch = 'staging'
-
 
 def _happy():
     print(green('\nLooks good from here!\n'))
