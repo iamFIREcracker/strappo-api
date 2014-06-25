@@ -19,8 +19,10 @@ from fabric.colors import red
 from fabric.decorators import task
 
 
+env.appname = 'poolit'
+env.servername = 'http://api.getstrappo.com'
 env.repo_url = 'ssh://hg@bitbucket.org/iamFIREcracker/poolit'
-env.repo_branch = 'default'
+env.site_url = 'http://localhost:8080/hello'
 
 
 def vagrant_key():
@@ -37,9 +39,8 @@ def dev():
     env.user = 'app'
     env.hosts = ['192.241.139.130']
 
-    env.site_path = '/srv/www/poolit'
-    env.venv_path = '/srv/www/poolit/venv'
-    env.site_url  = 'http://localhost:8080/hello'
+    env.site_path = '/srv/www/%s' % env.appname
+    env.venv_path = '/srv/www/%s/venv' % env.appname
     env.repo_branch = 'develop'
 
     env.config = 'dev_config.py'
@@ -51,12 +52,12 @@ def prod():
     env.user = 'app'
     env.hosts = ['188.226.177.93']
 
-    env.site_path = '/srv/www/poolit'
-    env.venv_path = '/srv/www/poolit/venv'
-    env.site_url  = 'http://localhost:8080/hello'
+    env.site_path = '/srv/www/%s' % env.appname
+    env.venv_path = '/srv/www/%s/venv' % env.appname
     env.repo_branch = 'staging'
 
     env.config = 'prod_config.py'
+
 
 
 def _happy():
@@ -173,9 +174,9 @@ def dbpopulate():
 @task
 def papply():
     '''Apply Puppet manifest. Usable from other commands or the CLI.'''
-    require('user')
+    require('appname', 'servername', 'user')
 
-    sdo('FACTER_APPNAME=poolit FACTER_USER=%s puppet apply --modulepath=puppet/modules/ puppet/base.pp' % env.user)
+    sdo('FACTER_APPNAME=%s FACTER_SERVERNAME=%s FACTER_USER=%s puppet apply --modulepath=puppet/modules/ puppet/base.pp' % (env.appname, env.servername, env.user))
 
 
 @task

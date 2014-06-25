@@ -6,7 +6,7 @@ upstream <%= @appname %> {
 
 server {
     listen 80 default;
-    server_name _;
+    server_name <%= @servername %>;
 
     location /static/ {
         alias /srv/www/<%= @appname %>/static/;

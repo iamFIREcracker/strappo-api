@@ -12,7 +12,7 @@ class nginx {
   }
 }
 
-define nginx::site( $config, $appname ) {
+define nginx::site( $config, $appname, $servername ) {
   file { "/etc/nginx/sites-enabled/${appname}":
     ensure  => present,
     owner   => root,
