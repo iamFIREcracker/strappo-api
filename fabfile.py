@@ -20,6 +20,7 @@ from fabric.decorators import task
 
 
 env.appname = 'poolit'
+env.appport = '8000'
 env.servername = 'http://api.getstrappo.com'
 env.repo_url = 'ssh://hg@bitbucket.org/iamFIREcracker/poolit'
 env.site_url = 'http://localhost:8080/hello'
@@ -34,7 +35,7 @@ def vagrant_key():
 
 @task
 def dev():
-    env.env_name = 'strappo'
+    env.env_name = 'strappo-ny'
 
     env.user = 'app'
     env.hosts = ['192.241.139.130']
@@ -47,7 +48,7 @@ def dev():
 
 @task
 def prod():
-    env.env_name = 'strappo'
+    env.env_name = 'strappo-am'
 
     env.user = 'app'
     env.hosts = ['188.226.177.93']
@@ -174,9 +175,9 @@ def dbpopulate():
 @task
 def papply():
     '''Apply Puppet manifest. Usable from other commands or the CLI.'''
-    require('appname', 'servername', 'user')
+    require('appname', 'appport', 'servername', 'user')
 
-    sdo('FACTER_APPNAME=%s FACTER_SERVERNAME=%s FACTER_USER=%s puppet apply --modulepath=puppet/modules/ puppet/base.pp' % (env.appname, env.servername, env.user))
+    sdo('FACTER_APPNAME=%s FACTER_APPPORT=%s FACTER_SERVERNAME=%s FACTER_USER=%s puppet apply --modulepath=puppet/modules/ puppet/base.pp' % (env.appname, env.appport, env.servername, env.user))
 
 
 @task

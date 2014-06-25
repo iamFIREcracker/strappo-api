@@ -17,6 +17,7 @@ exec { "add_${user}_to_group_www-data":
 nginx::site {'gunicorn':
   config => 'gunicorn',
   appname => $appname,
+  appport => $appport
   servername => $servername,
 }
 
