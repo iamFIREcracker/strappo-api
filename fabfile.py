@@ -42,6 +42,8 @@ def dev():
     env.site_url  = 'http://localhost:8080/hello'
     env.repo_branch = 'develop'
 
+    env.config = 'dev_config.py'
+
 @task
 def prod():
     env.env_name = 'strappo'
@@ -53,6 +55,9 @@ def prod():
     env.venv_path = '/srv/www/poolit/venv'
     env.site_url  = 'http://localhost:8080/hello'
     env.repo_branch = 'staging'
+
+    env.config = 'prod_config.py'
+
 
 def _happy():
     print(green('\nLooks good from here!\n'))
@@ -149,8 +154,9 @@ def vsdo(cmd=""):
 @task
 def cupload():
     '''Upload the configuration file on the remote server.'''
+    require('config')
     with cd(env.site_path):
-        put('prod_config.py', 'prod_config.py')
+        put(env.config, 'local_config.py')
 
 
 @task
