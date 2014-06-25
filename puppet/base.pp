@@ -18,7 +18,7 @@ nginx::site {'gunicorn':
   config => 'gunicorn',
   appname => $appname,
   appport => $appport,
-  servername => $servername
+  servername => $servername,
 }
 
 supervisor::gunicorn {'supervisor-gunicorn':

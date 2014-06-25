@@ -1,7 +1,7 @@
 upstream <%= @appname %> {
     # server unix:/tmp/gunicorn.sock fail_timeout=0;
     # For a TCP configuration:
-    server 127.0.0.1:<%= @appport => fail_timeout=0;
+    server 127.0.0.1:<%= @appport %> fail_timeout=0;
 }
 
 server {
