@@ -19,10 +19,10 @@ from fabric.colors import red
 from fabric.decorators import task
 
 
-env.appname = 'poolit'
+env.appname = 'strappo-api'
 env.appport = '8000'
 env.servername = 'http://api.getstrappo.com'
-env.repo_url = 'ssh://hg@bitbucket.org/iamFIREcracker/poolit'
+env.repo_url = 'ssh://hg@bitbucket.org/iamFIREcracker/strappo-api'
 env.site_url = 'http://localhost:8080/hello'
 
 

@@ -22,7 +22,7 @@ INSTALL_REQUIRES = open(requirements).read().split()
 
 
 params = dict(
-    name='poolit',
+    name='strappo-api',
     version=get_version(),
     packages=find_packages(exclude=['fabfile']),
     install_requires=INSTALL_REQUIRES,
