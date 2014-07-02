@@ -44,7 +44,6 @@ class ViewUserController(ParamAuthorizableController):
 class LoginUserController(ParamAuthorizableController):
     @api
     def POST(self):
-        current_user = self.current_user
         data = web.input(acs_id=None, facebook_token=None, locale=None)
         logger = LoggingSubscriber(web.ctx.logger)
         login_authorized = LoginUserWorkflow()
@@ -69,7 +68,7 @@ class LoginUserController(ParamAuthorizableController):
                                           user_future.get().driver.id
                                             if user_future.get().driver
                                             else None,
-                                          current_user,
+                                          user_future.get(),
                                           NotifyPassengersDriverDeactivatedTask)
 
         class DeactivateDriverSubscriber(object):
@@ -83,7 +82,7 @@ class LoginUserController(ParamAuthorizableController):
                                              user_future.get().passenger.id
                                                 if user_future.get().passenger
                                                 else None,
-                                             current_user,
+                                             user_future.get(),
                                              NotifyDriversDeactivatedPassengerTask)
 
         class DeactivatePassengerSubscriber(object):
