@@ -51,7 +51,6 @@ class LoginUserController(ParamAuthorizableController):
         deactivate_passenger = DeactivatePassengerWorkflow()
         token_future = Future()
         user_future = Future()
-        passenger_future = Future()
         ret = Future()
 
         class LoginAuthorizedSubscriber(object):
@@ -61,13 +60,14 @@ class LoginUserController(ParamAuthorizableController):
             def invalid_form(self, errors):
                 web.ctx.orm.rollback()
                 raise web.badrequest()
-            def success(self, token, user, driver, passenger):
+            def success(self, token, user):
                 token_future.set(token)
                 user_future.set(user)
-                passenger_future.set(passenger)
                 deactivate_driver.perform(web.ctx.logger, web.ctx.orm,
                                           DriversRepository,
-                                          driver.id if driver else None,
+                                          user_future.get().driver.id
+                                            if user_future.get().driver
+                                            else None,
                                           user_future.get(),
                                           NotifyPassengersDriverDeactivatedTask)
 
@@ -77,11 +77,11 @@ class LoginUserController(ParamAuthorizableController):
             def unauthorized(self):
                 self.success()
             def success(self):
-                passenger = passenger_future.get()
                 deactivate_passenger.perform(web.ctx.logger, web.ctx.orm,
                                              PassengersRepository,
-                                             passenger.id
-                                                if passenger else None,
+                                             user_future.get().passenger.id
+                                                if user_future.get().passenger
+                                                else None,
                                              user_future.get(),
                                              NotifyDriversDeactivatedPassengerTask)
 
