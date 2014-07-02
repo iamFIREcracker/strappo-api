@@ -4,12 +4,18 @@
 import web
 
 from app.controllers import ParamAuthorizableController
+from app.repositories.drivers import DriversRepository
+from app.repositories.passengers import PassengersRepository
 from app.repositories.users import UsersRepository
+from app.tasks import NotifyDriversDeactivatedPassengerTask
+from app.tasks import NotifyPassengersDriverDeactivatedTask
 from app.weblib.adapters.social.facebook import FacebookAdapter
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.request_decorators import api
 from app.weblib.request_decorators import authorized
+from app.workflows.drivers import DeactivateDriverWorkflow
+from app.workflows.passengers import DeactivatePassengerWorkflow
 from app.workflows.users import LoginUserWorkflow
 from app.workflows.users import ViewUserWorkflow
 from app.weblib.utils import jsonify
@@ -38,9 +44,14 @@ class ViewUserController(ParamAuthorizableController):
 class LoginUserController(ParamAuthorizableController):
     @api
     def POST(self):
+        current_user = self.current_user
         data = web.input(acs_id=None, facebook_token=None, locale=None)
         logger = LoggingSubscriber(web.ctx.logger)
         login_authorized = LoginUserWorkflow()
+        deactivate_driver = DeactivateDriverWorkflow()
+        deactivate_passenger = DeactivatePassengerWorkflow()
+        token_future = Future()
+        user_future = Future()
         ret = Future()
 
         class LoginAuthorizedSubscriber(object):
@@ -50,11 +61,46 @@ class LoginUserController(ParamAuthorizableController):
             def invalid_form(self, errors):
                 web.ctx.orm.rollback()
                 raise web.badrequest()
-            def success(self, blob):
+            def success(self, token, user):
+                token_future.set(token)
+                user_future.set(user)
+                deactivate_driver.perform(web.ctx.logger, web.ctx.orm,
+                                          DriversRepository,
+                                          user_future.get().driver.id
+                                            if user_future.get().driver
+                                            else None,
+                                          current_user,
+                                          NotifyPassengersDriverDeactivatedTask)
+
+        class DeactivateDriverSubscriber(object):
+            def not_found(self, driver_id):
+                self.success()
+            def unauthorized(self):
+                self.success()
+            def success(self):
+                deactivate_passenger.perform(web.ctx.logger, web.ctx.orm,
+                                             PassengersRepository,
+                                             user_future.get().passenger.id
+                                                if user_future.get().passenger
+                                                else None,
+                                             current_user,
+                                             NotifyDriversDeactivatedPassengerTask)
+
+        class DeactivatePassengerSubscriber(object):
+            def not_found(self, passenger_id):
+                self.success()
+            def unauthorized(self):
+                self.success()
+            def success(self):
                 web.ctx.orm.commit()
-                ret.set(jsonify(token=blob))
+                ret.set(jsonify(token_future.get()))
+
 
         login_authorized.add_subscriber(logger, LoginAuthorizedSubscriber())
+        deactivate_driver.add_subscriber(logger,
+                                         DeactivateDriverSubscriber())
+        deactivate_passenger.add_subscriber(logger,
+                                            DeactivatePassengerSubscriber())
         login_authorized.perform(web.ctx.orm, web.ctx.logger, UsersRepository,
                                  data.acs_id, FacebookAdapter(),
                                  data.facebook_token, data.locale)

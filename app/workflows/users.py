@@ -61,6 +61,7 @@ class LoginUserWorkflow(Publisher):
         token_refresher = TokenRefresher()
         token_serializer = TokenSerializer()
         form_future = Future()
+        user_future = Future()
 
         class ProfileGetterSubscriber(object):
             def profile_not_found(self, error):
@@ -96,11 +97,13 @@ class LoginUserWorkflow(Publisher):
         class UserCreatorSubscriber(object):
             def user_created(self, user):
                 orm.add(user)
+                user_future.set(user)
                 token_refresher.perform(repository, user.id)
 
         class UserUpdaterSubscriber(object):
             def user_updated(self, user):
                 orm.add(user)
+                user_future.set(user)
                 token_refresher.perform(repository, user.id)
 
         class TokenRefresherSubscriber(object):
@@ -110,7 +113,7 @@ class LoginUserWorkflow(Publisher):
 
         class TokenSerializerSubscriber(object):
             def token_serialized(self, blob):
-                outer.publish('success', blob)
+                outer.publish('success', blob, user_future.get())
 
         profile_getter.add_subscriber(logger, ProfileGetterSubscriber())
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
