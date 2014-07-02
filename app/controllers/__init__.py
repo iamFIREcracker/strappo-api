@@ -16,12 +16,3 @@ class CookieAuthorizableController(AbstractCookieAuthorizableController):
 class ParamAuthorizableController(AbstractParamAuthorizableController):
     def get_user(self, token):
         return UsersRepository.authorized_by(token)
-
-
-class IndexController(object):
-    def GET(self):
-        return web.ctx.render.index()
-
-class TOSController(object):
-    def GET(self):
-        return web.ctx.render.tos()
