@@ -39,7 +39,7 @@ def dev():
     env.config = 'dev_config.py'
 
     env.servername = 'api.dev.getstrappo.com'
-    env.site_url = 'http://%s/info' % env.hosts[0]
+    env.site_url = 'http://%s/1/info' % env.hosts[0]
 
 @task
 def prod():
@@ -55,7 +55,7 @@ def prod():
     env.config = 'prod_config.py'
 
     env.servername = 'api.getstrappo.com'
-    env.site_url = 'http://%s/info' % env.hosts[0]
+    env.site_url = 'http://%s/1/info' % env.hosts[0]
 
 
 @task

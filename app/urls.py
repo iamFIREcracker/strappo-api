@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from app.controllers import InfoController
 from app.controllers.destinations import ListDestinationsController
 from app.controllers.destinations import ListPredefinedDestinationsController
 from app.controllers.drive_requests import ListActiveDriveRequestsController
@@ -26,6 +27,8 @@ from app.controllers.users import ViewUserController
 
 
 URLS = (
+    '/1/info', InfoController,
+
     '/1/users/login', LoginUserController,
     '/1/users/(.+)/view', ViewUserController,
 

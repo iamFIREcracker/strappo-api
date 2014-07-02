@@ -16,3 +16,8 @@ class CookieAuthorizableController(AbstractCookieAuthorizableController):
 class ParamAuthorizableController(AbstractParamAuthorizableController):
     def get_user(self, token):
         return UsersRepository.authorized_by(token)
+
+
+class InfoController(object):
+    def GET(self):
+        return ""
