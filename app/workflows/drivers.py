@@ -131,8 +131,9 @@ class DeactivateDriverWorkflow(Publisher):
 
         class DriversDeactivatorSubscriber(object):
             def drivers_hid(self, drivers):
-                orm.add(drivers[0])
-                requests_deactivator.perform(drivers[0].drive_requests)
+                driver = orm.merge(drivers[0])
+                orm.add(driver)
+                requests_deactivator.perform(driver.drive_requests)
 
         class DriveRequestsDeactivatorSubscriber(object):
             def drive_requests_hid(self, requests):

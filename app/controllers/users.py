@@ -61,9 +61,6 @@ class LoginUserController(ParamAuthorizableController):
                 web.ctx.orm.rollback()
                 raise web.badrequest()
             def success(self, token, user):
-                web.ctx.orm.commit() # XXX
-                ret.set(jsonify(token=token)) # XXX
-                return # XXX
                 token_future.set(token)
                 user_future.set(user)
                 deactivate_driver.perform(web.ctx.logger, web.ctx.orm,
@@ -95,7 +92,7 @@ class LoginUserController(ParamAuthorizableController):
                 self.success()
             def success(self):
                 web.ctx.orm.commit()
-                ret.set(jsonify(token_future.get()))
+                ret.set(jsonify(token=token_future.get()))
 
 
         login_authorized.add_subscriber(logger, LoginAuthorizedSubscriber())
