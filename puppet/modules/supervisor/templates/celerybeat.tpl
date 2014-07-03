@@ -1,4 +1,4 @@
-[program:celerybeat]
+[program:<%= @appname %>-celerybeat]
 command=/srv/www/<%= @appname %>/venv/bin/celery beat --app=app --loglevel=info --logfile=celerybeat.log
 directory=/srv/www/<%= @appname %>
 user=<%= @user %>
