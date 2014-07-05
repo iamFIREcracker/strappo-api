@@ -7,7 +7,7 @@ Vagrant::Config.run do |config|
   # please see the online documentation at vagrantup.com.
 
   # Host name
-  config.vm.host_name = "poolit"
+  config.vm.host_name = "strappo-api"
 
   # Every Vagrant virtual environment requires a box to build off of.
   config.vm.box = "precise32"
@@ -41,7 +41,7 @@ Vagrant::Config.run do |config|
   # Share an additional folder to the guest VM. The first argument is
   # an identifier, the second is the path on the guest to mount the
   # folder, and the third is the path on the host to the actual folder.
-  #config.vm.share_folder "v-root", "/srv/www/poolit", "."
+  #config.vm.share_folder "v-root", "/srv/www/strappo-api", "."
 
   # Fix symlink error in shared folderds
   config.vm.customize ["setextradata", :id, "VBoxInternal2/SharedFoldersEnableSymlinksCreate/v-root", "1"]
@@ -71,7 +71,7 @@ Vagrant::Config.run do |config|
     #puppet.manifests_path = "puppet"
     #puppet.module_path = "puppet/modules"
     #puppet.manifest_file  = "base.pp"
-    #puppet.facter = { "appname" => "poolit", "user" => "vagrant" }
+    #puppet.facter = { "appname" => "strappo-api", "user" => "vagrant" }
   #end
 
   # Enable provisioning with chef solo, specifying a cookbooks path, roles

@@ -8,7 +8,7 @@ class supervisor {
 }
 
 define supervisor::gunicorn( $appname, $user ) {
-  file { "/etc/supervisor/conf.d/gunicorn.conf":
+  file { "/etc/supervisor/conf.d/${appname}-gunicorn.conf":
     ensure  => present,
     owner   => root,
     group   => root,
@@ -20,7 +20,7 @@ define supervisor::gunicorn( $appname, $user ) {
 }
 
 define supervisor::celery( $appname, $user ) {
-  file { "/etc/supervisor/conf.d/celery.conf":
+  file { "/etc/supervisor/conf.d/${appname}-celery.conf":
     ensure  => present,
     owner   => root,
     group   => root,
@@ -32,7 +32,7 @@ define supervisor::celery( $appname, $user ) {
 }
 
 define supervisor::celerybeat( $appname, $user ) {
-  file { "/etc/supervisor/conf.d/celerybeat.conf":
+  file { "/etc/supervisor/conf.d/${appname}-celerybeat.conf":
     ensure  => present,
     owner   => root,
     group   => root,

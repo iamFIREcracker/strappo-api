@@ -9,5 +9,5 @@ build/*
 cscope*
 dist/*
 local_config.py
-poolit.egg*
+strappo-api.egg*
 tags

@@ -7,12 +7,21 @@ class nginx {
     ensure => absent,
     before => Service[nginx]
   }
+  file { "/etc/nginx/nginx.conf":
+    ensure  => present,
+    owner   => root,
+    group   => root,
+    mode    => '644',
+    content => template("nginx/nginx.conf.tpl"),
+    require => Package[nginx],
+    notify  => Service[nginx],
+  }
   service { 'nginx':
     ensure => running,
   }
 }
 
-define nginx::site( $config, $appname ) {
+define nginx::site( $config, $appname, $appport, $servername ) {
   file { "/etc/nginx/sites-enabled/${appname}":
     ensure  => present,
     owner   => root,

@@ -1,4 +1,5 @@
-APP_NAME = 'poolit'
+
+APP_NAME = 'strappo-api'
 TAG = '0.0.1'
 
 DEBUG = False

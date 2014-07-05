@@ -18,10 +18,6 @@ class ParamAuthorizableController(AbstractParamAuthorizableController):
         return UsersRepository.authorized_by(token)
 
 
-class IndexController(object):
+class InfoController(object):
     def GET(self):
-        return web.ctx.render.index()
-
-class TOSController(object):
-    def GET(self):
-        return web.ctx.render.tos()
+        return ""
