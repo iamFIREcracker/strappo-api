@@ -3,6 +3,8 @@
 
 import json
 
+import web
+
 from app.celery import celery
 from app.pubsub.notifications import notificationid_for_user
 from app.repositories.drive_requests import DriveRequestsRepository
@@ -26,6 +28,7 @@ from app.workflows.passengers import NotifyPassengersWorkflow
 
 @celery.task
 def NotifyDriverDriveRequestAccepted(request):
+    channel = web.config.TITANIUM_NOTIFICATION_CHANNEL
     logger = create_logger()
     gettext = create_gettext()
     redis = create_redis()
@@ -50,10 +53,10 @@ def NotifyDriverDriveRequestAccepted(request):
     notify_driver.add_subscriber(logging_subscriber,
                                  NotifyDriverSubscriber())
     notify_driver.perform(logger, DriversRepository, request['driver']['id'],
-                          push_adapter, 'channel',
+                          push_adapter, channel,
                           json.dumps({
                               'badge': badge,
-                              'channel': 'channel',
+                              'channel': channel,
                               'kind': 'matched_passenger',
                               'drive_request': request['id'],
                               'sound': 'default',
@@ -65,6 +68,7 @@ def NotifyDriverDriveRequestAccepted(request):
 
 @celery.task
 def NotifyDriverDriveRequestCancelledByPassengerTask(request):
+    channel = web.config.TITANIUM_NOTIFICATION_CHANNEL
     logger = create_logger()
     gettext = create_gettext()
     redis = create_redis()
@@ -89,10 +93,10 @@ def NotifyDriverDriveRequestCancelledByPassengerTask(request):
     notify_driver.add_subscriber(logging_subscriber,
                                  NotifyDriverSubscriber())
     notify_driver.perform(logger, DriversRepository, request['driver']['id'],
-                          push_adapter, 'channel',
+                          push_adapter, channel,
                           json.dumps({
                               'badge': badge,
-                              'channel': 'channel',
+                              'channel': channel,
                               'kind': 'cancelled_drive_request',
                               'passenger': request['passenger']['id'],
                               'sound': 'default',
@@ -104,6 +108,7 @@ def NotifyDriverDriveRequestCancelledByPassengerTask(request):
 
 @celery.task
 def NotifyDriversPassengerRegisteredTask(passenger):
+    channel = web.config.TITANIUM_NOTIFICATION_CHANNEL
     logger = create_logger()
     gettext = create_gettext()
     redis = create_redis()
@@ -119,7 +124,7 @@ def NotifyDriversPassengerRegisteredTask(passenger):
                 incr(notificationid_for_user(user.id))
         return json.dumps({
             'badge': badge,
-            'channel': 'channel',
+            'channel': channel,
             'kind': 'unmatched_passenger',
             'passenger': passenger['id'],
             'sound': 'default',
@@ -135,13 +140,14 @@ def NotifyDriversPassengerRegisteredTask(passenger):
 
     notify_drivers.add_subscriber(logging_subscriber,
                                   NotifyDriversSubscriber())
-    notify_drivers.perform(logger, DriversRepository, push_adapter, 'channel',
+    notify_drivers.perform(logger, DriversRepository, push_adapter, channel,
                            payload_factory)
     return ret.get()
 
 
 @celery.task
 def NotifyDriversPassengerAlitTask(requests):
+    channel = web.config.TITANIUM_NOTIFICATION_CHANNEL
     logger = create_logger()
     gettext = create_gettext()
     redis = create_redis()
@@ -160,7 +166,7 @@ def NotifyDriversPassengerAlitTask(requests):
                 incr(notificationid_for_user(user.id))
         return json.dumps({
             'badge': badge,
-            'channel': 'channel',
+            'channel': channel,
             'kind': 'alighted_passenger',
             'passenger': requests[0]['passenger']['id'],
             'sound': 'default',
@@ -178,12 +184,13 @@ def NotifyDriversPassengerAlitTask(requests):
                                   NotifyDriversSubscriber())
     notify_drivers.perform(logger, DriversRepository,
                            [r['driver']['id'] for r in requests],
-                           push_adapter, 'channel', payload_factory)
+                           push_adapter, channel, payload_factory)
     return ret.get()
 
 
 @celery.task
 def NotifyDriversDeactivatedPassengerTask(requests):
+    channel = web.config.TITANIUM_NOTIFICATION_CHANNEL
     logger = create_logger()
     gettext = create_gettext()
     redis = create_redis()
@@ -202,7 +209,7 @@ def NotifyDriversDeactivatedPassengerTask(requests):
                 incr(notificationid_for_user(user.id))
         return json.dumps({
             'badge': badge,
-            'channel': 'channel',
+            'channel': channel,
             'kind': 'deactivated_passenger',
             'passenger': requests[0]['passenger']['id'],
             'sound': 'default',
@@ -220,12 +227,13 @@ def NotifyDriversDeactivatedPassengerTask(requests):
                                   NotifyDriversSubscriber())
     notify_drivers.perform(logger, DriversRepository,
                            [r['driver']['id'] for r in requests],
-                           push_adapter, 'channel', payload_factory)
+                           push_adapter, channel, payload_factory)
     return ret.get()
 
 
 @celery.task
 def NotifyPassengerDriveRequestPending(request):
+    channel = web.config.TITANIUM_NOTIFICATION_CHANNEL
     logger = create_logger()
     gettext = create_gettext()
     redis = create_redis()
@@ -241,7 +249,7 @@ def NotifyPassengerDriveRequestPending(request):
                 incr(notificationid_for_user(user.id))
         return json.dumps({
             'badge': badge,
-            'channel': 'channel',
+            'channel': channel,
             'kind': 'pending_drive_request',
             'drive_request': request['id'],
             'sound': 'default',
@@ -261,12 +269,13 @@ def NotifyPassengerDriveRequestPending(request):
                                     NotifyPassengerSubscriber())
     notify_passengers.perform(logger, PassengersRepository,
                               [request['passenger']['id']],
-                              push_adapter, 'channel', payload_factory)
+                              push_adapter, channel, payload_factory)
     return ret.get()
 
 
 @celery.task
 def NotifyPassengersDriverDeactivatedTask(requests):
+    channel = web.config.TITANIUM_NOTIFICATION_CHANNEL
     logger = create_logger()
     gettext = create_gettext()
     redis = create_redis()
@@ -285,7 +294,7 @@ def NotifyPassengersDriverDeactivatedTask(requests):
                 incr(notificationid_for_user(user.id))
         return json.dumps({
             'badge': badge,
-            'channel': 'channel',
+            'channel': channel,
             'sound': 'default',
             'icon': 'notificationicon',
             'alert': alert
@@ -301,13 +310,14 @@ def NotifyPassengersDriverDeactivatedTask(requests):
                                      NotifyPassengersSubscriber())
     notify_passengers.perform(logger, PassengersRepository,
                               [r['passenger']['id'] for r in requests],
-                              push_adapter, 'channel', payload_factory)
+                              push_adapter, channel, payload_factory)
     return ret.get()
 
 
 
 @celery.task
 def NotifyPassengerDriveRequestCancelledTask(request):
+    channel = web.config.TITANIUM_NOTIFICATION_CHANNEL
     logger = create_logger()
     gettext = create_gettext()
     redis = create_redis()
@@ -324,7 +334,7 @@ def NotifyPassengerDriveRequestCancelledTask(request):
                 incr(notificationid_for_user(user.id))
         return json.dumps({
             'badge': badge,
-            'channel': 'channel',
+            'channel': channel,
             'kind': 'cancelled_drive_request',
             'driver': request['driver']['id'],
             'sound': 'default',
@@ -344,7 +354,7 @@ def NotifyPassengerDriveRequestCancelledTask(request):
                                     NotifyPassengerSubscriber())
     notify_passengers.perform(logger, PassengersRepository,
                               [request['passenger']['id']], push_adapter,
-                              'channel', payload_factory)
+                              channel, payload_factory)
     return ret.get()
 
 
