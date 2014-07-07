@@ -16,6 +16,7 @@ from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import Text
 from sqlalchemy import Time
+from sqlalchemy import text
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import joinedload_all
@@ -29,7 +30,7 @@ from sqlalchemy.ext.declarative import declarative_base as _declarative_base
 __all__ = ['backref', 'create_engine', 'create_session', 'declarative_base',
            'func', 'init_db', 'joinedload', 'joinedload_all', 'relationship',
            'uuid', 'Boolean', 'Column', 'DateTime', 'Enum', 'Float',
-           'ForeignKey', 'Integer', 'String', 'Text', 'Time']
+           'ForeignKey', 'Integer', 'String', 'Text', 'Time', 'text']
 
 
 def create_engine():

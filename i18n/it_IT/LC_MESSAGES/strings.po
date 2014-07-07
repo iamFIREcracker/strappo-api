@@ -17,6 +17,9 @@ msgstr "Obbligatorio"
 msgid "integer_required"
 msgstr "Deve essere intero"
 
+msgid "integer_optional"
+msgstr "Deve essere intero"
+
 msgid "alert_matched_passenger"
 msgstr "%(name)s ha accettato il tuo strappo!"
 

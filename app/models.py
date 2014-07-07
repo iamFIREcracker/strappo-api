@@ -16,6 +16,7 @@ from app.weblib.db import Integer
 from app.weblib.db import String
 from app.weblib.db import Text
 from app.weblib.db import Time
+from app.weblib.db import text
 
 
 
@@ -26,7 +27,7 @@ class Session(Base):
     __tablename__ = 'session'
 
     session_id = Column(String, primary_key=True)
-    atime = Column(Time, default=datetime.now)
+    atime = Column(Time, default=datetime.utcnow)
     data = Column(Text)
 
 
@@ -42,8 +43,9 @@ class User(Base):
     email = Column(String, nullable=True)
     locale = Column(String, nullable=False)
     deleted = Column(Boolean, default=False, nullable=False)
-    created = Column(DateTime, default=datetime.now)
-    updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    created = Column(DateTime, default=datetime.utcnow)
+    updated = Column(DateTime, default=datetime.utcnow,
+                     onupdate=datetime.utcnow)
     driver = relationship('Driver', uselist=False,
                           backref=backref('user', cascade='expunge'),
                              primaryjoin="and_(User.id == Driver.user_id,"
@@ -65,8 +67,9 @@ class Token(Base):
 
     id = Column(String, default=uuid, primary_key=True)
     user_id = Column(String, ForeignKey('user.id'))
-    created = Column(DateTime, default=datetime.now)
-    updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    created = Column(DateTime, default=datetime.utcnow)
+    updated = Column(DateTime, default=datetime.utcnow,
+                     onupdate=datetime.utcnow)
 
     def __repr__(self):
         data = u'<Token id=%(id)s, user_id=%(user_id)s>' % self.__dict__
@@ -82,8 +85,9 @@ class Driver(Base):
     telephone = Column(String)
     hidden = Column(Boolean, default=False)
     active = Column(Boolean, default=True)
-    created = Column(DateTime, default=datetime.now)
-    updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    created = Column(DateTime, default=datetime.utcnow)
+    updated = Column(DateTime, default=datetime.utcnow,
+                     onupdate=datetime.utcnow)
     drive_requests = relationship('DriveRequest', uselist=True,
                                   backref=backref('driver', cascade='expunge'),
                                   primaryjoin="and_(Driver.id == DriveRequest.driver_id,"
@@ -111,8 +115,9 @@ class Passenger(Base):
     seats = Column(Integer)
     matched = Column(Boolean, default=False)
     active = Column(Boolean, default=True)
-    created = Column(DateTime, default=datetime.now)
-    updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    created = Column(DateTime, default=datetime.utcnow)
+    updated = Column(DateTime, default=datetime.utcnow,
+                     onupdate=datetime.utcnow)
     drive_requests = relationship('DriveRequest', uselist=True,
                                   backref=backref('passenger', cascade='expunge'),
                                   primaryjoin="and_(Passenger.id == DriveRequest.passenger_id,"
@@ -136,14 +141,16 @@ class DriveRequest(Base):
     passenger_id = Column(String, ForeignKey('passenger.id'))
     accepted = Column(Boolean, default=False)
     active = Column(Boolean, default=True)
-    created = Column(DateTime, default=datetime.now)
-    updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    response_time = Column(Integer, nullable=False, server_default=text('0'))
+    created = Column(DateTime, default=datetime.utcnow)
+    updated = Column(DateTime, default=datetime.utcnow,
+                     onupdate=datetime.utcnow)
 
     def __repr__(self):
         data = u'<DriveRequest id=%(id)s, driver_id=%(driver_id)s, '\
                 'passenger_id=%(passenger_id)s, '\
-                'accepted=%(accepted)s, '\
-                'active=%(active)s>' % self.__dict__
+                'accepted=%(accepted)s, active=%(active)s, '\
+                'response_time=%(response_time)s>' % self.__dict__
         return data.encode('utf-8')
 
 
@@ -155,8 +162,9 @@ class Trace(Base):
     level = Column(String)
     date = Column(String)
     message = Column(Text)
-    created = Column(DateTime, default=datetime.now)
-    updated = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    created = Column(DateTime, default=datetime.utcnow)
+    updated = Column(DateTime, default=datetime.utcnow,
+                     onupdate=datetime.utcnow)
 
     def __repr__(self):
         data = u'<Trace id=%(id)s, user_id=%(user_id)s, '\

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import app.forms.drive_requests as drive_requests_forms
 from app.pubsub.drive_requests import ActiveDriveRequestsFilterExtractor
 from app.pubsub.drive_requests import ActiveDriveRequestsGetter
 from app.pubsub.drive_requests import ActiveDriveRequestsWithDriverIdGetter
@@ -19,6 +20,8 @@ from app.pubsub.passengers import MultiplePassengerMatcher
 from app.pubsub.passengers import PassengerUnmatcher
 from app.pubsub.passengers import PassengerWithIdGetter
 from app.pubsub.passengers import PassengerWithUserIdAuthorizer
+from app.weblib.forms import describe_invalid_form_localized
+from app.weblib.pubsub import FormValidator
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.pubsub import Publisher
@@ -103,11 +106,12 @@ class ListActiveDriveRequestsWorkflow(Publisher):
 class AddDriveRequestWorkflow(Publisher):
     """Defines a workflow to create a new ride request."""
 
-    def perform(self, orm, logger, user_id, drivers_repository, driver_id,
-                passengers_repository, passenger_id, requests_repository,
-                task):
+    def perform(self, gettext, orm, logger, params, user,
+                drivers_repository, driver_id, passengers_repository,
+                passenger_id, requests_repository, task):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
+        form_validator = FormValidator()
         driver_getter = DeepDriverWithIdGetter()
         passenger_getter = PassengerWithIdGetter()
         authorizer = DriverWithUserIdAuthorizer()
@@ -115,15 +119,24 @@ class AddDriveRequestWorkflow(Publisher):
         request_creator = DriveRequestCreator()
         request_serializer = MultipleDriveRequestsSerializer()
         task_submitter = TaskSubmitter()
+        response_time_future = Future()
         driver_future = Future()
         passenger_future = Future()
+
+        class FormValidatorSubscriber(object):
+            def invalid_form(self, errors):
+                outer.publish('invalid_form', errors)
+            def valid_form(self, form):
+                v = int(form.d.response_time) if form.d.response_time else 0
+                response_time_future.set(v)
+                driver_getter.perform(drivers_repository, driver_id)
 
         class DriverGetterSubscriber(object):
             def driver_not_found(self, driver_id):
                 outer.publish('not_found', driver_id)
             def driver_found(self, driver):
                 driver_future.set(driver)
-                authorizer.perform(user_id, driver)
+                authorizer.perform(user.id, driver)
 
         class AuthorizerSubscriber(object):
             def unauthorized(self, user_id, driver):
@@ -143,7 +156,8 @@ class AddDriveRequestWorkflow(Publisher):
             def passenger_found(self, passenger):
                 passenger_future.set(passenger)
                 request_creator.perform(requests_repository, driver_id,
-                                        passenger_id)
+                                        passenger_id,
+                                        response_time=response_time_future.get())
 
         class DriveRequestCreatorSubscriber(object):
             def drive_request_created(self, request):
@@ -160,6 +174,7 @@ class AddDriveRequestWorkflow(Publisher):
             def task_created(self, task_id):
                 outer.publish('success')
 
+        form_validator.add_subscriber(logger, FormValidatorSubscriber())
         driver_getter.add_subscriber(logger, DriverGetterSubscriber())
         authorizer.add_subscriber(logger, AuthorizerSubscriber())
         driver_validator.add_subscriber(logger, DriverValidatorSubscriber())
@@ -168,7 +183,9 @@ class AddDriveRequestWorkflow(Publisher):
         request_serializer.add_subscriber(logger,
                                           DriveRequestSerializerSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
-        driver_getter.perform(drivers_repository, driver_id)
+        form_validator.perform(drive_requests_forms.add(), params,
+                               describe_invalid_form_localized(gettext,
+                                                               user.locale))
 
 
 class CancelDriveOfferWorkflow(Publisher):

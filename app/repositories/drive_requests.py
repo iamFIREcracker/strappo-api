@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import uuid
+from datetime import datetime
 
 from app.models import User
 from app.models import DriveRequest
@@ -38,11 +39,13 @@ class DriveRequestsRepository(object):
                         filter(DriveRequest.active == True)]
 
     @staticmethod
-    def add(driver_id, passenger_id):
+    def add(driver_id, passenger_id, response_time=0):
         id = unicode(uuid.uuid4())
         drive_request = DriveRequest(id=id, driver_id=driver_id,
-                                   passenger_id=passenger_id,
-                                   accepted=False, active=True)
+                                     passenger_id=passenger_id,
+                                     accepted=False, active=True,
+                                     response_time=response_time,
+                                     created=datetime.utcnow())
         return drive_request
 
     @staticmethod

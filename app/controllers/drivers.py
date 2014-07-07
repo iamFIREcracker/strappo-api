@@ -179,8 +179,12 @@ class UnhideDriverController(ParamAuthorizableController):
     def POST(self, driver_id):
         logger = LoggingSubscriber(web.ctx.logger)
         unhide_driver = UnhideDriverWorkflow()
+        ret = Future()
 
         class UnhideDriverSubscriber(object):
+            def invalid_form(self, errors):
+                web.ctx.orm.rollback()
+                ret.set(jsonify(success=False, errors=errors))
             def not_found(self, driver_id):
                 web.ctx.orm.rollback()
                 raise web.notfound()
@@ -194,6 +198,7 @@ class UnhideDriverController(ParamAuthorizableController):
         unhide_driver.add_subscriber(logger, UnhideDriverSubscriber())
         unhide_driver.perform(web.ctx.orm, web.ctx.logger, DriversRepository,
                               driver_id, self.current_user.id)
+        return ret.get()
 
 
 class AcceptPassengerController(ParamAuthorizableController):
@@ -215,8 +220,8 @@ class AcceptPassengerController(ParamAuthorizableController):
                 raise app.weblib.nocontent()
 
         add_drive_request.add_subscriber(logger, AddDriveRequestSubscriber())
-        add_drive_request.perform(web.ctx.orm, web.ctx.logger,
-                                  self.current_user.id,
+        add_drive_request.perform(web.ctx.gettext, web.ctx.orm, web.ctx.logger,
+                                  web.input(), self.current_user,
                                   DriversRepository, driver_id,
                                   PassengersRepository, passenger_id,
                                   DriveRequestsRepository,

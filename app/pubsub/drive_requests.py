@@ -58,14 +58,8 @@ class ActiveDriveRequestsGetter(Publisher):
 
 
 class DriveRequestCreator(Publisher):
-    def perform(self, repository, driver_id, passenger_id):
-        """Creates a ride request from driver identified by ``driver_id`` and
-        passenger identified by ``passenger_id``.
-
-        On success a 'drive_request_created' message will be published toghether
-        with the created request.
-        """
-        request = repository.add(driver_id, passenger_id)
+    def perform(self, repository, driver_id, passenger_id, **kw):
+        request = repository.add(driver_id, passenger_id, **kw)
         self.publish('drive_request_created', request)
 
 
@@ -110,7 +104,9 @@ class DriveRequestCancellorByPassengerId(Publisher):
 def serialize(request):
     if request is None:
         return None
-    return dict(id=request.id, accepted=request.accepted)
+    return dict(id=request.id, accepted=request.accepted,
+                response_time=request.response_time,
+                created=request.created.strftime('%Y-%m-%dT%H:%M:%SZ'))
 
 
 def _serialize(request):
