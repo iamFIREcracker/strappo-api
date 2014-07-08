@@ -20,6 +20,9 @@ msgstr "Nombre entier requis"
 msgid "integer_optional"
 msgstr "Nombre entier requis"
 
+msgid "integer_optional_between_0_and_5"
+msgstr "Nombre entier entre 0 et 5 requis"
+
 msgid "alert_matched_passenger"
 msgstr "%(name)s a bien accepté ton offre de lui conduire!"
 

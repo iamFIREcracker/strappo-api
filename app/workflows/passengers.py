@@ -3,11 +3,11 @@
 
 
 import app.forms.passengers as passengers_forms
+import app.forms.rates as rates_forms
 from app.pubsub import ACSSessionCreator
 from app.pubsub import ACSPayloadsForUserIdNotifier
 from app.pubsub import PayloadsByUserCreator
 from app.pubsub.drive_requests import AcceptedDriveRequestsFilter
-from app.pubsub.drive_requests import DriveRequestCancellorByDriverId
 from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
 from app.pubsub.notifications import NotificationsResetter
@@ -20,13 +20,12 @@ from app.pubsub.passengers import PassengersACSUserIdExtractor
 from app.pubsub.passengers import PassengerCreator
 from app.pubsub.passengers import PassengerCopier
 from app.pubsub.passengers import PassengerUpdater
-from app.pubsub.passengers import PassengerWithIdGetter
 from app.pubsub.passengers import PassengerSerializer
 from app.pubsub.passengers import PassengerWithUserIdAuthorizer
 from app.pubsub.passengers import PassengerLinkedToDriverWithUserIdAuthorizer
 from app.pubsub.passengers import UnmatchedPassengersGetter
+from app.pubsub.rates import RateCreator
 from app.pubsub.users import UserWithoutPassengerValidator
-from app.weblib.forms import describe_invalid_form
 from app.weblib.forms import describe_invalid_form_localized
 from app.weblib.pubsub import FormValidator
 from app.weblib.pubsub import Publisher
@@ -321,6 +320,96 @@ class DeactivatePassengerWorkflow(Publisher):
                                            DriveRequestSerializerSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         passenger_getter.perform(repository, passenger_id)
+
+
+class AlightPassengerWorkflow(Publisher):
+    """Defines a workflow to deactivate a passenger given its ID."""
+
+    def perform(self, logger, gettext, orm, params, rate_repository,
+                passenger_repository, passenger_id, user, task):
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        form_validator = FormValidator()
+        passenger_getter = PassengerWithIdGetter()
+        with_user_id_authorizer = PassengerWithUserIdAuthorizer()
+        passengers_deactivator = MultiplePassengersDeactivator()
+        accepted_requests_filter = AcceptedDriveRequestsFilter()
+        rate_creator = RateCreator()
+        requests_deactivator = MultipleDriveRequestsDeactivator()
+        requests_serializer = MultipleDriveRequestsSerializer()
+        task_submitter = TaskSubmitter()
+        stars_future = Future()
+        requests_future = Future()
+
+        class FormValidatorSubscriber(object):
+            def invalid_form(self, errors):
+                outer.publish('invalid_form', errors)
+            def valid_form(self, form):
+                v = int(form.d.stars) if form.d.stars else 3
+                stars_future.set(v)
+                passenger_getter.perform(passenger_repository, passenger_id)
+
+        class PassengerGetterSubscriber(object):
+            def passenger_not_found(self, passenger_id):
+                outer.publish('success')
+            def passenger_found(self, passenger):
+                with_user_id_authorizer.perform(user.id, passenger)
+
+        class WithUserIdAuthorizerSubscriber(object):
+            def unauthorized(self, user_id, passenger):
+                outer.publish('unauthorized')
+            def authorized(self, user_id, passenger):
+                passengers_deactivator.perform([passenger])
+
+        class PassengersDeactivatorSubscriber(object):
+            def passengers_hid(self, passengers):
+                passenger = orm.merge(passengers[0])
+                orm.add(passenger)
+                requests_future.set(passenger.drive_requests)
+                accepted_requests_filter.perform(passenger.drive_requests)
+
+        class AcceptedDriveRequestsFilterSubscriber(object):
+            def drive_requests_extracted(self, requests):
+                rate_creator.perform(rate_repository, passenger_id,
+                                     requests[0].driver.id,
+                                     stars_future.get())
+
+        class RateCreatorSubscriber(object):
+            def rate_created(self, rate):
+                orm.add(rate)
+                requests_deactivator.perform(requests_future.get())
+
+        class DriveRequestsDeactivatorSubscriber(object):
+            def drive_requests_hid(self, requests):
+                orm.add_all(requests)
+                requests_serializer.perform(requests)
+
+        class DriveRequestSerializerSubscriber(object):
+            def drive_requests_serialized(self, requests):
+                task_submitter.perform(task, requests)
+
+        class TaskSubmitterSubscriber(object):
+            def task_created(self, task_id):
+                outer.publish('success')
+
+        form_validator.add_subscriber(logger, FormValidatorSubscriber())
+        passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
+        with_user_id_authorizer.\
+                add_subscriber(logger, WithUserIdAuthorizerSubscriber())
+        passengers_deactivator.add_subscriber(logger,
+                                              PassengersDeactivatorSubscriber())
+        accepted_requests_filter.\
+                add_subscriber(logger,
+                               AcceptedDriveRequestsFilterSubscriber())
+        rate_creator.add_subscriber(logger, RateCreatorSubscriber())
+        requests_deactivator.\
+                add_subscriber(logger, DriveRequestsDeactivatorSubscriber())
+        requests_serializer.add_subscriber(logger,
+                                           DriveRequestSerializerSubscriber())
+        task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
+        form_validator.perform(rates_forms.add(), params,
+                               describe_invalid_form_localized(gettext,
+                                                               user.locale))
 
 
 class DeactivateActivePassengersWorkflow(Publisher):

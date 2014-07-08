@@ -7,3 +7,5 @@ required = form.Validator('required', bool)
 integer = form.Validator('integer_required', bool)
 integer_optional = form.Validator('integer_optional',
                                   lambda v: not v or int(v) >= 0)
+stars = form.Validator('integer_optional_between_0_and_5',
+                       lambda v: not v or 0 < int(v) <= 5)

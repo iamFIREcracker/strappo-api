@@ -171,3 +171,21 @@ class Trace(Base):
                 'level=%(level)s, date=%(date)s, '\
                 'message=%(message)s>' % self.__dict__
         return data.encode('utf-8')
+
+
+class Rate(Base):
+    __tablename__ = 'rate'
+
+    id = Column(String, default=uuid, primary_key=True)
+    rater_user_id = Column(String, ForeignKey('user.id'))
+    rated_user_id = Column(String, ForeignKey('user.id'))
+    stars = Column(Float, nullable=False)
+    created = Column(DateTime, default=datetime.utcnow)
+    updated = Column(DateTime, default=datetime.utcnow,
+                     onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        data = u'<Rating id=%(id)s, rater_user_id=%(rater_user_id)s, '\
+                'rated_user_id=%(rated_user_id)s, '\
+                'stars=%(stars)s>' % self.__dict__
+        return data.encode('utf-8')

@@ -20,6 +20,9 @@ msgstr "Integer required"
 msgid "integer_optional"
 msgstr "Integer required"
 
+msgid "integer_optional_between_0_and_5"
+msgstr "Integer between 0 and 5 required"
+
 msgid "alert_matched_passenger"
 msgstr "%(name)s just accepted your drive request!"
 

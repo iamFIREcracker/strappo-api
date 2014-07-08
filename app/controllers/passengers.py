@@ -5,8 +5,9 @@ import web
 
 import app.weblib
 from app.controllers import ParamAuthorizableController
-from app.repositories.passengers import PassengersRepository
 from app.repositories.drive_requests import DriveRequestsRepository
+from app.repositories.passengers import PassengersRepository
+from app.repositories.rates import RatesRepository
 from app.tasks import NotifyDriverDriveRequestCancelledByPassengerTask
 from app.tasks import NotifyDriverDriveRequestAccepted
 from app.tasks import NotifyDriversPassengerRegisteredTask
@@ -18,6 +19,7 @@ from app.weblib.request_decorators import api
 from app.weblib.request_decorators import authorized
 from app.weblib.utils import jsonify
 from app.workflows.passengers import AddPassengerWorkflow
+from app.workflows.passengers import AlightPassengerWorkflow
 from app.workflows.passengers import ListUnmatchedPassengersWorkflow
 from app.workflows.passengers import DeactivatePassengerWorkflow
 from app.workflows.passengers import ViewPassengerWorkflow
@@ -94,12 +96,18 @@ class AlightPassengerController(ParamAuthorizableController):
     @authorized
     def POST(self, passenger_id):
         logger = LoggingSubscriber(web.ctx.logger)
-        deactivate_passenger = DeactivatePassengerWorkflow()
+        deactivate_passenger = AlightPassengerWorkflow()
+        ret = Future()
 
         class DeactivatePassengerSubscriber(object):
+            def invalid_form(self, errors):
+                web.ctx.orm.rollback()
+                ret.set(jsonify(success=False, errors=errors))
             def not_found(self, passenger_id):
+                web.ctx.orm.rollback()
                 raise web.notfound()
             def unauthorized(self):
+                web.ctx.orm.rollback()
                 raise web.unauthorized()
             def success(self):
                 web.ctx.orm.commit()
@@ -107,11 +115,12 @@ class AlightPassengerController(ParamAuthorizableController):
 
         deactivate_passenger.add_subscriber(logger,
                                             DeactivatePassengerSubscriber())
-        deactivate_passenger.perform(web.ctx.logger, web.ctx.orm,
-                                     PassengersRepository, passenger_id,
-                                     self.current_user,
+        deactivate_passenger.perform(web.ctx.logger, web.ctx.gettext,
+                                     web.ctx.orm, web.input(),
+                                     RatesRepository, PassengersRepository,
+                                     passenger_id, self.current_user,
                                      NotifyDriversPassengerAlitTask)
-
+        return ret.get()
 
 
 class DeactivatePassengerController(ParamAuthorizableController):
