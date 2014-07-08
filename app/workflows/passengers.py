@@ -370,8 +370,8 @@ class AlightPassengerWorkflow(Publisher):
 
         class AcceptedDriveRequestsFilterSubscriber(object):
             def drive_requests_extracted(self, requests):
-                rate_creator.perform(rate_repository, passenger_id,
-                                     requests[0].driver.id,
+                rate_creator.perform(rate_repository, user.id,
+                                     requests[0].driver.user.id,
                                      stars_future.get())
 
         class RateCreatorSubscriber(object):
