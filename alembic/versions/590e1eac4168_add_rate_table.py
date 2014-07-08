@@ -20,7 +20,7 @@ def upgrade():
     sa.Column('id', sa.String(), nullable=False),
     sa.Column('rater_user_id', sa.String(), nullable=True),
     sa.Column('rated_user_id', sa.String(), nullable=True),
-    sa.Column('stars', sa.Float(), nullable=False),
+    sa.Column('stars', sa.Integer(), nullable=False),
     sa.Column('created', sa.DateTime(), nullable=True),
     sa.Column('updated', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['rated_user_id'], ['user.id'], ),
