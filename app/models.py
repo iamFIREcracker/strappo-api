@@ -62,7 +62,7 @@ class User(Base):
                 filter(Rate.rated_user_id == self.id).first()[0]
 
     @property
-    def rates(self):
+    def received_rates(self):
         return Base.session.query(func.count(Rate.id)).\
                 filter(Rate.rated_user_id == self.id).first()[0]
 

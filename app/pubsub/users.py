@@ -122,7 +122,8 @@ def serialize(user):
     if user is None:
         return None
     return dict(id=user.id, name=user.name, avatar=user.avatar,
-                locale=user.locale, stars=user.stars, rates=user.rates)
+                locale=user.locale, stars=user.stars,
+                received_rates=user.received_rates)
 
 
 class UserSerializer(Publisher):
