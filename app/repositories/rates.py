@@ -21,11 +21,12 @@ class RatesRepository(object):
 
     @staticmethod
     def avg_stars(rated_user_id):
-        return Base.session.query(func.avg(Rate.stars)).\
+        avg = Base.session.query(func.avg(Rate.stars)).\
                 filter(Rate.rated_user_id == rated_user_id).first()[0]
+        return 0.0 if avg is None else avg
 
     @staticmethod
     def received_rates(rated_user_id):
-        return Base.session.query(func.count(Rate.id)).\
+        return Base.session.query(func.count()).\
                 filter(Rate.rated_user_id == rated_user_id).first()[0]
 
