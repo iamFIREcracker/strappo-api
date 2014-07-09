@@ -181,3 +181,12 @@ class DriversACSUserIdExtractor(Publisher):
         """
         self.publish('acs_user_ids_extracted',
                      filter(None, [d.user.acs_id for d in drivers]))
+
+
+def enrich(driver):
+    return driver
+
+def _enrich(rates_repository, driver):
+    from app.pubsub.users import enrich as enrich_user
+    driver.user = enrich_user(rates_repository, driver.user)
+    return enrich(driver)

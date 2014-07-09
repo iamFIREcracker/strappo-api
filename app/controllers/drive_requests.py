@@ -7,6 +7,7 @@ from app.controllers import ParamAuthorizableController
 from app.repositories.drivers import DriversRepository
 from app.repositories.drive_requests import DriveRequestsRepository
 from app.repositories.passengers import PassengersRepository
+from app.repositories.rates import RatesRepository
 from app.weblib.pubsub import Future
 from app.weblib.pubsub import LoggingSubscriber
 from app.weblib.request_decorators import api
@@ -34,6 +35,7 @@ class ListActiveDriveRequestsController(ParamAuthorizableController):
         accepted_requests.add_subscriber(logger,
                                          ListActiveDriveRequestsSubscriber())
         accepted_requests.perform(web.ctx.logger, DriversRepository,
-                                  PassengersRepository, DriveRequestsRepository,
+                                  PassengersRepository,
+                                  DriveRequestsRepository, RatesRepository,
                                   self.current_user.id, web.input())
         return ret.get()

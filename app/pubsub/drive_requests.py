@@ -156,3 +156,23 @@ class AcceptedDriveRequestsFilter(Publisher):
         """
         self.publish('drive_requests_extracted',
                      [r for r in requests if r.accepted])
+
+def enrich(request):
+    return request
+
+def _enrich(rates_repository, request):
+    from app.pubsub.passengers import enrich as enrich_passenger
+    from app.pubsub.drivers import enrich as enrich_driver
+    from app.pubsub.users import enrich as enrich_user
+    request.passenger.user = enrich_user(rates_repository,
+                                         request.passenger.user)
+    request.passenger = enrich_passenger(request.passenger)
+    request.driver.user = enrich_user(rates_repository,
+                                         request.driver.user)
+    request.driver = enrich_driver(request.driver)
+    return enrich(request)
+
+class DriveRequestsEnricher(Publisher):
+    def perform(self, rates_repository, requests):
+        self.publish('drive_requests_enriched',
+                     [_enrich(rates_repository, r) for r in requests])

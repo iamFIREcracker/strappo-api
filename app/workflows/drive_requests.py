@@ -10,6 +10,7 @@ from app.pubsub.drive_requests import DriveRequestAcceptor
 from app.pubsub.drive_requests import DriveRequestCancellorByDriverId
 from app.pubsub.drive_requests import DriveRequestCancellorByPassengerId
 from app.pubsub.drive_requests import DriveRequestCreator
+from app.pubsub.drive_requests import DriveRequestsEnricher
 from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
 from app.pubsub.drivers import DeepDriverWithIdGetter
@@ -33,7 +34,7 @@ class ListActiveDriveRequestsWorkflow(Publisher):
     with a specific driver ID."""
 
     def perform(self, logger, drivers_repository, passengers_repository,
-                requests_repository, user_id, params):
+                requests_repository, rates_repository, user_id, params):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         filter_extractor = ActiveDriveRequestsFilterExtractor()
@@ -44,6 +45,7 @@ class ListActiveDriveRequestsWorkflow(Publisher):
                 ActiveDriveRequestsWithPassengerIdGetter()
         passenger_getter = PassengerWithIdGetter()
         passenger_authorizer = PassengerWithUserIdAuthorizer()
+        requests_enricher = DriveRequestsEnricher()
         requests_serializer = MultipleDriveRequestsSerializer()
 
         class FilterExtractorSubscriber(object):
@@ -82,6 +84,10 @@ class ListActiveDriveRequestsWorkflow(Publisher):
 
         class ActiveDriveRequestsGetterSubscriber(object):
             def drive_requests_found(self, requests):
+                requests_enricher.perform(rates_repository, requests)
+
+        class DriveRequestsEnricherSubscriber(object):
+            def drive_requests_enriched(self, requests):
                 requests_serializer.perform(requests)
 
         class DriveRequestsSerializerSubscriber(object):
@@ -98,6 +104,8 @@ class ListActiveDriveRequestsWorkflow(Publisher):
                                             PassengerAuthorizerSubscriber())
         with_passenger_id_requests_getter.\
                 add_subscriber(logger, ActiveDriveRequestsGetterSubscriber())
+        requests_enricher.add_subscriber(logger,
+                                         DriveRequestsEnricherSubscriber())
         requests_serializer.add_subscriber(logger,
                                            DriveRequestsSerializerSubscriber())
         filter_extractor.perform(params)

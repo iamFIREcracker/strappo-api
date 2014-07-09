@@ -4,7 +4,6 @@
 from datetime import datetime
 
 from app.weblib.db import backref
-from app.weblib.db import func
 from app.weblib.db import Boolean
 from app.weblib.db import declarative_base
 from app.weblib.db import relationship
@@ -56,16 +55,6 @@ class User(Base):
                              backref=backref('user', cascade='expunge'),
                              primaryjoin="and_(User.id == Passenger.user_id,"
                                               "Passenger.active == True)")
-    @property
-    def stars(self):
-        return Base.session.query(func.sum(Rate.stars)/func.count(Rate.id)).\
-                filter(Rate.rated_user_id == self.id).first()[0]
-
-    @property
-    def received_rates(self):
-        return Base.session.query(func.count(Rate.id)).\
-                filter(Rate.rated_user_id == self.id).first()[0]
-
 
     def __repr__(self):
         data = u'<User id=%(id)s, acs_id=%(acs_id)s, name=%(name)s, '\

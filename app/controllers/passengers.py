@@ -40,7 +40,8 @@ class ListUnmatchedPassengersController(ParamAuthorizableController):
                 ret.set(jsonify(passengers=blob))
 
         passengers.add_subscriber(logger, ListUnmatchedPassengersSubscriber())
-        passengers.perform(web.ctx.logger, PassengersRepository)
+        passengers.perform(web.ctx.logger, PassengersRepository,
+                           RatesRepository)
         return ret.get()
 
 

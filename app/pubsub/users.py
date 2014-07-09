@@ -121,9 +121,13 @@ class UserUpdater(Publisher):
 def serialize(user):
     if user is None:
         return None
-    return dict(id=user.id, name=user.name, avatar=user.avatar,
-                locale=user.locale, stars=user.stars,
-                received_rates=user.received_rates)
+    data = dict(id=user.id, name=user.name, avatar=user.avatar,
+             locale=user.locale)
+    if hasattr(user, 'stars'):
+        data.update(stars=user.stars)
+    if hasattr(user, 'received_rates'):
+        data.update(received_rates=user.received_rates)
+    return data
 
 
 class UserSerializer(Publisher):
@@ -140,3 +144,9 @@ class UserSerializer(Publisher):
         d.update(driver=serialize_driver(user.driver))
         d.update(passenger=serialize_passenger(user.passenger))
         self.publish('user_serialized', d)
+
+
+def enrich(rates_repository, user):
+    user.stars = rates_repository.avg_stars(user.id)
+    user.received_rates = rates_repository.received_rates(user.id)
+    return user

@@ -198,3 +198,17 @@ class PassengersACSUserIdExtractor(Publisher):
     def perform(self, passengers):
         self.publish('acs_user_ids_extracted',
                      filter(None, [p.user.acs_id for p in passengers]))
+
+def enrich(passenger):
+    return passenger
+
+def _enrich(rates_repository, passenger):
+    from app.pubsub.users import enrich as enrich_user
+    passenger.user = enrich_user(rates_repository, passenger.user)
+    return enrich(passenger)
+
+
+class PassengersEnricher(Publisher):
+    def perform(self, rates_repository, passengers):
+        self.publish('passengers_enriched',
+                     [_enrich(rates_repository, p) for p in passengers])

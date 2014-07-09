@@ -19,6 +19,7 @@ from app.pubsub.passengers import MultiplePassengersSerializer
 from app.pubsub.passengers import PassengersACSUserIdExtractor
 from app.pubsub.passengers import PassengerCreator
 from app.pubsub.passengers import PassengerCopier
+from app.pubsub.passengers import PassengersEnricher
 from app.pubsub.passengers import PassengerUpdater
 from app.pubsub.passengers import PassengerSerializer
 from app.pubsub.passengers import PassengerWithUserIdAuthorizer
@@ -37,14 +38,19 @@ from app.weblib.pubsub import Future
 class ListUnmatchedPassengersWorkflow(Publisher):
     """Defines a workflow to view the list of unmatched passengers."""
 
-    def perform(self, logger, repository):
+    def perform(self, logger, passengers_epository, rates_repository):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         passengers_getter = UnmatchedPassengersGetter()
+        passengers_enricher = PassengersEnricher()
         passengers_serializer = MultiplePassengersSerializer()
 
         class ActivePassengersGetterSubscriber(object):
             def passengers_found(self, passengers):
+                passengers_enricher.perform(rates_repository, passengers)
+
+        class PassengersEnricherSubscriber(object):
+            def passengers_enriched(self, passengers):
                 passengers_serializer.perform(passengers)
 
         class PassengersSerializerSubscriber(object):
@@ -54,9 +60,11 @@ class ListUnmatchedPassengersWorkflow(Publisher):
 
         passengers_getter.add_subscriber(logger,
                                          ActivePassengersGetterSubscriber())
+        passengers_enricher.add_subscriber(logger,
+                                           PassengersEnricherSubscriber())
         passengers_serializer.add_subscriber(logger,
                                              PassengersSerializerSubscriber())
-        passengers_getter.perform(repository)
+        passengers_getter.perform(passengers_epository)
 
 
 class AddPassengerWorkflow(Publisher):
