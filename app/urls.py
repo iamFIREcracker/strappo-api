@@ -7,10 +7,6 @@ from app.controllers.drivers import AcceptPassengerController
 from app.controllers.drivers import AddDriverController
 from app.controllers.drivers import CancelDriveOfferController
 from app.controllers.drivers import DeactivateDriverController
-from app.controllers.drivers import EditDriverController
-from app.controllers.drivers import HideDriverController
-from app.controllers.drivers import UnhideDriverController
-from app.controllers.drivers import ViewDriverController
 from app.controllers.notifications import ResetNotificationsController
 from app.controllers.passengers import AcceptDriverController
 from app.controllers.passengers import AddPassengerController
@@ -18,7 +14,6 @@ from app.controllers.passengers import AlightPassengerController
 from app.controllers.passengers import CancelDriveRequestController
 from app.controllers.passengers import DeactivatePassengerController
 from app.controllers.passengers import ListUnmatchedPassengersController
-from app.controllers.passengers import ViewPassengerController
 from app.controllers.traces import AddTracesController
 from app.controllers.users import LoginUserController
 from app.controllers.users import ViewUserController
@@ -47,10 +42,4 @@ URLS = (
     '/1/traces/add', AddTracesController,
 
     '/1/notifications/reset', ResetNotificationsController,
-
-    '/1/drivers/(.+)/view', ViewDriverController,
-    '/1/drivers/(.+)/edit', EditDriverController,
-    '/1/drivers/(.+)/hide', HideDriverController,
-    '/1/drivers/(.+)/unhide', UnhideDriverController,
-    '/1/passengers/(.+)/view', ViewPassengerController,
 )

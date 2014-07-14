@@ -22,7 +22,6 @@ from app.workflows.passengers import AddPassengerWorkflow
 from app.workflows.passengers import AlightPassengerWorkflow
 from app.workflows.passengers import ListUnmatchedPassengersWorkflow
 from app.workflows.passengers import DeactivatePassengerWorkflow
-from app.workflows.passengers import ViewPassengerWorkflow
 from app.workflows.drive_requests import AcceptDriveRequestWorkflow
 from app.workflows.drive_requests import CancelDriveRequestWorkflow
 
@@ -67,28 +66,6 @@ class AddPassengerController(ParamAuthorizableController):
                               web.ctx.redis, web.input(), PassengersRepository,
                               self.current_user,
                               NotifyDriversPassengerRegisteredTask)
-        return ret.get()
-
-
-class ViewPassengerController(ParamAuthorizableController):
-    @api
-    @authorized
-    def GET(self, passenger_id):
-        logger = LoggingSubscriber(web.ctx.logger)
-        view_passenger = ViewPassengerWorkflow()
-        ret = Future()
-
-        class ViewPassengerSubscriber(object):
-            def not_found(self, passenger_id):
-                raise web.notfound()
-            def unauthorized(self):
-                raise web.unauthorized()
-            def success(self, blob):
-                ret.set(jsonify(passenger=blob))
-
-        view_passenger.add_subscriber(logger, ViewPassengerSubscriber())
-        view_passenger.perform(web.ctx.logger, PassengersRepository,
-                               passenger_id, self.current_user.id)
         return ret.get()
 
 
