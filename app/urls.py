@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from app.controllers import InfoController
-from app.controllers.destinations import ListDestinationsController
-from app.controllers.destinations import ListPredefinedDestinationsController
 from app.controllers.drive_requests import ListActiveDriveRequestsController
 from app.controllers.drivers import AcceptPassengerController
 from app.controllers.drivers import AddDriverController
@@ -50,8 +48,6 @@ URLS = (
 
     '/1/notifications/reset', ResetNotificationsController,
 
-    '/1/destinations', ListDestinationsController,
-    '/1/destinations/predefined', ListPredefinedDestinationsController,
     '/1/drivers/(.+)/view', ViewDriverController,
     '/1/drivers/(.+)/edit', EditDriverController,
     '/1/drivers/(.+)/hide', HideDriverController,
