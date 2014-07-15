@@ -37,7 +37,23 @@ class InfoController(object):
                              'from': 16,
                              'to': 24
                          }, {
+                             'day_of_week': 1,
+                             'from': 18,
+                             'to': 24
+                         }, {
                              'day_of_week': 2,
+                             'from': 18,
+                             'to': 24
+                         }, {
+                             'day_of_week': 3,
+                             'from': 18,
+                             'to': 24
+                         }, {
+                             'day_of_week': 4,
+                             'from': 18,
+                             'to': 24
+                         }, {
+                             'day_of_week': 5,
                              'from': 18,
                              'to': 2
                          }, {
