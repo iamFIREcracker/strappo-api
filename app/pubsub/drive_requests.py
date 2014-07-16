@@ -17,10 +17,13 @@ class ActiveDriveRequestsFilterExtractor(Publisher):
             self.publish('bad_request', params)
 
 
-class ActiveDriveRequestsWithIdGetter(Publisher):
-    def perform(self, repository, drive_request_id):
-        self.publish('drive_requests_found',
-                     repository.get_active_by_id(drive_request_id))
+class DriveRequestWithIdGetter(Publisher):
+    def perform(self, repository, id):
+        request = repository.get_by_id(id)
+        if request is None:
+            self.publish('drive_request_not_found', id)
+        else:
+            self.publish('drive_request_found', request)
 
 
 class ActiveDriveRequestsWithDriverIdGetter(Publisher):

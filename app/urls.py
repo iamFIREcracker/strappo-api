@@ -7,6 +7,7 @@ from app.controllers.drivers import AcceptPassengerController
 from app.controllers.drivers import AddDriverController
 from app.controllers.drivers import CancelDriveOfferController
 from app.controllers.drivers import DeactivateDriverController
+from app.controllers.drivers import RateDriveRequestController
 from app.controllers.notifications import ResetNotificationsController
 from app.controllers.passengers import AcceptDriverController
 from app.controllers.passengers import AddPassengerController
@@ -29,6 +30,7 @@ URLS = (
     '/1/drivers/(.+)/deactivate', DeactivateDriverController,
     '/1/drivers/(.+)/accept/passenger/(.+)', AcceptPassengerController,
     '/1/drivers/(.+)/cancel/drive_request/(.+)', CancelDriveOfferController,
+    '/1/drivers/(.+)/rate/drive_request/(.+)', RateDriveRequestController,
 
     '/1/passengers/unmatched', ListUnmatchedPassengersController,
     '/1/passengers/add', AddPassengerController,

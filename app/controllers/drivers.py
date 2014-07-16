@@ -8,6 +8,7 @@ from app.controllers import ParamAuthorizableController
 from app.repositories.drivers import DriversRepository
 from app.repositories.drive_requests import DriveRequestsRepository
 from app.repositories.passengers import PassengersRepository
+from app.repositories.rates import RatesRepository
 from app.tasks import NotifyPassengerDriveRequestPending
 from app.tasks import NotifyPassengerDriveRequestCancelledTask
 from app.tasks import NotifyPassengersDriverDeactivatedTask
@@ -18,6 +19,7 @@ from app.weblib.request_decorators import authorized
 from app.weblib.utils import jsonify
 from app.workflows.drivers import AddDriverWorkflow
 from app.workflows.drivers import DeactivateDriverWorkflow
+from app.workflows.drivers import RateDriveRequestWorkflow
 from app.workflows.drive_requests import AddDriveRequestWorkflow
 from app.workflows.drive_requests import CancelDriveOfferWorkflow
 
@@ -121,3 +123,37 @@ class AcceptPassengerController(ParamAuthorizableController):
                                   PassengersRepository, passenger_id,
                                   DriveRequestsRepository,
                                   NotifyPassengerDriveRequestPending)
+
+
+class RateDriveRequestController(ParamAuthorizableController):
+    @api
+    @authorized
+    def POST(self, driver_id, drive_request_id):
+        logger = LoggingSubscriber(web.ctx.logger)
+        rate_passenger = RateDriveRequestWorkflow()
+        ret = Future()
+
+        class RatePassengerSubscriber(object):
+            def invalid_form(self, errors):
+                web.ctx.orm.rollback()
+                ret.set(jsonify(success=False, errors=errors))
+            def driver_not_found(self, driver_id):
+                web.ctx.orm.rollback()
+                raise web.notfound()
+            def unauthorized(self):
+                web.ctx.orm.rollback()
+                raise web.unauthorized()
+            def drive_request_not_found(self, drive_request_id):
+                web.ctx.orm.rollback()
+                raise web.notfound()
+            def success(self):
+                web.ctx.orm.commit()
+                raise app.weblib.nocontent()
+
+        rate_passenger.add_subscriber(logger, RatePassengerSubscriber())
+        rate_passenger.perform(web.ctx.logger, web.ctx.gettext, web.ctx.orm, 
+                               self.current_user, web.input(), driver_id,
+                               drive_request_id,
+                               DriversRepository, DriveRequestsRepository,
+                               RatesRepository)
+        return ret.get()

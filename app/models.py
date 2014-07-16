@@ -178,15 +178,21 @@ class Rate(Base):
     __tablename__ = 'rate'
 
     id = Column(String, default=uuid, primary_key=True)
-    rater_user_id = Column(String, ForeignKey('user.id'))
-    rated_user_id = Column(String, ForeignKey('user.id'))
+    drive_request_id = Column(String, ForeignKey('drive_request.id'),
+                              nullable=False)
+    rater_user_id = Column(String, ForeignKey('user.id'), nullable=False)
+    rated_user_id = Column(String, ForeignKey('user.id'), nullable=False)
+    rater_is_driver = Column(Boolean, nullable=False)
     stars = Column(Integer, nullable=False)
     created = Column(DateTime, default=datetime.utcnow)
     updated = Column(DateTime, default=datetime.utcnow,
                      onupdate=datetime.utcnow)
 
     def __repr__(self):
-        data = u'<Rating id=%(id)s, rater_user_id=%(rater_user_id)s, '\
+        data = u'<Rating id=%(id)s, '\
+                'drive_request_id=%(drive_request_id)s, '\
+                'rater_user_id=%(rater_user_id)s, '\
                 'rated_user_id=%(rated_user_id)s, '\
+                'rater_is_driver=%(rater_is_driver)s, '\
                 'stars=%(stars)s>' % self.__dict__
         return data.encode('utf-8')

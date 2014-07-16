@@ -11,11 +11,14 @@ from app.weblib.db import func
 
 class RatesRepository(object):
     @staticmethod
-    def add(rater_user_id, rated_user_id, stars):
+    def add(drive_request_id, rater_user_id, rated_user_id, rater_is_driver,
+            stars):
         id = unicode(uuid.uuid4())
         rate = Rate(id=id,
+                    drive_request_id=drive_request_id,
                     rater_user_id=rater_user_id,
                     rated_user_id=rated_user_id,
+                    rater_is_driver=rater_is_driver,
                     stars=stars)
         return rate
 

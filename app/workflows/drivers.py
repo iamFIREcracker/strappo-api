@@ -3,10 +3,12 @@
 
 
 import app.forms.drivers as drivers_forms
+import app.forms.rates as rates_forms
 from app.pubsub import ACSSessionCreator
 from app.pubsub import ACSUserIdsNotifier
 from app.pubsub import ACSPayloadsForUserIdNotifier
 from app.pubsub import PayloadsByUserCreator
+from app.pubsub.drive_requests import DriveRequestWithIdGetter
 from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
 from app.pubsub.drivers import DriverCreator
@@ -21,6 +23,7 @@ from app.pubsub.drivers import MultipleDriversUnhider
 from app.pubsub.drivers import UnhiddenDriversGetter
 from app.pubsub.notifications import NotificationsResetter
 from app.pubsub.users import UserWithoutDriverValidator
+from app.pubsub.rates import RateCreator
 from app.weblib.forms import describe_invalid_form_localized
 from app.weblib.pubsub import FormValidator
 from app.weblib.pubsub import Future
@@ -332,3 +335,63 @@ class UnhideHiddenDriversWorkflow(Publisher):
         drivers_getter.perform(repository)
 
 
+class RateDriveRequestWorkflow(Publisher):
+    def perform(self, logger, gettext, orm, user, params, driver_id,
+                drive_request_id, drivers_repository,
+                drive_requests_repository, rate_repository):
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        form_validator = FormValidator()
+        driver_getter = DriverWithIdGetter()
+        with_user_id_authorizer = DriverWithUserIdAuthorizer()
+        drive_request_getter = DriveRequestWithIdGetter()
+        rate_creator = RateCreator()
+        stars_future = Future()
+
+        class FormValidatorSubscriber(object):
+            def invalid_form(self, errors):
+                outer.publish('invalid_form', errors)
+            def valid_form(self, form):
+                v = int(form.d.stars) if form.d.stars else 3
+                stars_future.set(v)
+                driver_getter.perform(drivers_repository, driver_id)
+
+        class DriverGetterSubscriber(object):
+            def driver_not_found(self, driver_id):
+                outer.publish('driver_not_found', driver_id)
+            def driver_found(self, driver):
+                with_user_id_authorizer.perform(user.id, driver)
+
+        class WithUserIdAuthorizerSubscriber(object):
+            def unauthorized(self, user_id, driver):
+                outer.publish('unauthorized')
+            def authorized(self, user_id, driver):
+                drive_request_getter.perform(drive_requests_repository,
+                                             drive_request_id)
+
+        class DriveRequestGetterSubscriber(object):
+            def drive_request_not_found(self, id):
+                outer.publish('drive_request_not_found', id)
+            def drive_request_found(self, request):
+                rate_creator.perform(rate_repository,
+                                     request.id,
+                                     request.driver.user.id,
+                                     request.passenger.user.id,
+                                     True,
+                                     stars_future.get())
+
+        class RateCreatorSubscriber(object):
+            def rate_created(self, rate):
+                orm.add(rate)
+                outer.publish('success')
+
+        form_validator.add_subscriber(logger, FormValidatorSubscriber())
+        driver_getter.add_subscriber(logger, DriverGetterSubscriber())
+        with_user_id_authorizer.\
+                add_subscriber(logger, WithUserIdAuthorizerSubscriber())
+        drive_request_getter.add_subscriber(logger,
+                                            DriveRequestGetterSubscriber())
+        rate_creator.add_subscriber(logger, RateCreatorSubscriber())
+        form_validator.perform(rates_forms.add(), params,
+                               describe_invalid_form_localized(gettext,
+                                                               user.locale))

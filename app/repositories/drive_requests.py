@@ -12,6 +12,15 @@ from app.weblib.db import joinedload_all
 
 class DriveRequestsRepository(object):
     @staticmethod
+    def get_by_id(id):
+        options = [joinedload_all('driver.user'),
+                   joinedload_all('passenger.user')]
+        return expunged(DriveRequest.query.options(*options).\
+                        filter_by(id=id).\
+                        first(),
+                        DriveRequest.session)
+
+    @staticmethod
     def get_all_active():
         return [expunged(dr, DriveRequest.session)
                 for dr in DriveRequest.query.\
