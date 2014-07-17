@@ -49,12 +49,10 @@ class User(Base):
                      onupdate=datetime.utcnow)
     driver = relationship('Driver', uselist=False,
                           backref=backref('user', cascade='expunge'),
-                             primaryjoin="and_(User.id == Driver.user_id,"
-                                              "Driver.active == True)")
+                             primaryjoin="User.id == Driver.user_id")
     passenger = relationship('Passenger', uselist=False,
                              backref=backref('user', cascade='expunge'),
-                             primaryjoin="and_(User.id == Passenger.user_id,"
-                                              "Passenger.active == True)")
+                             primaryjoin="User.id == Passenger.user_id")
 
     def __repr__(self):
         data = u'<User id=%(id)s, acs_id=%(acs_id)s, name=%(name)s, '\
@@ -90,7 +88,6 @@ class Driver(Base):
     updated = Column(DateTime, default=datetime.utcnow,
                      onupdate=datetime.utcnow)
     drive_requests = relationship('DriveRequest', uselist=True,
-                                  backref=backref('driver', cascade='expunge'),
                                   primaryjoin="and_(Driver.id == DriveRequest.driver_id,"
                                                    "DriveRequest.active == True)")
 
@@ -120,7 +117,6 @@ class Passenger(Base):
     updated = Column(DateTime, default=datetime.utcnow,
                      onupdate=datetime.utcnow)
     drive_requests = relationship('DriveRequest', uselist=True,
-                                  backref=backref('passenger', cascade='expunge'),
                                   primaryjoin="and_(Passenger.id == DriveRequest.passenger_id,"
                                                    "DriveRequest.active == True)")
 
@@ -130,7 +126,7 @@ class Passenger(Base):
                'origin_longitude=%(origin_longitude)s, '\
                'destination=%(destination)s, destination_latitude=%(destination_latitude)s, '\
                'destination_longitude=%(destination_longitude)s, '\
-               'seats=%(seats)d, matched=%(matched)s,  active=%(active)s>' % self.__dict__
+               'seats=%(seats)d, matched=%(matched)s, active=%(active)s>' % self.__dict__
         return data.encode('utf-8')
 
 
@@ -146,31 +142,18 @@ class DriveRequest(Base):
     created = Column(DateTime, default=datetime.utcnow)
     updated = Column(DateTime, default=datetime.utcnow,
                      onupdate=datetime.utcnow)
+    driver = relationship('Driver', uselist=False,
+                          primaryjoin="DriveRequest.driver_id == Driver.id")
+    passenger = relationship('Passenger', uselist=False,
+                             primaryjoin="DriveRequest.passenger_id == Passenger.id")
+    rates = relationship('Rate', uselist=True,
+                         primaryjoin="DriveRequest.id == Rate.drive_request_id")
 
     def __repr__(self):
         data = u'<DriveRequest id=%(id)s, driver_id=%(driver_id)s, '\
                 'passenger_id=%(passenger_id)s, '\
                 'accepted=%(accepted)s, active=%(active)s, '\
                 'response_time=%(response_time)s>' % self.__dict__
-        return data.encode('utf-8')
-
-
-class Trace(Base):
-    __tablename__ = 'trace'
-
-    id = Column(String, default=uuid, primary_key=True)
-    user_id = Column(String, ForeignKey('user.id'))
-    level = Column(String)
-    date = Column(String)
-    message = Column(Text)
-    created = Column(DateTime, default=datetime.utcnow)
-    updated = Column(DateTime, default=datetime.utcnow,
-                     onupdate=datetime.utcnow)
-
-    def __repr__(self):
-        data = u'<Trace id=%(id)s, user_id=%(user_id)s, '\
-                'level=%(level)s, date=%(date)s, '\
-                'message=%(message)s>' % self.__dict__
         return data.encode('utf-8')
 
 
@@ -196,3 +179,24 @@ class Rate(Base):
                 'rater_is_driver=%(rater_is_driver)s, '\
                 'stars=%(stars)s>' % self.__dict__
         return data.encode('utf-8')
+
+
+class Trace(Base):
+    __tablename__ = 'trace'
+
+    id = Column(String, default=uuid, primary_key=True)
+    user_id = Column(String, ForeignKey('user.id'))
+    level = Column(String)
+    date = Column(String)
+    message = Column(Text)
+    created = Column(DateTime, default=datetime.utcnow)
+    updated = Column(DateTime, default=datetime.utcnow,
+                     onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        data = u'<Trace id=%(id)s, user_id=%(user_id)s, '\
+                'level=%(level)s, date=%(date)s, '\
+                'message=%(message)s>' % self.__dict__
+        return data.encode('utf-8')
+
+

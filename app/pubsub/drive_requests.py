@@ -17,9 +17,9 @@ class ActiveDriveRequestsFilterExtractor(Publisher):
             self.publish('bad_request', params)
 
 
-class DriveRequestWithIdGetter(Publisher):
-    def perform(self, repository, id):
-        request = repository.get_by_id(id)
+class UnratedDriveRequestWithIdGetter(Publisher):
+    def perform(self, repository, id, driver_id):
+        request = repository.get_by_id(id, driver_id, user_id)
         if request is None:
             self.publish('drive_request_not_found', id)
         else:
@@ -58,6 +58,20 @@ class ActiveDriveRequestsGetter(Publisher):
         with the list of active drive requests records.
         """
         self.publish('drive_requests_found', repository.get_all_active())
+
+
+class UnratedDriveRequestsWithDriverIdGetter(Publisher):
+    def perform(self, repository, driver_id, user_id):
+        self.publish('drive_requests_found',
+                     repository.get_unrated_by_driver_id(driver_id,
+                                                         user_id))
+
+
+class UnratedDriveRequestsWithPassengerIdGetter(Publisher):
+    def perform(self, repository, passenger_id, user_id):
+        self.publish('drive_requests_found',
+                     repository.get_unrated_by_passenger_id(passenger_id,
+                                                            user_id))
 
 
 class DriveRequestCreator(Publisher):

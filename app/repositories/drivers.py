@@ -15,7 +15,6 @@ class DriversRepository(object):
         return expunged(Driver.query.options(joinedload('user')).\
                                 filter(User.deleted == False).\
                                 filter(Driver.id == driver_id).\
-                                filter(Driver.active == True).\
                                 first(),
                         Driver.session)
 

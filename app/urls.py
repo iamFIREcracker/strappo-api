@@ -3,6 +3,7 @@
 
 from app.controllers import InfoController
 from app.controllers.drive_requests import ListActiveDriveRequestsController
+from app.controllers.drive_requests import ListUnratedDriveRequestsController
 from app.controllers.drivers import AcceptPassengerController
 from app.controllers.drivers import AddDriverController
 from app.controllers.drivers import CancelDriveOfferController
@@ -40,6 +41,7 @@ URLS = (
     '/1/passengers/(.+)/cancel/drive_request/(.+)', CancelDriveRequestController,
 
     '/1/drive_requests/active', ListActiveDriveRequestsController,
+    '/1/drive_requests/unrated', ListUnratedDriveRequestsController,
 
     '/1/traces/add', AddTracesController,
 

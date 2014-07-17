@@ -8,7 +8,7 @@ from app.pubsub import ACSSessionCreator
 from app.pubsub import ACSUserIdsNotifier
 from app.pubsub import ACSPayloadsForUserIdNotifier
 from app.pubsub import PayloadsByUserCreator
-from app.pubsub.drive_requests import DriveRequestWithIdGetter
+from app.pubsub.drive_requests import UnratedDriveRequestWithIdGetter
 from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
 from app.pubsub.drivers import DriverCreator
@@ -344,7 +344,7 @@ class RateDriveRequestWorkflow(Publisher):
         form_validator = FormValidator()
         driver_getter = DriverWithIdGetter()
         with_user_id_authorizer = DriverWithUserIdAuthorizer()
-        drive_request_getter = DriveRequestWithIdGetter()
+        drive_request_getter = UnratedDriveRequestWithIdGetter()
         rate_creator = RateCreator()
         stars_future = Future()
 
@@ -367,7 +367,9 @@ class RateDriveRequestWorkflow(Publisher):
                 outer.publish('unauthorized')
             def authorized(self, user_id, driver):
                 drive_request_getter.perform(drive_requests_repository,
-                                             drive_request_id)
+                                             drive_request_id,
+                                             driver_id,
+                                             user.id)
 
         class DriveRequestGetterSubscriber(object):
             def drive_request_not_found(self, id):

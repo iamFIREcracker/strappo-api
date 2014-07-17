@@ -4,21 +4,40 @@
 import uuid
 from datetime import datetime
 
-from app.models import User
 from app.models import DriveRequest
+from app.models import Driver
+from app.models import Rate
+from app.models import User
+from app.weblib.db import exists
 from app.weblib.db import expunged
 from app.weblib.db import joinedload_all
 
 
 class DriveRequestsRepository(object):
     @staticmethod
-    def get_by_id(id):
+    def get_by_id(id, driver_id, user_id):
         options = [joinedload_all('driver.user'),
                    joinedload_all('passenger.user')]
         return expunged(DriveRequest.query.options(*options).\
-                        filter_by(id=id).\
+                        filter(DriveRequest.id == id).\
+                        filter(DriveRequest.driver_id == driver_id).\
+                        filter(DriveRequest.accepted == True).\
+                        filter(DriveRequest.active == False).\
+                        filter(~exists().where(Rate.rater_user_id == user_id)).\
                         first(),
                         DriveRequest.session)
+
+    @staticmethod
+    def get_unrated_by_driver_id(driver_id, user_id):
+        options = [joinedload_all('driver.user'),
+                   joinedload_all('passenger.user'),
+                   joinedload_all('rates')]
+        return [expunged(dr, DriveRequest.session)
+                for dr in DriveRequest.query.options(*options).\
+                        filter(DriveRequest.driver_id == driver_id).\
+                        filter(DriveRequest.accepted == True).\
+                        filter(DriveRequest.active == False).\
+                        filter(~exists().where(Rate.rater_user_id == user_id))]
 
     @staticmethod
     def get_all_active():

@@ -6,6 +6,8 @@ from app.pubsub.drive_requests import ActiveDriveRequestsFilterExtractor
 from app.pubsub.drive_requests import ActiveDriveRequestsGetter
 from app.pubsub.drive_requests import ActiveDriveRequestsWithDriverIdGetter
 from app.pubsub.drive_requests import ActiveDriveRequestsWithPassengerIdGetter
+from app.pubsub.drive_requests import UnratedDriveRequestsWithDriverIdGetter
+from app.pubsub.drive_requests import UnratedDriveRequestsWithPassengerIdGetter
 from app.pubsub.drive_requests import DriveRequestAcceptor
 from app.pubsub.drive_requests import DriveRequestCancellorByDriverId
 from app.pubsub.drive_requests import DriveRequestCancellorByPassengerId
@@ -104,6 +106,90 @@ class ListActiveDriveRequestsWorkflow(Publisher):
                                             PassengerAuthorizerSubscriber())
         with_passenger_id_requests_getter.\
                 add_subscriber(logger, ActiveDriveRequestsGetterSubscriber())
+        requests_enricher.add_subscriber(logger,
+                                         DriveRequestsEnricherSubscriber())
+        requests_serializer.add_subscriber(logger,
+                                           DriveRequestsSerializerSubscriber())
+        filter_extractor.perform(params)
+
+
+class ListUnratedDriveRequestsWorkflow(Publisher):
+    """Defines a workflow to list all the active drive requests associated
+    with a specific driver ID."""
+
+    def perform(self, logger, drivers_repository, passengers_repository,
+                requests_repository, rates_repository, user_id, params):
+        outer = self # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        filter_extractor = ActiveDriveRequestsFilterExtractor()
+        driver_getter = DriverWithIdGetter()
+        driver_authorizer = DriverWithUserIdAuthorizer()
+        unrated_requests_with_driver_id_getter = \
+                UnratedDriveRequestsWithDriverIdGetter()
+        passenger_getter = PassengerWithIdGetter()
+        passenger_authorizer = PassengerWithUserIdAuthorizer()
+        unrated_requests_with_passenger_id_getter = \
+                UnratedDriveRequestsWithPassengerIdGetter()
+        requests_enricher = DriveRequestsEnricher()
+        requests_serializer = MultipleDriveRequestsSerializer()
+
+        class FilterExtractorSubscriber(object):
+            def bad_request(self, params):
+                outer.publish('bad_request')
+            def by_driver_id_filter(self, driver_id):
+                driver_getter.perform(drivers_repository, driver_id)
+            def by_passenger_id_filter(self, passenger_id):
+                passenger_getter.perform(passengers_repository, passenger_id)
+
+        class DriverGetterSubscriber(object):
+            def driver_not_found(self, driver_id):
+                outer.publish('unauthorized')
+            def driver_found(self, driver):
+                driver_authorizer.perform(user_id, driver)
+
+        class DriverAuthorizerSubscriber(object):
+            def unauthorized(self, user_id, driver):
+                outer.publish('unauthorized')
+            def authorized(self, user_id, driver):
+                unrated_requests_with_driver_id_getter.\
+                        perform(requests_repository, driver.id, driver.user.id)
+
+        class PassengerGetterSubscriber(object):
+            def passenger_not_found(self, passenger_id):
+                outer.publish('unauthorized')
+            def passenger_found(self, passenger):
+                passenger_authorizer.perform(user_id, passenger)
+
+        class PassengerAuthorizerSubscriber(object):
+            def unauthorized(self, user_id, passenger):
+                outer.publish('unauthorized')
+            def authorized(self, user_id, passenger):
+                unrated_requests_with_driver_id_getter.\
+                        perform(requests_repository, passenger.id,
+                                passenger.user.id)
+
+        class UnratedDriveRequestsGetterSubscriber(object):
+            def drive_requests_found(self, requests):
+                requests_enricher.perform(rates_repository, requests)
+
+        class DriveRequestsEnricherSubscriber(object):
+            def drive_requests_enriched(self, requests):
+                requests_serializer.perform(requests)
+
+        class DriveRequestsSerializerSubscriber(object):
+            def drive_requests_serialized(self, blob):
+                outer.publish('success', blob)
+
+        filter_extractor.add_subscriber(logger, FilterExtractorSubscriber())
+        driver_getter.add_subscriber(logger, DriverGetterSubscriber())
+        driver_authorizer.add_subscriber(logger, DriverAuthorizerSubscriber())
+        unrated_requests_with_driver_id_getter.\
+                add_subscriber(logger, UnratedDriveRequestsGetterSubscriber())
+        passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
+        passenger_authorizer.add_subscriber(logger,
+                                            PassengerAuthorizerSubscriber())
+        unrated_requests_with_passenger_id_getter.\
+                add_subscriber(logger, UnratedDriveRequestsGetterSubscriber())
         requests_enricher.add_subscriber(logger,
                                          DriveRequestsEnricherSubscriber())
         requests_serializer.add_subscriber(logger,

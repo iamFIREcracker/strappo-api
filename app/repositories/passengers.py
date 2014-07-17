@@ -15,7 +15,6 @@ class PassengersRepository(object):
         return expunged(Passenger.query.options(joinedload('user')).\
                                 filter(User.deleted == False).\
                                 filter(Passenger.id == id).\
-                                filter(Passenger.active == True).\
                                 first(),
                         Passenger.session)
 

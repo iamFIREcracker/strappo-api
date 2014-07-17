@@ -79,8 +79,9 @@ class PassengerUpdater(Publisher):
         passenger.destination_latitude = destination_latitude
         passenger.destination_longitude = destination_longitude
         passenger.seats = seats
+        passenger.matched = False
+        passenger.active = True
         self.publish('passenger_updated', passenger)
-
 
 
 class PassengerWithUserIdAuthorizer(Publisher):

@@ -5,6 +5,7 @@ import uuid as _uuid
 
 import web
 from sqlalchemy import create_engine as _create_engine
+from sqlalchemy import exists
 from sqlalchemy import func
 from sqlalchemy import Boolean
 from sqlalchemy import Column
@@ -28,9 +29,9 @@ from sqlalchemy.ext.declarative import declarative_base as _declarative_base
 
 
 __all__ = ['backref', 'create_engine', 'create_session', 'declarative_base',
-           'func', 'init_db', 'joinedload', 'joinedload_all', 'relationship',
-           'uuid', 'Boolean', 'Column', 'DateTime', 'Enum', 'Float',
-           'ForeignKey', 'Integer', 'String', 'Text', 'Time', 'text']
+           'exists', 'func', 'init_db', 'joinedload', 'joinedload_all',
+           'relationship', 'uuid', 'Boolean', 'Column', 'DateTime', 'Enum',
+           'Float', 'ForeignKey', 'Integer', 'String', 'Text', 'Time', 'text']
 
 
 def create_engine():
