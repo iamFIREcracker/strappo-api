@@ -48,11 +48,9 @@ class User(Base):
     updated = Column(DateTime, default=datetime.utcnow,
                      onupdate=datetime.utcnow)
     driver = relationship('Driver', uselist=False,
-                          backref=backref('user', cascade='expunge'),
-                             primaryjoin="User.id == Driver.user_id")
+                          backref=backref('user', cascade='expunge'))
     passenger = relationship('Passenger', uselist=False,
-                             backref=backref('user', cascade='expunge'),
-                             primaryjoin="User.id == Passenger.user_id")
+                             backref=backref('user', cascade='expunge'))
 
     def __repr__(self):
         data = u'<User id=%(id)s, acs_id=%(acs_id)s, name=%(name)s, '\
@@ -88,6 +86,7 @@ class Driver(Base):
     updated = Column(DateTime, default=datetime.utcnow,
                      onupdate=datetime.utcnow)
     drive_requests = relationship('DriveRequest', uselist=True,
+                                  cascade='expunge',
                                   primaryjoin="and_(Driver.id == DriveRequest.driver_id,"
                                                    "DriveRequest.active == True)")
 
@@ -117,6 +116,7 @@ class Passenger(Base):
     updated = Column(DateTime, default=datetime.utcnow,
                      onupdate=datetime.utcnow)
     drive_requests = relationship('DriveRequest', uselist=True,
+                                  cascade='expunge',
                                   primaryjoin="and_(Passenger.id == DriveRequest.passenger_id,"
                                                    "DriveRequest.active == True)")
 
@@ -142,9 +142,9 @@ class DriveRequest(Base):
     created = Column(DateTime, default=datetime.utcnow)
     updated = Column(DateTime, default=datetime.utcnow,
                      onupdate=datetime.utcnow)
-    driver = relationship('Driver', uselist=False,
+    driver = relationship('Driver', uselist=False, cascade='expunge',
                           primaryjoin="DriveRequest.driver_id == Driver.id")
-    passenger = relationship('Passenger', uselist=False,
+    passenger = relationship('Passenger', uselist=False, cascade='expunge',
                              primaryjoin="DriveRequest.passenger_id == Passenger.id")
 
     def __repr__(self):
