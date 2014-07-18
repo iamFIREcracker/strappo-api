@@ -146,8 +146,6 @@ class DriveRequest(Base):
                           primaryjoin="DriveRequest.driver_id == Driver.id")
     passenger = relationship('Passenger', uselist=False,
                              primaryjoin="DriveRequest.passenger_id == Passenger.id")
-    rates = relationship('Rate', uselist=True,
-                         primaryjoin="DriveRequest.id == Rate.drive_request_id")
 
     def __repr__(self):
         data = u'<DriveRequest id=%(id)s, driver_id=%(driver_id)s, '\
