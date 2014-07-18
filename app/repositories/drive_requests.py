@@ -5,7 +5,6 @@ import uuid
 from datetime import datetime
 
 from app.models import DriveRequest
-from app.models import Driver
 from app.models import Rate
 from app.models import User
 from app.weblib.db import exists
@@ -17,12 +16,14 @@ class DriveRequestsRepository(object):
     @staticmethod
     def get_by_id(id, driver_id, user_id):
         options = [joinedload_all('driver.user'),
-                   joinedload_all('passenger.user')]
+                   joinedload_all('passenger.user'),
+                   joinedload_all('rates')]
         return expunged(DriveRequest.query.options(*options).\
                         filter(DriveRequest.id == id).\
                         filter(DriveRequest.driver_id == driver_id).\
                         filter(DriveRequest.accepted == True).\
                         filter(DriveRequest.active == False).\
+                        filter(Rate.drive_request_id == DriveRequest.id).\
                         filter(~exists().where(Rate.rater_user_id == user_id)).\
                         first(),
                         DriveRequest.session)
@@ -37,7 +38,9 @@ class DriveRequestsRepository(object):
                         filter(DriveRequest.driver_id == driver_id).\
                         filter(DriveRequest.accepted == True).\
                         filter(DriveRequest.active == False).\
-                        filter(~exists().where(Rate.rater_user_id == user_id))]
+                        filter(Rate.drive_request_id == DriveRequest.id)
+                        #filter(~exists().where(Rate.rater_user_id == user_id))
+                ]
 
     @staticmethod
     def get_all_active():
