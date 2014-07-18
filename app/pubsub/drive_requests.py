@@ -19,7 +19,7 @@ class ActiveDriveRequestsFilterExtractor(Publisher):
 
 class UnratedDriveRequestWithIdGetter(Publisher):
     def perform(self, repository, id, driver_id, user_id):
-        request = repository.get_by_id(id, driver_id, user_id)
+        request = repository.get_unrated_by_id(id, driver_id, user_id)
         if request is None:
             self.publish('drive_request_not_found', id)
         else:
