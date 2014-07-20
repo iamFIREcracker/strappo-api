@@ -19,6 +19,15 @@ class DriversRepository(object):
                         Driver.session)
 
     @staticmethod
+    def get_active_by_id(driver_id):
+        return expunged(Driver.query.options(joinedload('user')).\
+                        filter(User.deleted == False).\
+                        filter(Driver.id == driver_id).\
+                        filter(Driver.active == True).\
+                        first(),
+                        Driver.session)
+
+    @staticmethod
     def get_with_requests(driver_id):
         return expunged(Driver.query.options(joinedload('user'),
                                              joinedload('drive_requests')).\

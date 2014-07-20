@@ -48,9 +48,25 @@ class AddPassengerController(ParamAuthorizableController):
     @api
     @authorized
     def POST(self):
+        outer = self
+        passenger_id = self.current_user.passenger.id \
+            if self.current_user.passenger is not None else ''
+
         logger = LoggingSubscriber(web.ctx.logger)
+        deactivate_passenger = DeactivatePassengerWorkflow()
         add_passenger = AddPassengerWorkflow()
         ret = Future()
+
+        class DeactivatePassengerSubscriber(object):
+            def unauthorized(self):
+                raise web.unauthorized()
+            def success(self):
+                add_passenger.perform(web.ctx.gettext, web.ctx.orm,
+                                      web.ctx.logger,
+                                      web.ctx.redis, web.input(),
+                                      PassengersRepository,
+                                      outer.current_user,
+                                      NotifyDriversPassengerRegisteredTask)
 
         class AddPassengerSubscriber(object):
             def invalid_form(self, errors):
@@ -61,11 +77,13 @@ class AddPassengerController(ParamAuthorizableController):
                 url = '/1/passengers/%(id)s/view' % dict(id=passenger_id)
                 raise app.weblib.created(url)
 
+        deactivate_passenger.add_subscriber(logger,
+                                            DeactivatePassengerSubscriber())
         add_passenger.add_subscriber(logger, AddPassengerSubscriber())
-        add_passenger.perform(web.ctx.gettext, web.ctx.orm, web.ctx.logger,
-                              web.ctx.redis, web.input(), PassengersRepository,
-                              self.current_user,
-                              NotifyDriversPassengerRegisteredTask)
+        deactivate_passenger.perform(web.ctx.logger, web.ctx.orm,
+                                     PassengersRepository,passenger_id,
+                                     self.current_user,
+                                     NotifyDriversDeactivatedPassengerTask)
         return ret.get()
 
 
@@ -81,9 +99,6 @@ class AlightPassengerController(ParamAuthorizableController):
             def invalid_form(self, errors):
                 web.ctx.orm.rollback()
                 ret.set(jsonify(success=False, errors=errors))
-            def not_found(self, passenger_id):
-                web.ctx.orm.rollback()
-                raise web.notfound()
             def unauthorized(self):
                 web.ctx.orm.rollback()
                 raise web.unauthorized()
@@ -109,8 +124,6 @@ class DeactivatePassengerController(ParamAuthorizableController):
         deactivate_passenger = DeactivatePassengerWorkflow()
 
         class DeactivatePassengerSubscriber(object):
-            def not_found(self, passenger_id):
-                raise web.notfound()
             def unauthorized(self):
                 raise web.unauthorized()
             def success(self):

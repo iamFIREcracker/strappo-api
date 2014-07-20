@@ -28,9 +28,24 @@ class AddDriverController(ParamAuthorizableController):
     @api
     @authorized
     def POST(self):
+        outer = self
+        driver_id = self.current_user.driver.id \
+            if self.current_user.driver is not None else ''
+
         logger = LoggingSubscriber(web.ctx.logger)
+        deactivate_driver = DeactivateDriverWorkflow()
         add_driver = AddDriverWorkflow()
         ret = Future()
+
+        class DeactivateDriverSubscriber(object):
+            def unauthorized(self):
+                raise web.unauthorized()
+            def success(self):
+                add_driver.perform(web.ctx.gettext, web.ctx.orm,
+                                   web.ctx.logger,
+                                   web.ctx.redis, web.input(),
+                                   DriversRepository,
+                                   outer.current_user)
 
         class AddDriverSubscriber(object):
             def invalid_form(self, errors):
@@ -41,10 +56,13 @@ class AddDriverController(ParamAuthorizableController):
                 url = '/1/drivers/%(id)s/view' % dict(id=driver_id)
                 raise app.weblib.created(url)
 
+        deactivate_driver.add_subscriber(logger,
+                                         DeactivateDriverSubscriber())
         add_driver.add_subscriber(logger, AddDriverSubscriber())
-        add_driver.perform(web.ctx.gettext, web.ctx.orm, web.ctx.logger,
-                           web.ctx.redis, web.input(), DriversRepository,
-                           self.current_user)
+        deactivate_driver.perform(web.ctx.logger, web.ctx.orm,
+                                  DriversRepository, driver_id,
+                                  self.current_user,
+                                  NotifyPassengersDriverDeactivatedTask)
         return ret.get()
 
 
@@ -56,8 +74,6 @@ class DeactivateDriverController(ParamAuthorizableController):
         deactivate_driver = DeactivateDriverWorkflow()
 
         class DeactivateDriverSubscriber(object):
-            def not_found(self, driver_id):
-                raise web.notfound()
             def unauthorized(self):
                 raise web.unauthorized()
             def success(self):
@@ -151,7 +167,7 @@ class RateDriveRequestController(ParamAuthorizableController):
                 raise app.weblib.nocontent()
 
         rate_passenger.add_subscriber(logger, RatePassengerSubscriber())
-        rate_passenger.perform(web.ctx.logger, web.ctx.gettext, web.ctx.orm, 
+        rate_passenger.perform(web.ctx.logger, web.ctx.gettext, web.ctx.orm,
                                self.current_user, web.input(), driver_id,
                                drive_request_id,
                                DriversRepository, DriveRequestsRepository,

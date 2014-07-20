@@ -46,6 +46,15 @@ class ActivePassengersGetter(Publisher):
         self.publish('passengers_found', repository.get_all_active())
 
 
+class ActivePassengerWithIdGetter(Publisher):
+    def perform(self, repository, passenger_id):
+        passenger = repository.get_active_by_id(passenger_id)
+        if passenger is None:
+            self.publish('passenger_not_found', passenger_id)
+        else:
+            self.publish('passenger_found', passenger)
+
+
 class PassengerCreator(Publisher):
     def perform(self, repository, user_id, origin, origin_latitude,
                 origin_longitude, destination, destination_latitude,
@@ -66,22 +75,6 @@ class PassengerCopier(Publisher):
     def perform(self, repository, other):
         passenger = repository.copy(other)
         self.publish('passenger_copied', passenger)
-
-
-class PassengerUpdater(Publisher):
-    def perform(self, passenger, origin, origin_latitude,
-                origin_longitude, destination, destination_latitude,
-                destination_longitude, seats):
-        passenger.origin = origin
-        passenger.origin_latitude = origin_latitude
-        passenger.origin_longitude = origin_longitude
-        passenger.destination = destination
-        passenger.destination_latitude = destination_latitude
-        passenger.destination_longitude = destination_longitude
-        passenger.seats = seats
-        passenger.matched = False
-        passenger.active = True
-        self.publish('passenger_updated', passenger)
 
 
 class PassengerWithUserIdAuthorizer(Publisher):

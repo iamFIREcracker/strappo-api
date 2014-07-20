@@ -12,6 +12,7 @@ from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
 from app.pubsub.notifications import NotificationsResetter
 from app.pubsub.passengers import ActivePassengersGetter
+from app.pubsub.passengers import ActivePassengerWithIdGetter
 from app.pubsub.passengers import PassengerWithIdGetter
 from app.pubsub.passengers import MultiplePassengersWithIdGetter
 from app.pubsub.passengers import MultiplePassengersDeactivator
@@ -20,12 +21,10 @@ from app.pubsub.passengers import PassengersACSUserIdExtractor
 from app.pubsub.passengers import PassengerCreator
 from app.pubsub.passengers import PassengerCopier
 from app.pubsub.passengers import PassengersEnricher
-from app.pubsub.passengers import PassengerUpdater
 from app.pubsub.passengers import PassengerSerializer
 from app.pubsub.passengers import PassengerWithUserIdAuthorizer
 from app.pubsub.passengers import UnmatchedPassengersGetter
 from app.pubsub.rates import RateCreator
-from app.pubsub.users import UserWithoutPassengerValidator
 from app.weblib.forms import describe_invalid_form_localized
 from app.weblib.pubsub import FormValidator
 from app.weblib.pubsub import Publisher
@@ -73,11 +72,8 @@ class AddPassengerWorkflow(Publisher):
                 repository, user, task):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
-        user_validator = UserWithoutPassengerValidator()
         form_validator = FormValidator()
-        passenger_getter = PassengerWithIdGetter()
         passenger_creator = PassengerCreator()
-        passenger_updater = PassengerUpdater()
         passenger_copier = PassengerCopier()
         passenger_serializer = PassengerSerializer()
         notifications_resetter = NotificationsResetter()
@@ -86,54 +82,21 @@ class AddPassengerWorkflow(Publisher):
         passenger_id_future = Future()
         passenger_serialized_future = Future()
 
-        class UserValidatorSubscriber(object):
-            def invalid_user(self, errors):
-                passenger_getter.perform(repository, user.passenger.id)
-            def valid_user(self, user):
-                passenger_future.set(None)
-                form_validator.perform(passengers_forms.add(), params,
-                                       describe_invalid_form_localized(gettext,
-                                                                       user.locale))
-
-        class PassengerGetterSubscriber(object):
-            def passenger_found(self, passenger):
-                passenger_future.set(passenger)
-                form_validator.perform(passengers_forms.add(), params,
-                                       describe_invalid_form_localized(gettext,
-                                                                       user.locale))
-
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
                 outer.publish('invalid_form', errors)
             def valid_form(self, form):
-                passenger = passenger_future.get()
-                if passenger is None:
-                    passenger_creator.perform(repository, user.id,
-                                              form.d.origin,
-                                              float(form.d.origin_latitude),
-                                              float(form.d.origin_longitude),
-                                              form.d.destination,
-                                              float(form.d.destination_latitude),
-                                              float(form.d.destination_longitude),
-                                              int(form.d.seats))
-                else:
-                    passenger_updater.perform(passenger,
-                                              form.d.origin,
-                                              float(form.d.origin_latitude),
-                                              float(form.d.origin_longitude),
-                                              form.d.destination,
-                                              float(form.d.destination_latitude),
-                                              float(form.d.destination_longitude),
-                                              int(form.d.seats))
+                passenger_creator.perform(repository, user.id,
+                                          form.d.origin,
+                                          float(form.d.origin_latitude),
+                                          float(form.d.origin_longitude),
+                                          form.d.destination,
+                                          float(form.d.destination_latitude),
+                                          float(form.d.destination_longitude),
+                                          int(form.d.seats))
 
         class PassengerCreatorSubscriber(object):
             def passenger_created(self, passenger):
-                passenger_id_future.set(passenger.id)
-                orm.add(passenger)
-                passenger_copier.perform(repository, passenger)
-
-        class PassengerUpdaterSubscriber(object):
-            def passenger_updated(self, passenger):
                 passenger_id_future.set(passenger.id)
                 orm.add(passenger)
                 passenger_copier.perform(repository, passenger)
@@ -156,22 +119,21 @@ class AddPassengerWorkflow(Publisher):
             def task_created(self, task_id):
                 outer.publish('success', passenger_id_future.get())
 
-        user_validator.add_subscriber(logger, UserValidatorSubscriber())
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
-        passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
         passenger_creator.add_subscriber(logger, PassengerCreatorSubscriber())
-        passenger_updater.add_subscriber(logger, PassengerUpdaterSubscriber())
         passenger_copier.add_subscriber(logger, PassengerCopierSubscriber())
         passenger_serializer.add_subscriber(logger,
                                             PassengerSerializerSubscriber())
         notifications_resetter.\
                 add_subscriber(logger, NotificationsResetterSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
-        user_validator.perform(user)
+        form_validator.perform(passengers_forms.add(), params,
+                               describe_invalid_form_localized(gettext,
+                                                               user.locale))
 
 
 class NotifyPassengersWorkflow(Publisher):
-    """Defines a workflow to notify a passenger that a driver has offered 
+    """Defines a workflow to notify a passenger that a driver has offered
     a ride request.
     """
 
@@ -234,7 +196,7 @@ class DeactivatePassengerWorkflow(Publisher):
     def perform(self, logger, orm, repository, passenger_id, user, task):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
-        passenger_getter = PassengerWithIdGetter()
+        passenger_getter = ActivePassengerWithIdGetter()
         with_user_id_authorizer = PassengerWithUserIdAuthorizer()
         passengers_deactivator = MultiplePassengersDeactivator()
         requests_deactivator = MultipleDriveRequestsDeactivator()

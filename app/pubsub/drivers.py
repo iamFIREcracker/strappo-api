@@ -44,6 +44,14 @@ class DriverWithIdGetter(Publisher):
         else:
             self.publish('driver_found', driver)
 
+class ActiveDriverWithIdGetter(Publisher):
+    def perform(self, repository, driver_id):
+        driver = repository.get_active_by_id(driver_id)
+        if driver is None:
+            self.publish('driver_not_found', driver_id)
+        else:
+            self.publish('driver_found', driver)
+
 class DeepDriverWithIdGetter(Publisher):
     def perform(self, repository, driver_id):
         driver = repository.get_with_requests(driver_id)
@@ -61,19 +69,6 @@ class DriverCreator(Publisher):
         """
         driver = repository.add(user_id, license_plate, telephone)
         self.publish('driver_created', driver)
-
-
-class DriverUpdater(Publisher):
-    def perform(self, driver, license_plate, telephone):
-        """Sets the properties 'license_plate' and 'telephone' of the given
-        driver.
-
-        When done, a 'driver_update' message is published together with
-        the update driver.
-        """
-        driver.license_plate = license_plate
-        driver.telephone = telephone
-        self.publish('driver_updated', driver)
 
 
 class DriverHider(Publisher):

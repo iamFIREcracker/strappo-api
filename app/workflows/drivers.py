@@ -11,8 +11,8 @@ from app.pubsub import PayloadsByUserCreator
 from app.pubsub.drive_requests import UnratedDriveRequestWithIdGetter
 from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from app.pubsub.drive_requests import MultipleDriveRequestsSerializer
+from app.pubsub.drivers import ActiveDriverWithIdGetter
 from app.pubsub.drivers import DriverCreator
-from app.pubsub.drivers import DriverUpdater
 from app.pubsub.drivers import DriverWithIdGetter
 from app.pubsub.drivers import DriversACSUserIdExtractor
 from app.pubsub.drivers import DriverWithUserIdAuthorizer
@@ -22,7 +22,6 @@ from app.pubsub.drivers import MultipleDriversDeactivator
 from app.pubsub.drivers import MultipleDriversUnhider
 from app.pubsub.drivers import UnhiddenDriversGetter
 from app.pubsub.notifications import NotificationsResetter
-from app.pubsub.users import UserWithoutDriverValidator
 from app.pubsub.rates import RateCreator
 from app.weblib.forms import describe_invalid_form_localized
 from app.weblib.pubsub import FormValidator
@@ -39,53 +38,21 @@ class AddDriverWorkflow(Publisher):
     def perform(self, gettext, orm, logger, redis, params, repository, user):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
-        user_validator = UserWithoutDriverValidator()
         form_validator = FormValidator()
-        driver_getter = DriverWithIdGetter()
         driver_creator = DriverCreator()
-        driver_updater = DriverUpdater()
         notifications_resetter = NotificationsResetter()
-        driver_future = Future()
         driver_id_future = Future()
-
-        class UserValidatorSubscriber(object):
-            def invalid_user(self, errors):
-                driver_getter.perform(repository, user.driver.id)
-            def valid_user(self, user):
-                driver_future.set(None)
-                form_validator.perform(drivers_forms.add(), params,
-                                       describe_invalid_form_localized(gettext,
-                                                                       user.locale))
-
-        class DriverGetterSubscriber(object):
-            def driver_found(self, driver):
-                driver_future.set(driver)
-                form_validator.perform(drivers_forms.add(), params,
-                                       describe_invalid_form_localized(gettext,
-                                                                       user.locale))
 
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
                 outer.publish('invalid_form', errors)
             def valid_form(self, form):
-                driver = driver_future.get()
-                if driver is None:
-                    driver_creator.perform(repository, user.id,
-                                           form.d.license_plate,
-                                           form.d.telephone)
-                else:
-                    driver_updater.perform(driver,
-                                           form.d.license_plate,
-                                           form.d.telephone)
+                driver_creator.perform(repository, user.id,
+                                       form.d.license_plate,
+                                       form.d.telephone)
 
         class DriverCreatorSubscriber(object):
             def driver_created(self, driver):
-                orm.add(driver)
-                driver_id_future.set(driver.id)
-                notifications_resetter.perform(redis, user.id)
-
-        class DriverUpdaterSubscriber(object):
-            def driver_updated(self, driver):
                 orm.add(driver)
                 driver_id_future.set(driver.id)
                 notifications_resetter.perform(redis, user.id)
@@ -94,14 +61,14 @@ class AddDriverWorkflow(Publisher):
             def notifications_reset(self, recordid):
                 outer.publish('success', driver_id_future.get())
 
-        user_validator.add_subscriber(logger, UserValidatorSubscriber())
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
-        driver_getter.add_subscriber(logger, DriverGetterSubscriber())
         driver_creator.add_subscriber(logger, DriverCreatorSubscriber())
-        driver_updater.add_subscriber(logger, DriverUpdaterSubscriber())
         notifications_resetter.\
                 add_subscriber(logger, NotificationsResetterSubscriber())
-        user_validator.perform(user)
+        form_validator.perform(drivers_forms.add(), params,
+                                describe_invalid_form_localized(gettext,
+                                                                user.locale))
+
 
 class DeactivateDriverWorkflow(Publisher):
     """Defines a workflow to deactivate a driver given its ID."""
@@ -109,7 +76,7 @@ class DeactivateDriverWorkflow(Publisher):
     def perform(self, logger, orm, repository, driver_id, user, task):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
-        driver_getter = DriverWithIdGetter()
+        driver_getter = ActiveDriverWithIdGetter()
         with_user_id_authorizer = DriverWithUserIdAuthorizer()
         drivers_deactivator = MultipleDriversDeactivator()
         requests_deactivator = MultipleDriveRequestsDeactivator()
