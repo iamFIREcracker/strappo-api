@@ -159,11 +159,11 @@ tmp_upload_dir = None
 #       A string of "debug", "info", "warning", "error", "critical"
 #
 #   accesslog - The path to a log file to write accesses to.
-#   
+#
 #       A path string. "-" means log to stdout.
 #
 #   errorlog - The path to a log file to write errors to.
-#   
+#
 #       A path string. "-" means log to stdout.
 #
 #   syslog - Log to syslog
@@ -221,6 +221,6 @@ proc_name = None
 #
 # def pre_fork(server, worker):
 #     pass
-# 
+#
 # def pre_exec(server):
 #     pass
