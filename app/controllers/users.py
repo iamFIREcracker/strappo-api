@@ -6,6 +6,7 @@ import web
 from app.controllers import ParamAuthorizableController
 from app.repositories.drivers import DriversRepository
 from app.repositories.passengers import PassengersRepository
+from app.repositories.rates import RatesRepository
 from app.repositories.users import UsersRepository
 from app.tasks import NotifyDriversDeactivatedPassengerTask
 from app.tasks import NotifyPassengersDriverDeactivatedTask
@@ -25,7 +26,7 @@ from app.weblib.utils import jsonify
 class ViewUserController(ParamAuthorizableController):
     @api
     @authorized
-    def GET(self, passenger_id):
+    def GET(self, user_id):
         logger = LoggingSubscriber(web.ctx.logger)
         view_user = ViewUserWorkflow()
         ret = Future()
@@ -37,7 +38,8 @@ class ViewUserController(ParamAuthorizableController):
                 ret.set(jsonify(user=blob))
 
         view_user.add_subscriber(logger, ViewUserSubscriber())
-        view_user.perform(web.ctx.logger, UsersRepository, passenger_id)
+        view_user.perform(web.ctx.logger, UsersRepository, user_id,
+                          RatesRepository)
         return ret.get()
 
 

@@ -106,3 +106,11 @@ def enrich(rates_repository, user):
     user.stars = rates_repository.avg_stars(user.id)
     user.received_rates = rates_repository.received_rates(user.id)
     return user
+
+def _enrich(rates_repository, user):
+    return enrich(rates_repository, user)
+
+
+class UserEnricher(Publisher):
+    def perform(self, rates_repository, user):
+        self.publish('user_enriched', _enrich(rates_repository, user))
