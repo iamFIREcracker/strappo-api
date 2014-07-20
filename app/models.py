@@ -3,7 +3,6 @@
 
 from datetime import datetime
 
-from app.weblib.db import backref
 from app.weblib.db import Boolean
 from app.weblib.db import declarative_base
 from app.weblib.db import relationship
@@ -47,10 +46,13 @@ class User(Base):
     created = Column(DateTime, default=datetime.utcnow)
     updated = Column(DateTime, default=datetime.utcnow,
                      onupdate=datetime.utcnow)
-    driver = relationship('Driver', uselist=False,
-                          backref=backref('user', cascade='expunge'))
-    passenger = relationship('Passenger', uselist=False,
-                             backref=backref('user', cascade='expunge'))
+    active_driver = relationship('Driver', uselist=False, cascade='expunge',
+                                 primaryjoin="and_(User.id == Driver.user_id,"
+                                                  "Driver.active == True)")
+    active_passenger = \
+        relationship('Passenger', uselist=False, cascade='expunge',
+                     primaryjoin="and_(User.id == Passenger.user_id,"
+                                      "Passenger.active == True)")
 
     def __repr__(self):
         data = u'<User id=%(id)s, acs_id=%(acs_id)s, name=%(name)s, '\
@@ -85,6 +87,7 @@ class Driver(Base):
     created = Column(DateTime, default=datetime.utcnow)
     updated = Column(DateTime, default=datetime.utcnow,
                      onupdate=datetime.utcnow)
+    user = relationship('User', uselist=False, cascade='expunge')
     drive_requests = relationship('DriveRequest', uselist=True,
                                   cascade='expunge',
                                   primaryjoin="and_(Driver.id == DriveRequest.driver_id,"
@@ -115,6 +118,7 @@ class Passenger(Base):
     created = Column(DateTime, default=datetime.utcnow)
     updated = Column(DateTime, default=datetime.utcnow,
                      onupdate=datetime.utcnow)
+    user = relationship('User', uselist=False, cascade='expunge')
     drive_requests = relationship('DriveRequest', uselist=True,
                                   cascade='expunge',
                                   primaryjoin="and_(Passenger.id == DriveRequest.passenger_id,"

@@ -49,8 +49,8 @@ class AddPassengerController(ParamAuthorizableController):
     @authorized
     def POST(self):
         outer = self
-        passenger_id = self.current_user.passenger.id \
-            if self.current_user.passenger is not None else ''
+        passenger_id = self.current_user.active_passenger.id \
+            if self.current_user.active_passenger is not None else None
 
         logger = LoggingSubscriber(web.ctx.logger)
         deactivate_passenger = DeactivatePassengerWorkflow()

@@ -29,8 +29,8 @@ class AddDriverController(ParamAuthorizableController):
     @authorized
     def POST(self):
         outer = self
-        driver_id = self.current_user.driver.id \
-            if self.current_user.driver is not None else ''
+        driver_id = self.current_user.active_driver.id \
+            if self.current_user.active_driver is not None else None
 
         logger = LoggingSubscriber(web.ctx.logger)
         deactivate_driver = DeactivateDriverWorkflow()
