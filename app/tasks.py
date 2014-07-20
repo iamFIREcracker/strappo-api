@@ -168,7 +168,7 @@ def NotifyDriversPassengerAlitTask(requests):
             'badge': badge,
             'channel': channel,
             'kind': 'alighted_passenger',
-            'passenger': requests[0]['passenger']['id'],
+            'drive_request': requests[0]['id'],
             'sound': 'default',
             'icon': 'notificationicon',
             'alert': alert
