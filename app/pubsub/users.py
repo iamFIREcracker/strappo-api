@@ -132,18 +132,7 @@ def serialize(user):
 
 class UserSerializer(Publisher):
     def perform(self, user):
-        """Convert the given user into a serializable dictionary.
-
-        At the end of the operation the method will emit a
-        'user_serialized' message containing the serialized object (i.e.
-        user dictionary).
-        """
-        from app.pubsub.drivers import serialize as serialize_driver
-        from app.pubsub.passengers import serialize as serialize_passenger
-        d = serialize(user)
-        d.update(driver=serialize_driver(user.driver))
-        d.update(passenger=serialize_passenger(user.passenger))
-        self.publish('user_serialized', d)
+        self.publish('user_serialized', serialize(user))
 
 
 def enrich(rates_repository, user):
