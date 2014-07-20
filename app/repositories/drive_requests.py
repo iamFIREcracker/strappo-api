@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime
 
 from app.models import DriveRequest
+from app.models import Passenger
 from app.models import Rate
 from app.models import User
 from app.weblib.db import and_
@@ -22,6 +23,7 @@ class DriveRequestsRepository(object):
                          filter(DriveRequest.driver_id == driver_id).\
                          filter(DriveRequest.accepted == True).\
                          filter(DriveRequest.active == False).\
+                         filter(Passenger.matched == True).\
                          filter(~exists().where(and_(Rate.drive_request_id == DriveRequest.id,
                                                       Rate.rater_user_id == user_id))).\
                         first(),
@@ -36,6 +38,7 @@ class DriveRequestsRepository(object):
                          filter(DriveRequest.driver_id == driver_id).\
                          filter(DriveRequest.accepted == True).\
                          filter(DriveRequest.active == False).\
+                         filter(Passenger.matched == True).\
                          filter(~exists().where(and_(Rate.drive_request_id == DriveRequest.id,
                                                       Rate.rater_user_id == user_id)))
                 ]

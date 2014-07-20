@@ -145,7 +145,7 @@ class MultipleDriveRequestsSerializer(Publisher):
         At the end of the operation, the method will emit a
         'drive_requests_serialized' message containing serialized objects.
         """
-        self.publish('drive_requests_serialized', 
+        self.publish('drive_requests_serialized',
                      [_serialize(r) for r in requests])
 
 
