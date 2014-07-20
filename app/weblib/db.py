@@ -31,7 +31,7 @@ from sqlalchemy.ext.declarative import declarative_base as _declarative_base
 
 def create_engine():
     '''Creates a new database engine.'''
-    return _create_engine(web.config.DATABASE_URL, convert_unicode=True, echo=True)
+    return _create_engine(web.config.DATABASE_URL, convert_unicode=True)
 
 
 def create_session(engine=None):
