@@ -6,6 +6,7 @@ import web
 from app.controllers import ParamAuthorizableController
 from app.repositories.drivers import DriversRepository
 from app.repositories.passengers import PassengersRepository
+from app.repositories.rates import RatesRepository
 from app.repositories.users import UsersRepository
 from app.tasks import NotifyDriversDeactivatedPassengerTask
 from app.tasks import NotifyPassengersDriverDeactivatedTask
@@ -25,7 +26,7 @@ from app.weblib.utils import jsonify
 class ViewUserController(ParamAuthorizableController):
     @api
     @authorized
-    def GET(self, passenger_id):
+    def GET(self, user_id):
         logger = LoggingSubscriber(web.ctx.logger)
         view_user = ViewUserWorkflow()
         ret = Future()
@@ -37,7 +38,8 @@ class ViewUserController(ParamAuthorizableController):
                 ret.set(jsonify(user=blob))
 
         view_user.add_subscriber(logger, ViewUserSubscriber())
-        view_user.perform(web.ctx.logger, UsersRepository, passenger_id)
+        view_user.perform(web.ctx.logger, UsersRepository, user_id,
+                          RatesRepository)
         return ret.get()
 
 
@@ -63,11 +65,11 @@ class LoginUserController(ParamAuthorizableController):
             def success(self, token, user):
                 token_future.set(token)
                 user_future.set(user)
+                driver_id = user_future.get().active_driver.id \
+                    if user_future.get().active_driver is not None else None
                 deactivate_driver.perform(web.ctx.logger, web.ctx.orm,
                                           DriversRepository,
-                                          user_future.get().driver.id
-                                            if user_future.get().driver
-                                            else None,
+                                          driver_id,
                                           user_future.get(),
                                           NotifyPassengersDriverDeactivatedTask)
 
@@ -77,11 +79,11 @@ class LoginUserController(ParamAuthorizableController):
             def unauthorized(self):
                 self.success()
             def success(self):
+                passenger_id = user_future.get().active_passenger.id \
+                    if user_future.get().active_passenger is not None else None
                 deactivate_passenger.perform(web.ctx.logger, web.ctx.orm,
                                              PassengersRepository,
-                                             user_future.get().passenger.id
-                                                if user_future.get().passenger
-                                                else None,
+                                             passenger_id,
                                              user_future.get(),
                                              NotifyDriversDeactivatedPassengerTask)
 

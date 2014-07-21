@@ -4,7 +4,9 @@
 import uuid as _uuid
 
 import web
+from sqlalchemy import and_
 from sqlalchemy import create_engine as _create_engine
+from sqlalchemy import exists
 from sqlalchemy import func
 from sqlalchemy import Boolean
 from sqlalchemy import Column
@@ -16,6 +18,7 @@ from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import Text
 from sqlalchemy import Time
+from sqlalchemy import text
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import joinedload_all
@@ -26,15 +29,9 @@ from sqlalchemy.ext.declarative import declarative_base as _declarative_base
 
 
 
-__all__ = ['backref', 'create_engine', 'create_session', 'declarative_base',
-           'func', 'init_db', 'joinedload', 'joinedload_all', 'relationship',
-           'uuid', 'Boolean', 'Column', 'DateTime', 'Enum', 'Float',
-           'ForeignKey', 'Integer', 'String', 'Text', 'Time']
-
-
 def create_engine():
     '''Creates a new database engine.'''
-    return _create_engine(web.config.DATABASE_URL, convert_unicode=True, echo=True)
+    return _create_engine(web.config.DATABASE_URL, convert_unicode=True)
 
 
 def create_session(engine=None):

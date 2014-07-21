@@ -17,10 +17,13 @@ class ActiveDriveRequestsFilterExtractor(Publisher):
             self.publish('bad_request', params)
 
 
-class ActiveDriveRequestsWithIdGetter(Publisher):
-    def perform(self, repository, drive_request_id):
-        self.publish('drive_requests_found',
-                     repository.get_active_by_id(drive_request_id))
+class UnratedDriveRequestWithIdGetter(Publisher):
+    def perform(self, repository, id, driver_id, user_id):
+        request = repository.get_unrated_by_id(id, driver_id, user_id)
+        if request is None:
+            self.publish('drive_request_not_found', id)
+        else:
+            self.publish('drive_request_found', request)
 
 
 class ActiveDriveRequestsWithDriverIdGetter(Publisher):
@@ -57,15 +60,23 @@ class ActiveDriveRequestsGetter(Publisher):
         self.publish('drive_requests_found', repository.get_all_active())
 
 
-class DriveRequestCreator(Publisher):
-    def perform(self, repository, driver_id, passenger_id):
-        """Creates a ride request from driver identified by ``driver_id`` and
-        passenger identified by ``passenger_id``.
+class UnratedDriveRequestsWithDriverIdGetter(Publisher):
+    def perform(self, repository, driver_id, user_id):
+        self.publish('drive_requests_found',
+                     repository.get_unrated_by_driver_id(driver_id,
+                                                         user_id))
 
-        On success a 'drive_request_created' message will be published toghether
-        with the created request.
-        """
-        request = repository.add(driver_id, passenger_id)
+
+class UnratedDriveRequestsWithPassengerIdGetter(Publisher):
+    def perform(self, repository, passenger_id, user_id):
+        self.publish('drive_requests_found',
+                     repository.get_unrated_by_passenger_id(passenger_id,
+                                                            user_id))
+
+
+class DriveRequestCreator(Publisher):
+    def perform(self, repository, driver_id, passenger_id, **kw):
+        request = repository.add(driver_id, passenger_id, **kw)
         self.publish('drive_request_created', request)
 
 
@@ -110,7 +121,9 @@ class DriveRequestCancellorByPassengerId(Publisher):
 def serialize(request):
     if request is None:
         return None
-    return dict(id=request.id, accepted=request.accepted)
+    return dict(id=request.id, accepted=request.accepted,
+                response_time=request.response_time,
+                created=request.created.strftime('%Y-%m-%dT%H:%M:%SZ'))
 
 
 def _serialize(request):
@@ -132,7 +145,7 @@ class MultipleDriveRequestsSerializer(Publisher):
         At the end of the operation, the method will emit a
         'drive_requests_serialized' message containing serialized objects.
         """
-        self.publish('drive_requests_serialized', 
+        self.publish('drive_requests_serialized',
                      [_serialize(r) for r in requests])
 
 
@@ -160,3 +173,23 @@ class AcceptedDriveRequestsFilter(Publisher):
         """
         self.publish('drive_requests_extracted',
                      [r for r in requests if r.accepted])
+
+def enrich(request):
+    return request
+
+def _enrich(rates_repository, request):
+    from app.pubsub.passengers import enrich as enrich_passenger
+    from app.pubsub.drivers import enrich as enrich_driver
+    from app.pubsub.users import enrich as enrich_user
+    request.passenger.user = enrich_user(rates_repository,
+                                         request.passenger.user)
+    request.passenger = enrich_passenger(request.passenger)
+    request.driver.user = enrich_user(rates_repository,
+                                         request.driver.user)
+    request.driver = enrich_driver(request.driver)
+    return enrich(request)
+
+class DriveRequestsEnricher(Publisher):
+    def perform(self, rates_repository, requests):
+        self.publish('drive_requests_enriched',
+                     [_enrich(rates_repository, r) for r in requests])

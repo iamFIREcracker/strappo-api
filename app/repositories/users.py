@@ -13,10 +13,10 @@ from app.weblib.db import joinedload
 class UsersRepository(object):
     @staticmethod
     def get(id):
-        return expunged(User.query.options(joinedload('driver'),
-                                           joinedload('passenger')).\
-                                filter(User.deleted == False).\
-                                filter(User.id == id).first(),
+        return expunged(User.query.options(joinedload('active_driver'),
+                                           joinedload('active_passenger')).\
+                        filter(User.deleted == False).\
+                        filter(User.id == id).first(),
                         User.session)
 
     @staticmethod
@@ -32,11 +32,12 @@ class UsersRepository(object):
 
     @staticmethod
     def authorized_by(token):
-        return expunged(User.query.options(joinedload('driver'),
-                                           joinedload('passenger')).\
-                                filter(Token.id == token).\
-                                filter(User.id == Token.user_id).\
-                                filter(User.deleted == False).first(),
+        return expunged(User.query.options(joinedload('active_driver'),
+                                           joinedload('active_passenger')).\
+                        filter(Token.id == token).\
+                        filter(User.id == Token.user_id).\
+                        filter(User.deleted == False).\
+                        first(),
                         User.session)
 
     @staticmethod

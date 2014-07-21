@@ -36,39 +36,6 @@ class AlreadyRegisteredVerifier(Publisher):
             self.publish('not_registered', acs_id)
 
 
-class UserWithoutDriverValidator(Publisher):
-    def perform(self, user):
-        """Checks whether the given user is already linked to a driver entity.
-
-        An 'invalid_user' message is published if the given user is already
-        linked to a driver;  on the other hand a 'valid_user' message will
-        be sent back to subscribers if no driver was previously linked with
-        the user.
-        """
-        if user.driver is None:
-            self.publish('valid_user', user)
-        else:
-            self.publish('invalid_user',
-                         dict(_global='Driver already present'))
-
-
-class UserWithoutPassengerValidator(Publisher):
-    def perform(self, user):
-        """Checks whether the given user is already linked to a passenger
-        entity.
-
-        An 'invalid_user' message is published if the given user is already
-        linked to a passenger;  on the other hand a 'valid_user' message will
-        be sent back to subscribers if no passenger was previously linked with
-        the user.
-        """
-        if user.passenger is None:
-            self.publish('valid_user', user)
-        else:
-            self.publish('invalid_user',
-                         dict(_global='Passenger already present'))
-
-
 class AccountRefresher(Publisher):
     def perform(self, repository, userid, externalid, accounttype):
         """Refreshes the user external account.
@@ -121,21 +88,29 @@ class UserUpdater(Publisher):
 def serialize(user):
     if user is None:
         return None
-    return dict(id=user.id, name=user.name, avatar=user.avatar,
-                locale=user.locale)
+    data = dict(id=user.id, name=user.name, avatar=user.avatar,
+             locale=user.locale)
+    if hasattr(user, 'stars'):
+        data.update(stars=user.stars)
+    if hasattr(user, 'received_rates'):
+        data.update(received_rates=user.received_rates)
+    return data
 
 
 class UserSerializer(Publisher):
     def perform(self, user):
-        """Convert the given user into a serializable dictionary.
+        self.publish('user_serialized', serialize(user))
 
-        At the end of the operation the method will emit a
-        'user_serialized' message containing the serialized object (i.e.
-        user dictionary).
-        """
-        from app.pubsub.drivers import serialize as serialize_driver
-        from app.pubsub.passengers import serialize as serialize_passenger
-        d = serialize(user)
-        d.update(driver=serialize_driver(user.driver))
-        d.update(passenger=serialize_passenger(user.passenger))
-        self.publish('user_serialized', d)
+
+def enrich(rates_repository, user):
+    user.stars = rates_repository.avg_stars(user.id)
+    user.received_rates = rates_repository.received_rates(user.id)
+    return user
+
+def _enrich(rates_repository, user):
+    return enrich(rates_repository, user)
+
+
+class UserEnricher(Publisher):
+    def perform(self, rates_repository, user):
+        self.publish('user_enriched', _enrich(rates_repository, user))
