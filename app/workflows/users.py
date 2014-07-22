@@ -4,13 +4,14 @@
 from web.utils import storage
 
 import app.forms.users as user_forms
-from app.pubsub.users import AlreadyRegisteredVerifier
 from app.pubsub.users import TokenRefresher
 from app.pubsub.users import TokenSerializer
 from app.pubsub.users import UserCreator
 from app.pubsub.users import UserEnricher
 from app.pubsub.users import UserUpdater
 from app.pubsub.users import UserWithIdGetter
+from app.pubsub.users import UserWithFacebookIdGetter
+from app.pubsub.users import UserWithAcsIdGetter
 from app.pubsub.users import UserSerializer
 from app.weblib.forms import describe_invalid_form
 from app.weblib.pubsub import FacebookProfileGetter
@@ -61,7 +62,8 @@ class LoginUserWorkflow(Publisher):
         logger = LoggingSubscriber(logger)
         profile_getter = FacebookProfileGetter()
         form_validator = FormValidator()
-        already_registered = AlreadyRegisteredVerifier()
+        user_with_facebook_id_getter = UserWithFacebookIdGetter()
+        user_with_acs_id_getter = UserWithAcsIdGetter()
         user_creator = UserCreator()
         user_updater = UserUpdater()
         token_refresher = TokenRefresher()
@@ -74,6 +76,7 @@ class LoginUserWorkflow(Publisher):
                 outer.publish('internal_error')
             def profile_found(self, profile):
                 params = storage(acs_id=acs_id,
+                                 facebook_id=profile['id'],
                                  name=profile['name'],
                                  avatar=profile['avatar'],
                                  email=profile['email'],
@@ -87,18 +90,32 @@ class LoginUserWorkflow(Publisher):
                               dict(success=False, errors=errors))
             def valid_form(self, form):
                 form_future.set(form)
-                already_registered.perform(repository, acs_id)
+                user_with_facebook_id_getter.perform(repository, form.d.facebook_id)
 
-        class AlreadyRegisteredVerifierSubscriber(object):
-            def not_registered(self, acs_id):
+        class UserWithFacebookIdGetterSubscriber(object):
+            def user_found(self, user):
                 form = form_future.get()
-                user_creator.perform(repository, form.d.acs_id, form.d.name,
+                user_updater.perform(user, form.d.acs_id,
+                                     form.d.facebook_id, form.d.name,
                                      form.d.avatar, form.d.email,
                                      form.d.locale)
-            def already_registered(self, user):
+            def user_not_found(self, facebook_id):
                 form = form_future.get()
-                user_updater.perform(user, form.d.name, form.d.avatar,
-                                     form.d.email, form.d.locale)
+                user_with_acs_id_getter.perform(repository, form.d.acs_id)
+
+        class UserWithAcsIdGetterSubscriber(object):
+            def user_found(self, user):
+                form = form_future.get()
+                user_updater.perform(user, form.d.acs_id,
+                                     form.d.facebook_id, form.d.name,
+                                     form.d.avatar, form.d.email,
+                                     form.d.locale)
+            def user_not_found(self, acs_id):
+                form = form_future.get()
+                user_creator.perform(repository, form.d.acs_id,
+                                     form.d.facebook_id, form.d.name,
+                                     form.d.avatar, form.d.email,
+                                     form.d.locale)
 
         class UserCreatorSubscriber(object):
             def user_created(self, user):
@@ -123,8 +140,10 @@ class LoginUserWorkflow(Publisher):
 
         profile_getter.add_subscriber(logger, ProfileGetterSubscriber())
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
-        already_registered.add_subscriber(logger,
-                                          AlreadyRegisteredVerifierSubscriber())
+        user_with_facebook_id_getter.\
+            add_subscriber(logger, UserWithFacebookIdGetterSubscriber())
+        user_with_acs_id_getter.\
+            add_subscriber(logger, UserWithAcsIdGetterSubscriber())
         user_creator.add_subscriber(logger, UserCreatorSubscriber())
         user_updater.add_subscriber(logger, UserUpdaterSubscriber())
         token_refresher.add_subscriber(logger, TokenRefresherSubscriber())

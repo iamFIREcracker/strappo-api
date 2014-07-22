@@ -19,21 +19,22 @@ class UserWithIdGetter(Publisher):
         else:
             self.publish('user_found', user)
 
-
-class AlreadyRegisteredVerifier(Publisher):
-    def perform(self, repository, acs_id):
-        """Checks whether the system already contains a user with the specified
-        ACS ID.
-
-        Generates an 'already_registered' message followed by the ID of the
-        registered user if a user with the specified ACS ID already extists.
-        Otherwise a 'not_registered' message together with the ACS ID.
-        """
-        user = repository.with_acs_id(acs_id)
-        if user is not None:
-            self.publish('already_registered', user)
+class UserWithFacebookIdGetter(Publisher):
+    def perform(self, repository, facebook_id):
+        user = repository.with_facebook_id(facebook_id)
+        if user is None:
+            self.publish('user_not_found', facebook_id)
         else:
-            self.publish('not_registered', acs_id)
+            self.publish('user_found', user)
+
+
+class UserWithAcsIdGetter(Publisher):
+    def perform(self, repository, acs_id):
+        user = repository.with_acs_id(acs_id)
+        if user is None:
+            self.publish('user_not_found', acs_id)
+        else:
+            self.publish('user_found', user)
 
 
 class AccountRefresher(Publisher):
@@ -71,13 +72,16 @@ class TokenSerializer(Publisher):
 
 
 class UserCreator(Publisher):
-    def perform(self, repository, acs_id, name, avatar, email, locale):
-        user = repository.add(acs_id, name, avatar, email, locale)
+    def perform(self, repository, acs_id, facebook_id, name, avatar, email,
+                locale):
+        user = repository.add(acs_id, facebook_id, name, avatar, email, locale)
         self.publish('user_created', user)
 
 
 class UserUpdater(Publisher):
-    def perform(self, user, name, avatar, email, locale):
+    def perform(self, user, acs_id, facebook_id, name, avatar, email, locale):
+        user.acs_id = acs_id
+        user.facebook_id = facebook_id
         user.name = name
         user.avatar = avatar
         user.email = email

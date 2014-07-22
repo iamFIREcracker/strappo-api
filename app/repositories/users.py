@@ -20,10 +20,10 @@ class UsersRepository(object):
                         User.session)
 
     @staticmethod
-    def add(acs_id, name, avatar, email, locale):
+    def add(acs_id, facebook_id, name, avatar, email, locale):
         id = unicode(uuid.uuid4())
-        user = User(id=id, acs_id=acs_id, name=name, avatar=avatar,
-                    email=email, locale=locale)
+        user = User(id=id, acs_id=acs_id, facebook_id=facebook_id, name=name,
+                    avatar=avatar, email=email, locale=locale)
         return user
 
     @staticmethod
@@ -38,6 +38,13 @@ class UsersRepository(object):
                         filter(User.id == Token.user_id).\
                         filter(User.deleted == False).\
                         first(),
+                        User.session)
+
+    @staticmethod
+    def with_facebook_id(facebook_id):
+        return expunged(User.query.\
+                                filter(User.facebook_id == facebook_id).\
+                                filter(User.deleted == False).first(),
                         User.session)
 
     @staticmethod

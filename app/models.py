@@ -38,6 +38,7 @@ class User(Base):
     acs_id = Column(String) # XXX This field shouldn't be nullable;  if it is,
                             # it is just because I am too lazy to fix all the
                             # tests.
+    facebook_id = Column(String) # XXX field is nullable because added later
     name = Column(String, nullable=False)
     avatar = Column(String, nullable=True)
     email = Column(String, nullable=True)
@@ -55,7 +56,8 @@ class User(Base):
                                       "Passenger.active == True)")
 
     def __repr__(self):
-        data = u'<User id=%(id)s, acs_id=%(acs_id)s, name=%(name)s, '\
+        data = u'<User id=%(id)s, acs_id=%(acs_id)s, '\
+                'facebook_id=%(facebook_id)s, name=%(name)s, '\
                 'avatar=%(avatar)s, email=%(email)s, '\
                 'locale=%(locale)s>' % self.__dict__
         return data.encode('utf-8')
