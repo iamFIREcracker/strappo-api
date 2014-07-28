@@ -7,6 +7,7 @@ from app.models import User
 from app.models import Driver
 from app.weblib.db import expunged
 from app.weblib.db import joinedload
+from app.weblib.db import joinedload_all
 
 
 class DriversRepository(object):
@@ -30,7 +31,8 @@ class DriversRepository(object):
     @staticmethod
     def get_with_requests(driver_id):
         return expunged(Driver.query.options(joinedload('user'),
-                                             joinedload('drive_requests')).\
+                                             joinedload_all('drive_requests.driver.user'),
+                                             joinedload_all('drive_requests.passenger.user')).\
                                 filter(Driver.id == driver_id).\
                                 filter(User.deleted == False).first(),
                         Driver.session)
