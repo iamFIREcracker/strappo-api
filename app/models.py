@@ -143,6 +143,7 @@ class DriveRequest(Base):
     driver_id = Column(String, ForeignKey('driver.id'))
     passenger_id = Column(String, ForeignKey('passenger.id'))
     accepted = Column(Boolean, default=False)
+    cancelled = Column(Boolean, default=False)
     active = Column(Boolean, default=True)
     response_time = Column(Integer, nullable=False, server_default=text('0'))
     created = Column(DateTime, default=datetime.utcnow)
@@ -157,7 +158,7 @@ class DriveRequest(Base):
         data = u'<DriveRequest id=%(id)s, driver_id=%(driver_id)s, '\
                 'passenger_id=%(passenger_id)s, '\
                 'accepted=%(accepted)s, active=%(active)s, '\
-                'response_time=%(response_time)s>' % self.__dict__
+                'cancelled=%(cancelled)s, response_time=%(response_time)s>' % self.__dict__
         return data.encode('utf-8')
 
 

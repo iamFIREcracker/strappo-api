@@ -22,6 +22,7 @@ class DriveRequestsRepository(object):
         return expunged(DriveRequest.query.options(*options).\
                          filter(DriveRequest.driver_id == driver_id).\
                          filter(DriveRequest.accepted == True).\
+                         filter(DriveRequest.cancelled == False).\
                          filter(DriveRequest.active == False).\
                          filter(Passenger.matched == True).\
                          filter(~exists().where(and_(Rate.drive_request_id == DriveRequest.id,
@@ -37,6 +38,7 @@ class DriveRequestsRepository(object):
                 for dr in DriveRequest.query.options(*options).\
                          filter(DriveRequest.driver_id == driver_id).\
                          filter(DriveRequest.accepted == True).\
+                         filter(DriveRequest.cancelled == False).\
                          filter(DriveRequest.active == False).\
                          filter(Passenger.matched == True).\
                          filter(~exists().where(and_(Rate.drive_request_id == DriveRequest.id,
@@ -75,8 +77,8 @@ class DriveRequestsRepository(object):
         id = unicode(uuid.uuid4())
         drive_request = DriveRequest(id=id, driver_id=driver_id,
                                      passenger_id=passenger_id,
-                                     accepted=False, active=True,
-                                     response_time=response_time,
+                                     accepted=False, cancelled=False,
+                                     active=True, response_time=response_time,
                                      created=datetime.utcnow())
         return drive_request
 
@@ -89,6 +91,7 @@ class DriveRequestsRepository(object):
                            DriveRequest.session)
         if request:
             request.active = False
+            request.cancelled = True
         return request
 
 
@@ -101,6 +104,7 @@ class DriveRequestsRepository(object):
                            DriveRequest.session)
         if request:
             request.active = False
+            request.cancelled = True
         return request
 
 
