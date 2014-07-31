@@ -48,6 +48,7 @@ class AddDriverWorkflow(Publisher):
                 outer.publish('invalid_form', errors)
             def valid_form(self, form):
                 driver_creator.perform(repository, user.id,
+                                       form.d.car_type,
                                        form.d.license_plate,
                                        form.d.telephone)
 

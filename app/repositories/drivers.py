@@ -60,10 +60,11 @@ class DriversRepository(object):
                         Driver.session)
 
     @staticmethod
-    def add(user_id, license_plate, telephone):
+    def add(user_id, car_type, license_plate, telephone):
         id = unicode(uuid.uuid4())
-        driver = Driver(id=id, user_id=user_id, license_plate=license_plate,
-                        telephone=telephone, hidden=False, active=True)
+        driver = Driver(id=id, user_id=user_id, car_type=car_type,
+                        license_plate=license_plate, telephone=telephone,
+                        hidden=False, active=True)
         return driver
 
 
