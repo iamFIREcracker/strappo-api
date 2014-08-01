@@ -103,7 +103,7 @@ def serialize(driver):
     return dict(id=driver.id,
                 car_make=driver.car_make,
                 car_model=driver.car_model,
-                car_color=car_color,
+                car_color=driver.car_color,
                 license_plate=driver.license_plate,
                 telephone=driver.telephone,
                 hidden=driver.hidden)
