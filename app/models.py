@@ -82,7 +82,9 @@ class Driver(Base):
 
     id = Column(String, default=uuid, primary_key=True)
     user_id = Column(String, ForeignKey('user.id'))
-    car_type = Column(String)
+    car_make = Column(String)
+    car_model = Column(String)
+    car_color = Column(String)
     license_plate = Column(String)
     telephone = Column(String)
     hidden = Column(Boolean, default=False)
@@ -97,8 +99,12 @@ class Driver(Base):
                                                    "DriveRequest.active == True)")
 
     def __repr__(self):
-        data = u'<Driver id=%(id)s, user_id=%(user_id)s, '\
-                'car_type=%(car_type)s, license_plate=%(license_plate)s, '\
+        data = u'<Driver id=%(id)s, '\
+                'user_id=%(user_id)s, '\
+                'car_make=%(car_make)s, '\
+                'car_model=%(car_model)s, '\
+                'car_color=%(car_color)s, '\
+                'license_plate=%(license_plate)s, '\
                 'telephone=%(telephone)s, hidden=%(hidden)s, '\
                 'active=%(active)s>' % self.__dict__
         return data.encode('utf-8')
