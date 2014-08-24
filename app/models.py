@@ -198,6 +198,11 @@ class Trace(Base):
     created = Column(DateTime, default=datetime.utcnow)
     updated = Column(DateTime, default=datetime.utcnow,
                      onupdate=datetime.utcnow)
+    user = relationship('User', uselist=False)
+
+    @property
+    def created_day(self):
+        return self.created.date()
 
     def __repr__(self):
         data = u'<Trace id=%(id)s, user_id=%(user_id)s, '\

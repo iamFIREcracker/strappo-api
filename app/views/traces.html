@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="//code.jquery.com/mobile/1.4.3/jquery.mobile-1.4.3.min.css">
+<script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+<script src="//code.jquery.com/mobile/1.4.3/jquery.mobile-1.4.3.min.js"></script>
+</head>
+<body>
+{% for by_user_id in traces | groupby('user_id') %}
+<div data-role="collapsible">
+    <h3>{{ by_user_id.list[0].user.name }} - {{ by_user_id.grouper }}</h3>
+    {% for by_created_day in by_user_id.list | groupby('created_day') | sort(reverse=True) %}
+    <div data-role="collapsible">
+        <h3>{{ by_created_day.grouper }}</h3>
+        {% for trace in by_created_day.list %}
+        <div>
+            <span>{{ trace.created }}</span>
+            <span>{{ trace.level }}</span>
+            <span>{{ trace.message }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
+{% endfor %}
+</body>
+</html>

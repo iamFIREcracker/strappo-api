@@ -16,6 +16,7 @@ from app.controllers.passengers import AlightPassengerController
 from app.controllers.passengers import CancelDriveRequestController
 from app.controllers.passengers import DeactivatePassengerController
 from app.controllers.passengers import ListUnmatchedPassengersController
+from app.controllers.traces import ListTracesController
 from app.controllers.traces import AddTracesController
 from app.controllers.users import LoginUserController
 from app.controllers.users import ViewUserController
@@ -43,6 +44,7 @@ URLS = (
     '/1/drive_requests/active', ListActiveDriveRequestsController,
     '/1/drive_requests/unrated', ListUnratedDriveRequestsController,
 
+    '/traces', ListTracesController,
     '/1/traces/add', AddTracesController,
 
     '/1/notifications/reset', ResetNotificationsController,

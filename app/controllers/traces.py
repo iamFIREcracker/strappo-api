@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import json
-import urllib
-import urllib2
-import uuid
+from itertools import groupby
 
 import web
 
@@ -16,7 +13,9 @@ from app.weblib.request_decorators import api
 from app.weblib.request_decorators import authorized
 from app.workflows.traces import AddTracesWorkflow
 
-
+class ListTracesController():
+    def GET(self):
+        return web.ctx.render.traces(traces=TracesRepository.all())
 
 class AddTracesController(ParamAuthorizableController):
     @api
