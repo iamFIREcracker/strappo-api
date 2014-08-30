@@ -37,22 +37,18 @@ def app_factory():
     from app.weblib.app_processors import load_logger
     from app.weblib.app_processors import load_path_url
     from app.weblib.app_processors import load_render
-    from app.weblib.app_processors import load_session
     from app.weblib.app_processors import load_gettext
     from app.weblib.app_processors import load_redis
     from app.weblib.app_processors import load_and_manage_orm
-    from app.weblib.session import RedisStore
 
     redis = weblib.redis.create_redis()
     views = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'views')
     app = web.application(URLS, globals())
-    session = web.session.Session(app, RedisStore(redis))
     gettext = weblib.gettext.create_gettext()
 
     app.add_processor(web.loadhook(load_logger))
     app.add_processor(web.loadhook(load_path_url))
     app.add_processor(web.loadhook(load_render(views)))
-    app.add_processor(web.loadhook(load_session(session)))
     app.add_processor(web.loadhook(load_gettext(gettext)))
     app.add_processor(web.loadhook(load_redis(redis)))
     app.add_processor(load_and_manage_orm(weblib.db.create_session()))

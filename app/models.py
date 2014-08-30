@@ -23,14 +23,6 @@ from app.weblib.db import text
 Base = declarative_base()
 
 
-class Session(Base):
-    __tablename__ = 'session'
-
-    session_id = Column(String, primary_key=True)
-    atime = Column(Time, default=datetime.utcnow)
-    data = Column(Text)
-
-
 class User(Base):
     __tablename__ = 'user'
 
