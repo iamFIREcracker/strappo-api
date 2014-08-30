@@ -11,7 +11,7 @@ from app.pubsub.traces import MultipleTracesSerializer
 
 
 class ListTracesWorkflow(Publisher):
-    def perform(self, logger, repository):
+    def perform(self, logger, repository, limit, offset):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         traces_getter = TracesGetter()
@@ -27,7 +27,7 @@ class ListTracesWorkflow(Publisher):
 
         traces_getter.add_subscriber(logger, TracesGetterSubscriber())
         traces_serializer.add_subscriber(logger, TracesSerializerSusbcriber())
-        traces_getter.perform(repository)
+        traces_getter.perform(repository, limit, offset)
 
 
 class AddTracesWorkflow(Publisher):

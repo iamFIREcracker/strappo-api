@@ -10,8 +10,8 @@ ParsedTrace = namedtuple('ParsedTrace', 'level date message'.split())
 
 
 class TracesGetter(Publisher):
-    def perform(self, repository):
-        self.publish('traces_found', repository.all())
+    def perform(self, repository, limit, offset):
+        self.publish('traces_found', repository.all(limit, offset))
 
 
 class MultipleTracesParser(Publisher):

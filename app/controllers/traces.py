@@ -20,6 +20,7 @@ from app.weblib.utils import jsonify
 class ListTracesController():
     @internal([web.config.ANALYTICS_IP])
     def GET(self):
+        data = web.input(limit=1000, offset=0)
         logger = LoggingSubscriber(web.ctx.logger)
         traces = ListTracesWorkflow()
         ret = Future()
@@ -28,8 +29,10 @@ class ListTracesController():
             def success(self, blob):
                 ret.set(jsonify(traces=blob))
 
+
         traces.add_subscriber(logger, ListTracesSubscriber())
-        traces.perform(web.ctx.logger, TracesRepository)
+        traces.perform(web.ctx.logger, TracesRepository,
+                       data.limit, data.offset)
         return ret.get()
 
 

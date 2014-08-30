@@ -11,13 +11,13 @@ from app.weblib.db import joinedload_all
 
 class TracesRepository(object):
     @staticmethod
-    def all():
+    def all(limit, offset):
         options = [joinedload_all('user')]
         return [expunged(t, Trace.session)
                 for t in Trace.query.options(*options).\
-                         #filter(DriveRequest.accepted == True).\
-                         order_by(Trace.user_id,
-                                  Trace.created.desc())
+                         order_by(Trace.date.desc()).\
+                         limit(limit).\
+                         offset(offset)
                 ]
 
     @staticmethod
