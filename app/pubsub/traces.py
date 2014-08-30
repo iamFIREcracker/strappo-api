@@ -32,15 +32,15 @@ def serialize(trace):
     if trace is None:
         return None
     return dict(id=trace.id,
+                user_id=trace.user.id if trace.user else '',
+                user_name=trace.user.name if trace.user else '',
                 level=trace.level,
                 date=trace.date,#.strftime('%Y-%m-%dT%H:%M:%SZ'),
                 message=trace.message)
 
 
 def _serialize(trace):
-    from app.pubsub.users import serialize as serialize_user
     d = serialize(trace)
-    d.update(user=serialize_user(trace.user))
     return d
 
 
