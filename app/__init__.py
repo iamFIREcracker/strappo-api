@@ -17,9 +17,10 @@ web.config.LOGGER_NAME = config.LOGGER_NAME
 web.config.LOG_ENABLE = config.LOG_ENABLE
 web.config.LOG_FORMAT = config.LOG_FORMAT
 
-web.config.DATABASE_URL = config.DATABASE_URL
-
 web.config.DISABLE_HTTP_ACCEPT_CHECK = config.DISABLE_HTTP_ACCEPT_CHECK
+web.config.ANALYTICS_IP = config.ANALYTICS_IP
+
+web.config.DATABASE_URL = config.DATABASE_URL
 
 web.config.TITANIUM_KEY = config.TITANIUM_KEY
 web.config.TITANIUM_LOGIN = config.TITANIUM_LOGIN

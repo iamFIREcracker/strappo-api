@@ -206,10 +206,6 @@ class Trace(Base):
                      onupdate=datetime.utcnow)
     user = relationship('User', uselist=False)
 
-    @property
-    def created_day(self):
-        return self.created.date()
-
     def __repr__(self):
         data = u'<Trace id=%(id)s, user_id=%(user_id)s, '\
                 'level=%(level)s, date=%(date)s, '\

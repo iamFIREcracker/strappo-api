@@ -39,12 +39,13 @@ URLS = (
     '/1/passengers/(.+)/deactivate', DeactivatePassengerController,
     '/1/passengers/(.+)/alight', AlightPassengerController,
     '/1/passengers/(.+)/accept/driver/(.+)', AcceptDriverController,
-    '/1/passengers/(.+)/cancel/drive_request/(.+)', CancelDriveRequestController,
+    '/1/passengers/(.+)/cancel/drive_request/(.+)',
+            CancelDriveRequestController,
 
     '/1/drive_requests/active', ListActiveDriveRequestsController,
     '/1/drive_requests/unrated', ListUnratedDriveRequestsController,
 
-    '/traces', ListTracesController,
+    '/1/traces', ListTracesController,
     '/1/traces/add', AddTracesController,
 
     '/1/notifications/reset', ResetNotificationsController,
