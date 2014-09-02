@@ -22,7 +22,7 @@ class ParamAuthorizableController(AbstractParamAuthorizableController):
 class InfoController(object):
     def GET(self):
         return jsonify({
-            'min_version':'1.0.0',
+            'min_version':'0.0.1',
             'served_regions':[
                 {
                     'name': 'Viareggio',
