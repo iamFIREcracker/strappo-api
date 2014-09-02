@@ -223,3 +223,21 @@ def prerequisites():
 @task
 def i18nupdate():
     cmd('./make_strings.sh')
+
+
+
+@task
+def pull_uploads():
+    '''Copy the uploads from the site to your local machine.'''
+    require('uploads_path')
+
+    sudo('chmod -R a+r "%s"' % env.uploads_path)
+
+    rsync_command = r"""rsync -av -e 'ssh -p %s' %s@%s:%s %s""" % (
+        env.port,
+        env.user, env.host,
+        env.uploads_path.rstrip('/') + '/',
+        'static/uploads'
+    )
+    print local(rsync_command, capture=False)
+

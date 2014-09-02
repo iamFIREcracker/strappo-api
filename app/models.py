@@ -23,14 +23,6 @@ from app.weblib.db import text
 Base = declarative_base()
 
 
-class Session(Base):
-    __tablename__ = 'session'
-
-    session_id = Column(String, primary_key=True)
-    atime = Column(Time, default=datetime.utcnow)
-    data = Column(Text)
-
-
 class User(Base):
     __tablename__ = 'user'
 
@@ -82,6 +74,9 @@ class Driver(Base):
 
     id = Column(String, default=uuid, primary_key=True)
     user_id = Column(String, ForeignKey('user.id'))
+    car_make = Column(String)
+    car_model = Column(String)
+    car_color = Column(String)
     license_plate = Column(String)
     telephone = Column(String)
     hidden = Column(Boolean, default=False)
@@ -96,7 +91,11 @@ class Driver(Base):
                                                    "DriveRequest.active == True)")
 
     def __repr__(self):
-        data = u'<Driver id=%(id)s, user_id=%(user_id)s, '\
+        data = u'<Driver id=%(id)s, '\
+                'user_id=%(user_id)s, '\
+                'car_make=%(car_make)s, '\
+                'car_model=%(car_model)s, '\
+                'car_color=%(car_color)s, '\
                 'license_plate=%(license_plate)s, '\
                 'telephone=%(telephone)s, hidden=%(hidden)s, '\
                 'active=%(active)s>' % self.__dict__
@@ -197,6 +196,7 @@ class Trace(Base):
     created = Column(DateTime, default=datetime.utcnow)
     updated = Column(DateTime, default=datetime.utcnow,
                      onupdate=datetime.utcnow)
+    user = relationship('User', uselist=False)
 
     def __repr__(self):
         data = u'<Trace id=%(id)s, user_id=%(user_id)s, '\

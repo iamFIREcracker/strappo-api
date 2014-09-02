@@ -46,6 +46,17 @@ def api(func):
         return func(*args, **kwargs)
     return func if web.config.DISABLE_HTTP_ACCEPT_CHECK else inner
 
+def internal(ips):
+    def inner(func):
+        def inner2(*args, **kwargs):
+            remote = web.ctx.environ.get('REMOTE_ADDR', '')
+            if remote not in ips:
+                raise web.forbidden()
+
+            return func(*args, **kwargs)
+        return inner2
+    return inner
+
 
 def authorized(func):
     """Checks that an authorized user has been successfully associated with the
@@ -61,7 +72,7 @@ def authorized(func):
     ...   pass
     >>> web.unauthorized = MyUnauthorized
     >>> request = lambda *a: 'Hello world'
-    
+
     >>> authorized(request)(Mock(current_user=None))
     Traceback (most recent call last):
         ...

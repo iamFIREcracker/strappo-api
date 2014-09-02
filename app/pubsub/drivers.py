@@ -61,13 +61,15 @@ class DeepDriverWithIdGetter(Publisher):
             self.publish('driver_found', driver)
 
 class DriverCreator(Publisher):
-    def perform(self, repository, user_id, license_plate, telephone):
+    def perform(self, repository, user_id, car_make, car_model, car_color,
+                license_plate, telephone):
         """Creates a new driver with the specified set of properties.
 
         On success a 'driver_created' message will be published toghether
         with the created user.
         """
-        driver = repository.add(user_id, license_plate, telephone)
+        driver = repository.add(user_id, car_make, car_model, car_color,
+                                license_plate, telephone)
         self.publish('driver_created', driver)
 
 
@@ -98,8 +100,13 @@ class MultipleDriversUnhider(Publisher):
 def serialize(driver):
     if driver is None:
         return None
-    return dict(id=driver.id, license_plate=driver.license_plate,
-            telephone=driver.telephone, hidden=driver.hidden)
+    return dict(id=driver.id,
+                car_make=driver.car_make,
+                car_model=driver.car_model,
+                car_color=driver.car_color,
+                license_plate=driver.license_plate,
+                telephone=driver.telephone,
+                hidden=driver.hidden)
 
 
 class MultipleDriversDeactivator(Publisher):
