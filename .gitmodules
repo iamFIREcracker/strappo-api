@@ -1,0 +1,4 @@
+[submodule "fabolous"]
+	path = fabolous
+	url = https://github.com/iamFIREcracker/fabolous.git
+

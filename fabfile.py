@@ -18,7 +18,7 @@ from fabric.colors import green
 from fabric.colors import red
 from fabric.decorators import task
 
-from fabfilecommon import *
+from fabolous.fabolous import *
 
 
 env.appname = 'strappo-api'
