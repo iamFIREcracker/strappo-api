@@ -36,6 +36,8 @@ def dev():
     env.venv_path = '/srv/www/%s/venv' % env.appname
     env.repo_branch = 'develop'
 
+    env.database_path = env.site_path + '/appdb.sqlite'
+
     env.config = 'dev_config.py'
 
     env.servername = 'api.dev.getstrappo.com'
@@ -117,3 +119,19 @@ def restart():
     print(cyan("Restarting supervisor..."))
     # XXX Issuing a 'service supervisor restart' will produce an error!!!
     sdo("service supervisor stop && sleep 5 && service supervisor start")
+
+
+@task
+def pull_database():
+    '''Copy the uploads from the site to your local machine.'''
+    require('database_path')
+
+    sudo('chmod -R a+r "%s"' % env.database_path)
+
+    rsync_command = r"""rsync -av -e 'ssh -p %s' %s@%s:%s %s""" % (
+        env.port,
+        env.user, env.host,
+        env.database_path,
+        '.'
+    )
+    print local(rsync_command, capture=False)
