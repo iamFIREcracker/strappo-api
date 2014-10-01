@@ -113,6 +113,7 @@ class Passenger(Base):
     destination = Column(Text)
     destination_latitude = Column(Float)
     destination_longitude = Column(Float)
+    distance = Column(Float)
     seats = Column(Integer)
     matched = Column(Boolean, default=False)
     active = Column(Boolean, default=True)
@@ -131,7 +132,8 @@ class Passenger(Base):
                'origin_longitude=%(origin_longitude)s, '\
                'destination=%(destination)s, destination_latitude=%(destination_latitude)s, '\
                'destination_longitude=%(destination_longitude)s, '\
-               'seats=%(seats)d, matched=%(matched)s, active=%(active)s>' % self.__dict__
+               'distance=%(distance)s, seats=%(seats)s, '\
+               'matched=%(matched)s, active=%(active)s>' % self.__dict__
         return data.encode('utf-8')
 
 

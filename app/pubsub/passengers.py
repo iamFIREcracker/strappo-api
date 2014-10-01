@@ -58,16 +58,11 @@ class ActivePassengerWithIdGetter(Publisher):
 class PassengerCreator(Publisher):
     def perform(self, repository, user_id, origin, origin_latitude,
                 origin_longitude, destination, destination_latitude,
-                destination_longitude, seats):
-        """Creates a new passenger with the specified set of properties.
-
-        On success a 'passenger_created' message will be published toghether
-        with the created user.
-        """
+                destination_longitude, distance, seats):
         passenger = repository.add(user_id, origin, origin_latitude,
                                    origin_longitude, destination,
                                    destination_latitude, destination_longitude,
-                                   seats)
+                                   distance, seats)
         self.publish('passenger_created', passenger)
 
 
@@ -120,6 +115,7 @@ def serialize(passenger):
                 destination=passenger.destination,
                 destination_latitude=passenger.destination_latitude,
                 destination_longitude=passenger.destination_longitude,
+                distance=passenger.distance,
                 seats=passenger.seats,
                 matched=passenger.matched)
 

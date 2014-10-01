@@ -6,6 +6,7 @@ import app.forms.passengers as passengers_forms
 import app.forms.rates as rates_forms
 from app.pubsub import ACSSessionCreator
 from app.pubsub import ACSPayloadsForUserIdNotifier
+from app.pubsub import DistanceCalculator
 from app.pubsub import PayloadsByUserCreator
 from app.pubsub.drive_requests import AcceptedDriveRequestsFilter
 from app.pubsub.drive_requests import MultipleDriveRequestsDeactivator
@@ -73,11 +74,13 @@ class AddPassengerWorkflow(Publisher):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         form_validator = FormValidator()
+        distance_calculator = DistanceCalculator()
         passenger_creator = PassengerCreator()
         passenger_copier = PassengerCopier()
         passenger_serializer = PassengerSerializer()
         notifications_resetter = NotificationsResetter()
         task_submitter = TaskSubmitter()
+        form_data_future = Future()
         passenger_future = Future()
         passenger_id_future = Future()
         passenger_serialized_future = Future()
@@ -86,14 +89,24 @@ class AddPassengerWorkflow(Publisher):
             def invalid_form(self, errors):
                 outer.publish('invalid_form', errors)
             def valid_form(self, form):
+                form_data_future.set(form.d)
+                distance_calculator.perform(float(form.d.origin_latitude),
+                                            float(form.d.origin_longitude),
+                                            float(form.d.destination_latitude),
+                                            float(form.d.destination_longitude))
+
+        class DistanceCalculatorPublisher(object):
+            def distance_calculated(self, distance):
+                d = form_data_future.get()
                 passenger_creator.perform(repository, user.id,
-                                          form.d.origin,
-                                          float(form.d.origin_latitude),
-                                          float(form.d.origin_longitude),
-                                          form.d.destination,
-                                          float(form.d.destination_latitude),
-                                          float(form.d.destination_longitude),
-                                          int(form.d.seats))
+                                          d.origin,
+                                          float(d.origin_latitude),
+                                          float(d.origin_longitude),
+                                          d.destination,
+                                          float(d.destination_latitude),
+                                          float(d.destination_longitude),
+                                          distance,
+                                          int(d.seats))
 
         class PassengerCreatorSubscriber(object):
             def passenger_created(self, passenger):
@@ -120,6 +133,8 @@ class AddPassengerWorkflow(Publisher):
                 outer.publish('success', passenger_id_future.get())
 
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
+        distance_calculator.add_subscriber(logger,
+                                           DistanceCalculatorPublisher())
         passenger_creator.add_subscriber(logger, PassengerCreatorSubscriber())
         passenger_copier.add_subscriber(logger, PassengerCopierSubscriber())
         passenger_serializer.add_subscriber(logger,

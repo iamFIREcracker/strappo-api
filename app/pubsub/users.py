@@ -110,6 +110,8 @@ def serialize_private(user):
     data = serialize(user)
     if hasattr(user, 'rides_given'):
         data.update(rides_given=user.rides_given)
+    if hasattr(user, 'distance_driven'):
+        data.update(distance_driven=user.distance_driven)
     return data
 
 
@@ -134,6 +136,7 @@ class UserEnricher(Publisher):
 def enrich_private(rates_repository, drive_requests_repository, user):
     user = enrich(rates_repository, user)
     user.rides_given = drive_requests_repository.rides_given(user.id)
+    user.distance_driven = drive_requests_repository.distance_driven(user.id)
     return user
 
 def _enrich_private(rates_repository, drive_requests_repository, user):

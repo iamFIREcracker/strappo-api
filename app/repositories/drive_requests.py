@@ -131,3 +131,13 @@ class DriveRequestsRepository(object):
             filter(User.id == user_id).\
             filter(DriveRequest.accepted == True).\
             first()[0]
+
+    @staticmethod
+    def distance_driven(user_id):
+        return Base.session.query(func.sum(Passenger.distance)).\
+            select_from(DriveRequest).\
+            join('driver', 'user').\
+            join('passenger').\
+            filter(User.id == user_id).\
+            filter(DriveRequest.accepted == True).\
+            first()[0]
