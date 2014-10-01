@@ -13,6 +13,7 @@ from app.models import User
 from app.weblib.db import and_
 from app.weblib.db import exists
 from app.weblib.db import expunged
+from app.weblib.db import func
 from app.weblib.db import joinedload_all
 
 
@@ -124,8 +125,9 @@ class DriveRequestsRepository(object):
 
     @staticmethod
     def rides_given(user_id):
-        options = [joinedload_all('driver.user')]
-        return DriveRequest.query.options(*options).\
-            filter(DriveRequest.accepted == True).\
+        return Base.session.query(func.count()).\
+            select_from(DriveRequest).\
+            join('driver', 'user').\
             filter(User.id == user_id).\
-            count()
+            filter(DriveRequest.accepted == True).\
+            first()[0]
