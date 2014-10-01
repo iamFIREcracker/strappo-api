@@ -4,6 +4,8 @@
 import uuid
 from datetime import datetime
 
+from app.models import Base
+from app.models import Driver
 from app.models import DriveRequest
 from app.models import Passenger
 from app.models import Rate
@@ -119,3 +121,11 @@ class DriveRequestsRepository(object):
         if request:
             request.accepted = True
         return request
+
+    @staticmethod
+    def rides_given(user_id):
+        options = [joinedload_all('driver.user')]
+        return DriveRequest.query.options(*options).\
+            filter(DriveRequest.accepted == True).\
+            filter(User.id == user_id).\
+            count()

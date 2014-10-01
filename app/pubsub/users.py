@@ -106,6 +106,18 @@ class UserSerializer(Publisher):
         self.publish('user_serialized', serialize(user))
 
 
+def serialize_private(user):
+    data = serialize(user)
+    if hasattr(user, 'rides_given'):
+        data.update(rides_given=user.rides_given)
+    return data
+
+
+class UserSerializerPrivate(Publisher):
+    def perform(self, user):
+        self.publish('user_serialized', serialize_private(user))
+
+
 def enrich(rates_repository, user):
     user.stars = rates_repository.avg_stars(user.id)
     user.received_rates = rates_repository.received_rates(user.id)
@@ -114,7 +126,21 @@ def enrich(rates_repository, user):
 def _enrich(rates_repository, user):
     return enrich(rates_repository, user)
 
-
 class UserEnricher(Publisher):
     def perform(self, rates_repository, user):
         self.publish('user_enriched', _enrich(rates_repository, user))
+
+
+def enrich_private(rates_repository, drive_requests_repository, user):
+    user = enrich(rates_repository, user)
+    user.rides_given = drive_requests_repository.rides_given(user.id)
+    return user
+
+def _enrich_private(rates_repository, drive_requests_repository, user):
+    return enrich_private(rates_repository, drive_requests_repository, user)
+
+class UserEnricherPrivate(Publisher):
+    def perform(self, rates_repository, drive_requests_repository, user):
+        self.publish('user_enriched', _enrich_private(rates_repository,
+                                                      drive_requests_repository,
+                                                      user))

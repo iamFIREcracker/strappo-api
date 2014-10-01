@@ -7,12 +7,12 @@ import app.forms.users as user_forms
 from app.pubsub.users import TokenRefresher
 from app.pubsub.users import TokenSerializer
 from app.pubsub.users import UserCreator
-from app.pubsub.users import UserEnricher
+from app.pubsub.users import UserEnricherPrivate
 from app.pubsub.users import UserUpdater
 from app.pubsub.users import UserWithIdGetter
 from app.pubsub.users import UserWithFacebookIdGetter
 from app.pubsub.users import UserWithAcsIdGetter
-from app.pubsub.users import UserSerializer
+from app.pubsub.users import UserSerializerPrivate
 from app.weblib.forms import describe_invalid_form
 from app.weblib.pubsub import FacebookProfileGetter
 from app.weblib.pubsub import FormValidator
@@ -25,18 +25,20 @@ from app.weblib.pubsub import Future
 class ViewUserWorkflow(Publisher):
     """Defines a workflow to view the details of an active user."""
 
-    def perform(self, logger, users_repository, user_id, rates_repository):
+    def perform(self, logger, users_repository, user_id, rates_repository,
+                drive_requests_repository):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         user_getter = UserWithIdGetter()
-        user_enricher = UserEnricher()
-        user_serializer = UserSerializer()
+        user_enricher = UserEnricherPrivate()
+        user_serializer = UserSerializerPrivate()
 
         class UserGetterSubscriber(object):
             def user_not_found(self, user_id):
                 outer.publish('not_found', user_id)
             def user_found(self, user):
-                user_enricher.perform(rates_repository, user)
+                user_enricher.perform(rates_repository,
+                                      drive_requests_repository, user)
 
         class UserEnricherSubscriber(object):
             def user_enriched(self, user):

@@ -5,6 +5,7 @@ import web
 
 from app.controllers import ParamAuthorizableController
 from app.repositories.drivers import DriversRepository
+from app.repositories.drive_requests import DriveRequestsRepository
 from app.repositories.passengers import PassengersRepository
 from app.repositories.rates import RatesRepository
 from app.repositories.users import UsersRepository
@@ -39,7 +40,7 @@ class ViewUserController(ParamAuthorizableController):
 
         view_user.add_subscriber(logger, ViewUserSubscriber())
         view_user.perform(web.ctx.logger, UsersRepository, user_id,
-                          RatesRepository)
+                          RatesRepository, DriveRequestsRepository)
         return ret.get()
 
 
