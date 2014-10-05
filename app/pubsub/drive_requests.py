@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from app.weblib.pubsub import Publisher
+from app.pubsub import serialize_date
 
 
 class ActiveDriveRequestsFilterExtractor(Publisher):
@@ -123,7 +124,7 @@ def serialize(request):
         return None
     return dict(id=request.id, accepted=request.accepted,
                 response_time=request.response_time,
-                created=request.created.strftime('%Y-%m-%dT%H:%M:%SZ'))
+                created=serialize_date(request.created))
 
 
 def _serialize(request):

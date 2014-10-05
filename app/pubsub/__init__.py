@@ -71,3 +71,9 @@ def distance(lat1, lon1, lat2, lon2):
 class DistanceCalculator(Publisher):
     def perform(self, lat1, lon1, lat2, lon2):
         self.publish('distance_calculated', distance(lat1, lon1, lat2, lon2))
+
+
+def serialize_date(date):
+    if date is None:
+        return None
+    return date.strftime('%Y-%m-%dT%H:%M:%SZ')
