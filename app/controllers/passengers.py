@@ -60,6 +60,7 @@ class AddPassengerController(ParamAuthorizableController):
         class DeactivatePassengerSubscriber(object):
             def unauthorized(self):
                 raise web.unauthorized()
+
             def success(self):
                 add_passenger.perform(web.ctx.gettext, web.ctx.orm,
                                       web.ctx.logger,
@@ -72,6 +73,7 @@ class AddPassengerController(ParamAuthorizableController):
             def invalid_form(self, errors):
                 web.ctx.orm.rollback()
                 ret.set(jsonify(success=False, errors=errors))
+
             def success(self, passenger_id):
                 web.ctx.orm.commit()
                 url = '/1/passengers/%(id)s/view' % dict(id=passenger_id)
@@ -81,7 +83,7 @@ class AddPassengerController(ParamAuthorizableController):
                                             DeactivatePassengerSubscriber())
         add_passenger.add_subscriber(logger, AddPassengerSubscriber())
         deactivate_passenger.perform(web.ctx.logger, web.ctx.orm,
-                                     PassengersRepository,passenger_id,
+                                     PassengersRepository, passenger_id,
                                      self.current_user,
                                      NotifyDriversDeactivatedPassengerTask)
         return ret.get()
@@ -99,9 +101,11 @@ class AlightPassengerController(ParamAuthorizableController):
             def invalid_form(self, errors):
                 web.ctx.orm.rollback()
                 ret.set(jsonify(success=False, errors=errors))
+
             def unauthorized(self):
                 web.ctx.orm.rollback()
                 raise web.unauthorized()
+
             def success(self):
                 web.ctx.orm.commit()
                 raise web.ok()
@@ -126,6 +130,7 @@ class DeactivatePassengerController(ParamAuthorizableController):
         class DeactivatePassengerSubscriber(object):
             def unauthorized(self):
                 raise web.unauthorized()
+
             def success(self):
                 web.ctx.orm.commit()
                 raise web.ok()
@@ -149,9 +154,11 @@ class AcceptDriverController(ParamAuthorizableController):
             def not_found(self):
                 web.ctx.orm.rollback()
                 raise web.notfound()
+
             def unauthorized(self):
                 web.ctx.orm.rollback()
                 raise web.unauthorized()
+
             def success(self):
                 web.ctx.orm.commit()
                 raise app.weblib.nocontent()
@@ -176,16 +183,21 @@ class CancelDriveRequestController(ParamAuthorizableController):
             def not_found(self, driver_id):
                 web.ctx.orm.rollback()
                 raise web.notfound()
+
             def unauthorized(self):
                 web.ctx.orm.rollback()
                 raise web.unauthorized()
+
             def success(self):
                 web.ctx.orm.commit()
                 raise app.weblib.nocontent()
 
-        cancel_drive_request.add_subscriber(logger, CancelDriveRequestSubscriber())
-        cancel_drive_request.perform(web.ctx.orm, web.ctx.logger,
-                                     PassengersRepository, self.current_user.id,
-                                     passenger_id, DriveRequestsRepository,
-                                     drive_request_id,
-                                     NotifyDriverDriveRequestCancelledByPassengerTask)
+        cancel_drive_request.add_subscriber(logger,
+                                            CancelDriveRequestSubscriber())
+        cancel_drive_request.\
+            perform(web.ctx.orm, web.ctx.logger,
+                    PassengersRepository,
+                    self.current_user.id,
+                    passenger_id, DriveRequestsRepository,
+                    drive_request_id,
+                    NotifyDriverDriveRequestCancelledByPassengerTask)
