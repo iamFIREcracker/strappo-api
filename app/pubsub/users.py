@@ -19,6 +19,7 @@ class UserWithIdGetter(Publisher):
         else:
             self.publish('user_found', user)
 
+
 class UserWithFacebookIdGetter(Publisher):
     def perform(self, repository, facebook_id):
         user = repository.with_facebook_id(facebook_id)
@@ -93,7 +94,7 @@ def serialize(user):
     if user is None:
         return None
     data = dict(id=user.id, name=user.name, avatar=user.avatar,
-             locale=user.locale)
+                locale=user.locale)
     if hasattr(user, 'stars'):
         data.update(stars=user.stars)
     if hasattr(user, 'received_rates'):
@@ -125,8 +126,10 @@ def enrich(rates_repository, user):
     user.received_rates = rates_repository.received_rates(user.id)
     return user
 
+
 def _enrich(rates_repository, user):
     return enrich(rates_repository, user)
+
 
 class UserEnricher(Publisher):
     def perform(self, rates_repository, user):
@@ -139,11 +142,14 @@ def enrich_private(rates_repository, drive_requests_repository, user):
     user.distance_driven = drive_requests_repository.distance_driven(user.id)
     return user
 
+
 def _enrich_private(rates_repository, drive_requests_repository, user):
     return enrich_private(rates_repository, drive_requests_repository, user)
 
+
 class UserEnricherPrivate(Publisher):
     def perform(self, rates_repository, drive_requests_repository, user):
-        self.publish('user_enriched', _enrich_private(rates_repository,
-                                                      drive_requests_repository,
-                                                      user))
+        self.publish('user_enriched',
+                     _enrich_private(rates_repository,
+                                     drive_requests_repository,
+                                     user))
