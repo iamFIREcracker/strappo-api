@@ -38,7 +38,7 @@ class ListUnmatchedPassengersWorkflow(Publisher):
     """Defines a workflow to view the list of unmatched passengers."""
 
     def perform(self, logger, passengers_epository, rates_repository):
-        outer = self # Handy to access ``self`` from inner classes
+        outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         passengers_getter = UnmatchedPassengersGetter()
         passengers_enricher = PassengersEnricher()
@@ -56,7 +56,6 @@ class ListUnmatchedPassengersWorkflow(Publisher):
             def passengers_serialized(self, blob):
                 outer.publish('success', blob)
 
-
         passengers_getter.add_subscriber(logger,
                                          ActivePassengersGetterSubscriber())
         passengers_enricher.add_subscriber(logger,
@@ -71,7 +70,7 @@ class AddPassengerWorkflow(Publisher):
 
     def perform(self, gettext, orm, logger, redis, params,
                 repository, user, task):
-        outer = self # Handy to access ``self`` from inner classes
+        outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         form_validator = FormValidator()
         distance_calculator = DistanceCalculator()
@@ -88,12 +87,14 @@ class AddPassengerWorkflow(Publisher):
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
                 outer.publish('invalid_form', errors)
+
             def valid_form(self, form):
                 form_data_future.set(form.d)
-                distance_calculator.perform(float(form.d.origin_latitude),
-                                            float(form.d.origin_longitude),
-                                            float(form.d.destination_latitude),
-                                            float(form.d.destination_longitude))
+                distance_calculator.\
+                    perform(float(form.d.origin_latitude),
+                            float(form.d.origin_longitude),
+                            float(form.d.destination_latitude),
+                            float(form.d.destination_longitude))
 
         class DistanceCalculatorPublisher(object):
             def distance_calculated(self, distance):
@@ -140,7 +141,7 @@ class AddPassengerWorkflow(Publisher):
         passenger_serializer.add_subscriber(logger,
                                             PassengerSerializerSubscriber())
         notifications_resetter.\
-                add_subscriber(logger, NotificationsResetterSubscriber())
+            add_subscriber(logger, NotificationsResetterSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         form_validator.perform(passengers_forms.add(), params,
                                describe_invalid_form_localized(gettext,
@@ -154,7 +155,7 @@ class NotifyPassengersWorkflow(Publisher):
 
     def perform(self, logger, repository, passenger_ids, push_adapter, channel,
                 payload_factory):
-        outer = self # Handy to access ``self`` from inner classes
+        outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         passengers_getter = MultiplePassengersWithIdGetter()
         payloads_creator = PayloadsByUserCreator()
@@ -184,6 +185,7 @@ class NotifyPassengersWorkflow(Publisher):
         class ACSSessionCreatorSubscriber(object):
             def acs_session_not_created(self, error):
                 outer.publish('failure', error)
+
             def acs_session_created(self, session_id):
                 acs_notifier.perform(push_adapter, session_id, channel,
                                      zip(user_ids_future.get(),
@@ -192,6 +194,7 @@ class NotifyPassengersWorkflow(Publisher):
         class ACSNotifierSubscriber(object):
             def acs_user_ids_not_notified(self, error):
                 outer.publish('failure', error)
+
             def acs_user_ids_notified(self):
                 outer.publish('success')
 
@@ -209,7 +212,7 @@ class DeactivatePassengerWorkflow(Publisher):
     """Defines a workflow to deactivate a passenger given its ID."""
 
     def perform(self, logger, orm, repository, passenger_id, user, task):
-        outer = self # Handy to access ``self`` from inner classes
+        outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         passenger_getter = ActivePassengerWithIdGetter()
         with_user_id_authorizer = PassengerWithUserIdAuthorizer()
@@ -221,12 +224,14 @@ class DeactivatePassengerWorkflow(Publisher):
         class PassengerGetterSubscriber(object):
             def passenger_not_found(self, passenger_id):
                 outer.publish('success')
+
             def passenger_found(self, passenger):
                 with_user_id_authorizer.perform(user.id, passenger)
 
         class WithUserIdAuthorizerSubscriber(object):
             def unauthorized(self, user_id, passenger):
                 outer.publish('unauthorized')
+
             def authorized(self, user_id, passenger):
                 passengers_deactivator.perform([passenger])
 
@@ -251,11 +256,11 @@ class DeactivatePassengerWorkflow(Publisher):
 
         passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
         with_user_id_authorizer.\
-                add_subscriber(logger, WithUserIdAuthorizerSubscriber())
-        passengers_deactivator.add_subscriber(logger,
-                                              PassengersDeactivatorSubscriber())
+            add_subscriber(logger, WithUserIdAuthorizerSubscriber())
+        passengers_deactivator.\
+            add_subscriber(logger, PassengersDeactivatorSubscriber())
         requests_deactivator.\
-                add_subscriber(logger, DriveRequestsDeactivatorSubscriber())
+            add_subscriber(logger, DriveRequestsDeactivatorSubscriber())
         requests_serializer.add_subscriber(logger,
                                            DriveRequestSerializerSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
@@ -267,7 +272,7 @@ class AlightPassengerWorkflow(Publisher):
 
     def perform(self, logger, gettext, orm, params, rate_repository,
                 passenger_repository, passenger_id, user, task):
-        outer = self # Handy to access ``self`` from inner classes
+        outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         form_validator = FormValidator()
         passenger_getter = PassengerWithIdGetter()
@@ -284,6 +289,7 @@ class AlightPassengerWorkflow(Publisher):
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
                 outer.publish('invalid_form', errors)
+
             def valid_form(self, form):
                 v = int(form.d.stars) if form.d.stars else 3
                 stars_future.set(v)
@@ -292,12 +298,14 @@ class AlightPassengerWorkflow(Publisher):
         class PassengerGetterSubscriber(object):
             def passenger_not_found(self, passenger_id):
                 outer.publish('success')
+
             def passenger_found(self, passenger):
                 with_user_id_authorizer.perform(user.id, passenger)
 
         class WithUserIdAuthorizerSubscriber(object):
             def unauthorized(self, user_id, passenger):
                 outer.publish('unauthorized')
+
             def authorized(self, user_id, passenger):
                 passengers_deactivator.perform([passenger])
 
@@ -338,15 +346,14 @@ class AlightPassengerWorkflow(Publisher):
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
         passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
         with_user_id_authorizer.\
-                add_subscriber(logger, WithUserIdAuthorizerSubscriber())
-        passengers_deactivator.add_subscriber(logger,
-                                              PassengersDeactivatorSubscriber())
+            add_subscriber(logger, WithUserIdAuthorizerSubscriber())
+        passengers_deactivator.\
+            add_subscriber(logger, PassengersDeactivatorSubscriber())
         accepted_requests_filter.\
-                add_subscriber(logger,
-                               AcceptedDriveRequestsFilterSubscriber())
+            add_subscriber(logger, AcceptedDriveRequestsFilterSubscriber())
         rate_creator.add_subscriber(logger, RateCreatorSubscriber())
         requests_deactivator.\
-                add_subscriber(logger, DriveRequestsDeactivatorSubscriber())
+            add_subscriber(logger, DriveRequestsDeactivatorSubscriber())
         requests_serializer.add_subscriber(logger,
                                            DriveRequestSerializerSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
@@ -359,7 +366,7 @@ class DeactivateActivePassengersWorkflow(Publisher):
     """Defines a workflow to deactivate all the active passengers."""
 
     def perform(self, logger, orm, repository):
-        outer = self # Handy to access ``self`` from inner classes
+        outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         passengers_getter = ActivePassengersGetter()
         passengers_deactivator = MultiplePassengersDeactivator()
@@ -375,6 +382,6 @@ class DeactivateActivePassengersWorkflow(Publisher):
 
         passengers_getter.add_subscriber(logger,
                                          ActivePassengersGetterSubscriber())
-        passengers_deactivator.add_subscriber(logger,
-                                              PassengersDeactivatorSubscriber())
+        passengers_deactivator.\
+            add_subscriber(logger, PassengersDeactivatorSubscriber())
         passengers_getter.perform(repository)
