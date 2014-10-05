@@ -71,8 +71,3 @@ class PerksRepository(object):
     def active_passenger_perks(user_id):
         return [expunged(p, Base.session)
                 for p in PerksRepository._active_passenger_perks(user_id)]
-
-
-if __name__ == '__main__':
-    print PerksRepository.active_driver_perks('aaf5d3a4-3465-46e8-b356-74cb158231e8')
-    print PerksRepository.active_passenger_perks('aaf5d3a4-3465-46e8-b356-74cb158231e8')
