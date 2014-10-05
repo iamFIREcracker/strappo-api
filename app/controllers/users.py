@@ -24,7 +24,6 @@ from app.workflows.users import ViewUserWorkflow
 from app.weblib.utils import jsonify
 
 
-
 class ViewUserController(ParamAuthorizableController):
     @api
     @authorized
@@ -36,6 +35,7 @@ class ViewUserController(ParamAuthorizableController):
         class ViewUserSubscriber(object):
             def not_found(self, user_id):
                 raise web.notfound()
+
             def success(self, blob):
                 ret.set(jsonify(user=blob))
 
@@ -62,43 +62,50 @@ class LoginUserController(ParamAuthorizableController):
             def internal_error(self):
                 web.ctx.orm.rollback()
                 raise web.badrequest()
+
             def invalid_form(self, errors):
                 web.ctx.orm.rollback()
                 raise web.badrequest()
+
             def success(self, token, user):
                 token_future.set(token)
                 user_future.set(user)
                 driver_id = user_future.get().active_driver.id \
                     if user_future.get().active_driver is not None else None
-                deactivate_driver.perform(web.ctx.logger, web.ctx.orm,
-                                          DriversRepository,
-                                          driver_id,
-                                          user_future.get(),
-                                          NotifyPassengersDriverDeactivatedTask)
+                deactivate_driver.\
+                    perform(web.ctx.logger, web.ctx.orm,
+                            DriversRepository,
+                            driver_id,
+                            user_future.get(),
+                            NotifyPassengersDriverDeactivatedTask)
 
         class DeactivateDriverSubscriber(object):
             def not_found(self, driver_id):
                 self.success()
+
             def unauthorized(self):
                 self.success()
+
             def success(self):
                 passenger_id = user_future.get().active_passenger.id \
                     if user_future.get().active_passenger is not None else None
-                deactivate_passenger.perform(web.ctx.logger, web.ctx.orm,
-                                             PassengersRepository,
-                                             passenger_id,
-                                             user_future.get(),
-                                             NotifyDriversDeactivatedPassengerTask)
+                deactivate_passenger.\
+                    perform(web.ctx.logger, web.ctx.orm,
+                            PassengersRepository,
+                            passenger_id,
+                            user_future.get(),
+                            NotifyDriversDeactivatedPassengerTask)
 
         class DeactivatePassengerSubscriber(object):
             def not_found(self, passenger_id):
                 self.success()
+
             def unauthorized(self):
                 self.success()
+
             def success(self):
                 web.ctx.orm.commit()
                 ret.set(jsonify(token=token_future.get()))
-
 
         login_authorized.add_subscriber(logger, LoginAuthorizedSubscriber())
         deactivate_driver.add_subscriber(logger,
