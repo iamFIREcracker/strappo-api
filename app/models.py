@@ -187,6 +187,87 @@ class Rate(Base):
         return data.encode('utf-8')
 
 
+class Perk(Base):
+    __tablename__ = 'perk'
+
+    id = Column(String, default=uuid, primary_key=True)
+    created = Column(DateTime, default=datetime.utcnow)
+    updated = Column(DateTime, default=datetime.utcnow,
+                     onupdate=datetime.utcnow)
+    deleted = Column(Boolean, default=False, nullable=False)
+    name = Column(String, nullable=False)
+    duration = Column(Integer, nullable=False)
+    fixed_rate = Column(Float, nullable=False)
+    multiplier = Column(Float, nullable=False)
+    per_seat_cost = Column(Float, nullable=False)
+    per_distance_unit_cost = Column(Float, nullable=False)
+
+    def __repr__(self):
+        data = u''\
+            '<Perk '\
+            'id=%(id)s, '\
+            'drive_request_id=%(drive_request_id)s, '\
+            'deleted=%(deleted)s, '\
+            'name=%(name)s, '\
+            'duration=%(duration)s, '\
+            'fixed_rate=%(fixed_rate)s, '\
+            'multiplier=%(multiplier)s', \
+            'per_seat_cost=%(per_seat_cost)s', \
+            'per_distance_unit_cost=%(per_distance_unit_cost)s', \
+            '>' % self.__dict__
+        return data.encode('utf-8')
+
+
+class DriverPerk(Base):
+    __tablename__ = 'driver_perk'
+
+    id = Column(String, default=uuid, primary_key=True)
+    created = Column(DateTime, default=datetime.utcnow)
+    updated = Column(DateTime, default=datetime.utcnow,
+                     onupdate=datetime.utcnow)
+    deleted = Column(Boolean, default=False, nullable=False)
+    user_id = Column(String, ForeignKey('user.id'), nullable=True)
+    perk_id = Column(String, ForeignKey('perk.id'), nullable=True)
+    valid_until = Column(DateTime, nullable=False)
+
+    perk = relationship('Perk', uselist=False, cascade='expunge')
+
+    def __repr__(self):
+        data = u''\
+            '<DriverPerk '\
+            'id=%(id)s, '\
+            'user_id=%(user_id)s, '\
+            'perk_id=%(perk_id)s, '\
+            'valid_until=%(valid_until)s, '\
+            '>' % self.__dict__
+        return data.encode('utf-8')
+
+
+class PassengerPerk(Base):
+    __tablename__ = 'passenger_perk'
+
+    id = Column(String, default=uuid, primary_key=True)
+    created = Column(DateTime, default=datetime.utcnow)
+    updated = Column(DateTime, default=datetime.utcnow,
+                     onupdate=datetime.utcnow)
+    deleted = Column(Boolean, default=False, nullable=False)
+    user_id = Column(String, ForeignKey('user.id'), nullable=True)
+    perk_id = Column(String, ForeignKey('perk.id'), nullable=True)
+    valid_until = Column(DateTime, nullable=False)
+
+    perk = relationship('Perk', uselist=False, cascade='expunge')
+
+    def __repr__(self):
+        data = u''\
+            '<PassengerPerk '\
+            'id=%(id)s, '\
+            'user_id=%(user_id)s, '\
+            'perk_id=%(perk_id)s, '\
+            'valid_until=%(valid_until)s, '\
+            '>' % self.__dict__
+        return data.encode('utf-8')
+
+
 class Trace(Base):
     __tablename__ = 'trace'
 

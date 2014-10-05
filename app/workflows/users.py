@@ -26,7 +26,7 @@ class ViewUserWorkflow(Publisher):
     """Defines a workflow to view the details of an active user."""
 
     def perform(self, logger, users_repository, user_id, rates_repository,
-                drive_requests_repository):
+                drive_requests_repository, perks_repository):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         user_getter = UserWithIdGetter()
@@ -38,7 +38,9 @@ class ViewUserWorkflow(Publisher):
                 outer.publish('not_found', user_id)
             def user_found(self, user):
                 user_enricher.perform(rates_repository,
-                                      drive_requests_repository, user)
+                                      drive_requests_repository,
+                                      perks_repository,
+                                      user)
 
         class UserEnricherSubscriber(object):
             def user_enriched(self, user):

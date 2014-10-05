@@ -7,6 +7,7 @@ from app.controllers import ParamAuthorizableController
 from app.repositories.drivers import DriversRepository
 from app.repositories.drive_requests import DriveRequestsRepository
 from app.repositories.passengers import PassengersRepository
+from app.repositories.perks import PerksRepository
 from app.repositories.rates import RatesRepository
 from app.repositories.users import UsersRepository
 from app.tasks import NotifyDriversDeactivatedPassengerTask
@@ -40,7 +41,8 @@ class ViewUserController(ParamAuthorizableController):
 
         view_user.add_subscriber(logger, ViewUserSubscriber())
         view_user.perform(web.ctx.logger, UsersRepository, user_id,
-                          RatesRepository, DriveRequestsRepository)
+                          RatesRepository, DriveRequestsRepository,
+                          PerksRepository)
         return ret.get()
 
 
