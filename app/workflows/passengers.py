@@ -25,6 +25,12 @@ from app.pubsub.passengers import PassengersEnricher
 from app.pubsub.passengers import PassengerSerializer
 from app.pubsub.passengers import PassengerWithUserIdAuthorizer
 from app.pubsub.passengers import UnmatchedPassengersGetter
+from app.pubsub.payments import ReimbursementCalculator
+from app.pubsub.payments import ReimbursementCreator
+from app.pubsub.payments import FareCalculator
+from app.pubsub.payments import FareCreator
+from app.pubsub.perks import DriverPerksGetter
+from app.pubsub.perks import PassengerPerksGetter
 from app.pubsub.rates import RateCreator
 from app.weblib.forms import describe_invalid_form_localized
 from app.weblib.pubsub import FormValidator
@@ -271,7 +277,8 @@ class AlightPassengerWorkflow(Publisher):
     """Defines a workflow to deactivate a passenger given its ID."""
 
     def perform(self, logger, gettext, orm, params, rate_repository,
-                passenger_repository, passenger_id, user, task):
+                passenger_repository, perks_repository, payments_repository,
+                passenger_id, user, task):
         outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         form_validator = FormValidator()
@@ -280,11 +287,19 @@ class AlightPassengerWorkflow(Publisher):
         passengers_deactivator = MultiplePassengersDeactivator()
         accepted_requests_filter = AcceptedDriveRequestsFilter()
         rate_creator = RateCreator()
+        driver_perks_getter = DriverPerksGetter()
+        reimbursement_calculator = ReimbursementCalculator()
+        reimbursement_creator = ReimbursementCreator()
+        passenger_perks_getter = PassengerPerksGetter()
+        fare_calculator = FareCalculator()
+        fare_creator = FareCreator()
         requests_deactivator = MultipleDriveRequestsDeactivator()
         requests_serializer = MultipleDriveRequestsSerializer()
         task_submitter = TaskSubmitter()
         stars_future = Future()
         requests_future = Future()
+        reimbursement_future = Future()
+        fare_future = Future()
 
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
@@ -328,6 +343,60 @@ class AlightPassengerWorkflow(Publisher):
         class RateCreatorSubscriber(object):
             def rate_created(self, rate):
                 orm.add(rate)
+                driver_perks_getter.\
+                    perform(perks_repository,
+                            requests_future.get()[0].driver.user.id)
+
+        class DriverPerksGetterSubscriber(object):
+            def driver_perks_found(self, driver_perks):
+                requests = requests_future.get()
+                reimbursement_calculator.\
+                    perform(driver_perks[0].perk.fixed_rate,
+                            driver_perks[0].perk.multiplier,
+                            requests[0].passenger.seats,
+                            driver_perks[0].perk.per_seat_cost,
+                            requests[0].passenger.distance,
+                            driver_perks[0].perk.per_distance_unit_cost)
+
+        class ReimbursementCalculatorSubscriber(object):
+            def reimbursement_calculated(self, credits_):
+                reimbursement_future.set(credits_)
+                requests = requests_future.get()
+                reimbursement_creator.perform(payments_repository,
+                                              requests[0].id,
+                                              requests[0].driver.id,
+                                              reimbursement_future.get())
+
+        class ReimbursementCreatorSubscriber(object):
+            def reimbursement_created(self, payment):
+                orm.add(payment)
+                passenger_perks_getter.\
+                    perform(perks_repository,
+                            requests_future.get()[0].passenger.user.id)
+
+        class PassengerPerksGetterSubscriber(object):
+            def passenger_perks_found(self, passenger_perks):
+                requests = requests_future.get()
+                fare_calculator.\
+                    perform(passenger_perks[0].perk.fixed_rate,
+                            passenger_perks[0].perk.multiplier,
+                            requests[0].passenger.seats,
+                            passenger_perks[0].perk.per_seat_cost,
+                            requests[0].passenger.distance,
+                            passenger_perks[0].perk.per_distance_unit_cost)
+
+        class FareCalculatorSubscriber(object):
+            def fare_calculated(self, credits_):
+                fare_future.set(credits_)
+                requests = requests_future.get()
+                fare_creator.perform(payments_repository,
+                                     requests[0].id,
+                                     requests[0].passenger.id,
+                                     fare_future.get())
+
+        class FareCreatorSubscriber(object):
+            def fare_created(self, payment):
+                orm.add(payment)
                 requests_deactivator.perform(requests_future.get())
 
         class DriveRequestsDeactivatorSubscriber(object):
@@ -352,6 +421,16 @@ class AlightPassengerWorkflow(Publisher):
         accepted_requests_filter.\
             add_subscriber(logger, AcceptedDriveRequestsFilterSubscriber())
         rate_creator.add_subscriber(logger, RateCreatorSubscriber())
+        driver_perks_getter.\
+            add_subscriber(logger, DriverPerksGetterSubscriber())
+        reimbursement_calculator.\
+            add_subscriber(logger, ReimbursementCalculatorSubscriber())
+        reimbursement_creator.add_subscriber(logger,
+                                             ReimbursementCreatorSubscriber())
+        passenger_perks_getter.\
+            add_subscriber(logger, PassengerPerksGetterSubscriber())
+        fare_calculator.add_subscriber(logger, FareCalculatorSubscriber())
+        fare_creator.add_subscriber(logger, FareCreatorSubscriber())
         requests_deactivator.\
             add_subscriber(logger, DriveRequestsDeactivatorSubscriber())
         requests_serializer.add_subscriber(logger,

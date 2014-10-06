@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from app.pubsub import Publisher
 from app.pubsub import serialize_date
 
 
@@ -21,3 +22,15 @@ def serialize_driver_perk(driver_perk):
 
 def serialize_passenger_perk(passenger_perk):
     return _serialize_perk(passenger_perk)
+
+
+class DriverPerksGetter(Publisher):
+    def perform(self, perks_repository, user_id):
+        self.publish('driver_perks_found',
+                     perks_repository.active_driver_perks(user_id))
+
+
+class PassengerPerksGetter(Publisher):
+    def perform(self, perks_repository, user_id):
+        self.publish('passenger_perks_found',
+                     perks_repository.active_passenger_perks(user_id))

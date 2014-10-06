@@ -7,6 +7,8 @@ import app.weblib
 from app.controllers import ParamAuthorizableController
 from app.repositories.drive_requests import DriveRequestsRepository
 from app.repositories.passengers import PassengersRepository
+from app.repositories.payments import PaymentsRepository
+from app.repositories.perks import PerksRepository
 from app.repositories.rates import RatesRepository
 from app.tasks import NotifyDriverDriveRequestCancelledByPassengerTask
 from app.tasks import NotifyDriverDriveRequestAccepted
@@ -115,6 +117,7 @@ class AlightPassengerController(ParamAuthorizableController):
         deactivate_passenger.perform(web.ctx.logger, web.ctx.gettext,
                                      web.ctx.orm, web.input(),
                                      RatesRepository, PassengersRepository,
+                                     PerksRepository, PaymentsRepository,
                                      passenger_id, self.current_user,
                                      NotifyDriversPassengerAlitTask)
         return ret.get()

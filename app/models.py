@@ -268,6 +268,29 @@ class PassengerPerk(Base):
         return data.encode('utf-8')
 
 
+class Payment(Base):
+    __tablename__ = 'payment'
+
+    id = Column(String, default=uuid, primary_key=True)
+    created = Column(DateTime, default=datetime.utcnow)
+    updated = Column(DateTime, default=datetime.utcnow,
+                     onupdate=datetime.utcnow)
+    drive_request_id = Column(String, ForeignKey('drive_request.id'),
+                              nullable=True)
+    payer_user_id = Column(String, ForeignKey('user.id'), nullable=True)
+    payee_user_id = Column(String, ForeignKey('user.id'), nullable=True)
+    credits = Column(Integer, nullable=False)
+
+    def __repr__(self):
+        data = u''\
+            '<Payment id=%(id)s, '\
+            'drive_request_id=%(drive_request_id)s, '\
+            'payer_user_id=%(payer_user_id)s, '\
+            'payee_user_id=%(payee_user_id)s, '\
+            'credits=%(credits)s>' % self.__dict__
+        return data.encode('utf-8')
+
+
 class Trace(Base):
     __tablename__ = 'trace'
 

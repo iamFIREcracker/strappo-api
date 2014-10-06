@@ -111,6 +111,10 @@ def serialize_private(user):
     from app.pubsub.perks import serialize_driver_perk
     from app.pubsub.perks import serialize_passenger_perk
     data = serialize(user)
+    if hasattr(user, 'rides_given'):
+        data.update(rides_given=user.rides_given)
+    if hasattr(user, 'distance_driven'):
+        data.update(distance_driven=user.distance_driven)
     if hasattr(user, 'active_driver_perks'):
         data.update(active_driver_perks=[serialize_driver_perk(p)
                                          for p in user.active_driver_perks])
@@ -118,10 +122,8 @@ def serialize_private(user):
         data.update(active_passenger_perks=[serialize_passenger_perk(p)
                                             for p in user.
                                             active_passenger_perks])
-    if hasattr(user, 'rides_given'):
-        data.update(rides_given=user.rides_given)
-    if hasattr(user, 'distance_driven'):
-        data.update(distance_driven=user.distance_driven)
+    if hasattr(user, 'balance'):
+        data.update(balance=user.balance)
     return data
 
 
@@ -146,27 +148,29 @@ class UserEnricher(Publisher):
 
 
 def enrich_private(rates_repository, drive_requests_repository,
-                   perks_repository, user):
+                   perks_repository, payments_repository, user):
     user = enrich(rates_repository, user)
     user.rides_given = drive_requests_repository.rides_given(user.id)
     user.distance_driven = drive_requests_repository.distance_driven(user.id)
     user.active_driver_perks = perks_repository.active_driver_perks(user.id)
     user.active_passenger_perks = perks_repository.\
         active_passenger_perks(user.id)
+    user.balance = payments_repository.balance(user.id)
     return user
 
 
 def _enrich_private(rates_repository, drive_requests_repository,
-                    perks_repository, user):
+                    perks_repository, payments_repository, user):
     return enrich_private(rates_repository, drive_requests_repository,
-                          perks_repository, user)
+                          perks_repository, payments_repository, user)
 
 
 class UserEnricherPrivate(Publisher):
     def perform(self, rates_repository, drive_requests_repository,
-                perks_repository, user):
+                perks_repository, payments_repository, user):
         self.publish('user_enriched',
                      _enrich_private(rates_repository,
                                      drive_requests_repository,
                                      perks_repository,
+                                     payments_repository,
                                      user))
