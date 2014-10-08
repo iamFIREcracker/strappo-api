@@ -20,7 +20,6 @@ from app.weblib.db import text
 from app.weblib.db import ReprMixin
 
 
-
 Base = declarative_base()
 
 
@@ -28,10 +27,8 @@ class User(Base, ReprMixin):
     __tablename__ = 'user'
 
     id = Column(String, default=uuid, primary_key=True)
-    acs_id = Column(String) # XXX This field shouldn't be nullable;  if it is,
-                            # it is just because I am too lazy to fix all the
-                            # tests.
-    facebook_id = Column(String) # XXX field is nullable because added later
+    acs_id = Column(String)  # XXX Should be not nullable
+    facebook_id = Column(String)  # XXX Should be not nullable
     name = Column(String, nullable=False)
     avatar = Column(String, nullable=True)
     email = Column(String, nullable=True)
@@ -40,13 +37,18 @@ class User(Base, ReprMixin):
     created = Column(DateTime, default=datetime.utcnow)
     updated = Column(DateTime, default=datetime.utcnow,
                      onupdate=datetime.utcnow)
+
     active_driver = relationship('Driver', uselist=False, cascade='expunge',
-                                 primaryjoin="and_(User.id == Driver.user_id,"
-                                                  "Driver.active == True)")
+                                 primaryjoin="""
+                                 and_(User.id == Driver.user_id,
+                                      Driver.active == True)
+                                 """)
     active_passenger = \
         relationship('Passenger', uselist=False, cascade='expunge',
-                     primaryjoin="and_(User.id == Passenger.user_id,"
-                                      "Passenger.active == True)")
+                     primaryjoin="""
+                     and_(User.id == Passenger.user_id,
+                          Passenger.active == True)
+                     """)
 
 
 class Token(Base, ReprMixin):
@@ -74,11 +76,14 @@ class Driver(Base, ReprMixin):
     created = Column(DateTime, default=datetime.utcnow)
     updated = Column(DateTime, default=datetime.utcnow,
                      onupdate=datetime.utcnow)
+
     user = relationship('User', uselist=False, cascade='expunge')
-    drive_requests = relationship('DriveRequest', uselist=True,
-                                  cascade='expunge',
-                                  primaryjoin="and_(Driver.id == DriveRequest.driver_id,"
-                                                   "DriveRequest.active == True)")
+    drive_requests = \
+        relationship('DriveRequest', uselist=True, cascade='expunge',
+                     primaryjoin="""
+                     and_(Driver.id == DriveRequest.driver_id,
+                          DriveRequest.active == True)
+                     """)
 
 
 class Passenger(Base, ReprMixin):
@@ -99,11 +104,14 @@ class Passenger(Base, ReprMixin):
     created = Column(DateTime, default=datetime.utcnow)
     updated = Column(DateTime, default=datetime.utcnow,
                      onupdate=datetime.utcnow)
+
     user = relationship('User', uselist=False, cascade='expunge')
-    drive_requests = relationship('DriveRequest', uselist=True,
-                                  cascade='expunge',
-                                  primaryjoin="and_(Passenger.id == DriveRequest.passenger_id,"
-                                                   "DriveRequest.active == True)")
+    drive_requests = \
+        relationship('DriveRequest', uselist=True, cascade='expunge',
+                     primaryjoin="""
+                     and_(Passenger.id == DriveRequest.passenger_id,
+                          DriveRequest.active == True)
+                     """)
 
 
 class DriveRequest(Base, ReprMixin):
@@ -119,10 +127,12 @@ class DriveRequest(Base, ReprMixin):
     created = Column(DateTime, default=datetime.utcnow)
     updated = Column(DateTime, default=datetime.utcnow,
                      onupdate=datetime.utcnow)
+
     driver = relationship('Driver', uselist=False, cascade='expunge',
                           primaryjoin="DriveRequest.driver_id == Driver.id")
-    passenger = relationship('Passenger', uselist=False, cascade='expunge',
-                             primaryjoin="DriveRequest.passenger_id == Passenger.id")
+    passenger = \
+        relationship('Passenger', uselist=False, cascade='expunge',
+                     primaryjoin="DriveRequest.passenger_id == Passenger.id")
 
 
 class Rate(Base, ReprMixin):
