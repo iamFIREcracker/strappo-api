@@ -39,16 +39,14 @@ class User(Base, ReprMixin):
                      onupdate=datetime.utcnow)
 
     active_driver = relationship('Driver', uselist=False, cascade='expunge',
-                                 primaryjoin="""
-                                 and_(User.id == Driver.user_id,
-                                      Driver.active == True)
-                                 """)
+                                 primaryjoin=""
+                                 "and_(User.id == Driver.user_id,"
+                                 "Driver.active == True)")
     active_passenger = \
         relationship('Passenger', uselist=False, cascade='expunge',
-                     primaryjoin="""
-                     and_(User.id == Passenger.user_id,
-                          Passenger.active == True)
-                     """)
+                     primaryjoin=""
+                     "and_(User.id == Passenger.user_id,"
+                     "Passenger.active == True)")
 
 
 class Token(Base, ReprMixin):
@@ -80,10 +78,9 @@ class Driver(Base, ReprMixin):
     user = relationship('User', uselist=False, cascade='expunge')
     drive_requests = \
         relationship('DriveRequest', uselist=True, cascade='expunge',
-                     primaryjoin="""
-                     and_(Driver.id == DriveRequest.driver_id,
-                          DriveRequest.active == True)
-                     """)
+                     primaryjoin=""
+                     "and_(Driver.id == DriveRequest.driver_id,"
+                     "DriveRequest.active == True)")
 
 
 class Passenger(Base, ReprMixin):
@@ -108,10 +105,9 @@ class Passenger(Base, ReprMixin):
     user = relationship('User', uselist=False, cascade='expunge')
     drive_requests = \
         relationship('DriveRequest', uselist=True, cascade='expunge',
-                     primaryjoin="""
-                     and_(Passenger.id == DriveRequest.passenger_id,
-                          DriveRequest.active == True)
-                     """)
+                     primaryjoin=""
+                     "and_(Passenger.id == DriveRequest.passenger_id,"
+                     "DriveRequest.active == True)")
 
 
 class DriveRequest(Base, ReprMixin):
