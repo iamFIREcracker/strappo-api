@@ -299,7 +299,6 @@ class AlightPassengerWorkflow(Publisher):
         stars_future = Future()
         requests_future = Future()
         reimbursement_future = Future()
-        fare_future = Future()
 
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
@@ -387,12 +386,11 @@ class AlightPassengerWorkflow(Publisher):
 
         class FareCalculatorSubscriber(object):
             def fare_calculated(self, credits_):
-                fare_future.set(credits_)
                 requests = requests_future.get()
                 fare_creator.perform(payments_repository,
                                      requests[0].id,
                                      requests[0].passenger.id,
-                                     fare_future.get())
+                                     credits_)
 
         class FareCreatorSubscriber(object):
             def fare_created(self, payment):
