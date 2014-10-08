@@ -124,11 +124,8 @@ class DriveRequest(Base, ReprMixin):
     updated = Column(DateTime, default=datetime.utcnow,
                      onupdate=datetime.utcnow)
 
-    driver = relationship('Driver', uselist=False, cascade='expunge',
-                          primaryjoin="DriveRequest.driver_id == Driver.id")
-    passenger = \
-        relationship('Passenger', uselist=False, cascade='expunge',
-                     primaryjoin="DriveRequest.passenger_id == Passenger.id")
+    driver = relationship('Driver', uselist=False, cascade='expunge')
+    passenger = relationship('Passenger', uselist=False, cascade='expunge')
 
 
 class Rate(Base, ReprMixin):
