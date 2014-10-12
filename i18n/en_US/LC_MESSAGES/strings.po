@@ -47,14 +47,17 @@ msgstr "Oh no! %(name)s cannot drive you around anymore.."
 msgid "alert_cancelled_drive_request_by_driver"
 msgstr "Oh no! %(name)s cannot drive you around anymore.."
 
-msgid "perk_name_standard_driver"
-msgstr "Guidatore Standard"
+msgid "perk_name_driver_standard"
+msgstr "Standard Driver"
 
-msgid "perk_description_standard_driver"
-msgstr "Promozione che ogni utente riceve al momento della registrazione"
+msgid "perk_description_driver_standard"
+msgstr "Perk everyone gets at sign-up time"
 
-msgid "perk_name_standard_passenger"
-msgstr "Passeggero Standard"
+msgid "perk_name_passenger_standard"
+msgstr "Standard Passenger"
 
-msgid "perk_description_standard_passenger"
-msgstr "Promozione che ogni utente riceve al momento della registrazione"
+msgid "perk_description_passenger_standard"
+msgstr "Perk everyone gets at sign-up time"
+
+msgid "perk_name_driver_early_bird"
+msgstr "Unlock super-convenient credit rates after the first 10 rides given in your first week of activity."
