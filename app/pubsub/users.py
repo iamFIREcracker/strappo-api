@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from functools import partial
 
 from app.weblib.pubsub import Publisher
 
@@ -107,29 +108,31 @@ class UserSerializer(Publisher):
         self.publish('user_serialized', serialize(user))
 
 
-def serialize_private(user):
+def serialize_private(gettext, user):
     from app.pubsub.perks import serialize_driver_perk
     from app.pubsub.perks import serialize_passenger_perk
+    localized_gettext = partial(gettext, lang=user.locale)
     data = serialize(user)
     if hasattr(user, 'rides_given'):
         data.update(rides_given=user.rides_given)
     if hasattr(user, 'distance_driven'):
         data.update(distance_driven=user.distance_driven)
     if hasattr(user, 'active_driver_perks'):
-        data.update(active_driver_perks=[serialize_driver_perk(p)
-                                         for p in user.active_driver_perks])
+        data.update(active_driver_perks=[
+            serialize_driver_perk(localized_gettext, p)
+            for p in user.active_driver_perks])
     if hasattr(user, 'active_passenger_perks'):
-        data.update(active_passenger_perks=[serialize_passenger_perk(p)
-                                            for p in user.
-                                            active_passenger_perks])
+        data.update(active_passenger_perks=[
+            serialize_passenger_perk(localized_gettext, p)
+            for p in user.active_passenger_perks])
     if hasattr(user, 'balance'):
         data.update(balance=user.balance)
     return data
 
 
 class UserSerializerPrivate(Publisher):
-    def perform(self, user):
-        self.publish('user_serialized', serialize_private(user))
+    def perform(self, gettext, user):
+        self.publish('user_serialized', serialize_private(gettext, user))
 
 
 def enrich(rates_repository, user):

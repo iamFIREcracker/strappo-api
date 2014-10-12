@@ -41,8 +41,8 @@ class ViewUserController(ParamAuthorizableController):
                 ret.set(jsonify(user=blob))
 
         view_user.add_subscriber(logger, ViewUserSubscriber())
-        view_user.perform(web.ctx.logger, UsersRepository, user_id,
-                          RatesRepository, DriveRequestsRepository,
+        view_user.perform(web.ctx.logger, web.ctx.gettext, UsersRepository,
+                          user_id, RatesRepository, DriveRequestsRepository,
                           PerksRepository, PaymentsRepository)
         return ret.get()
 

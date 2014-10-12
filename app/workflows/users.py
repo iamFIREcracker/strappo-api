@@ -25,8 +25,8 @@ from app.weblib.pubsub import Future
 class ViewUserWorkflow(Publisher):
     """Defines a workflow to view the details of an active user."""
 
-    def perform(self, logger, users_repository, user_id, rates_repository,
-                drive_requests_repository, perks_repository,
+    def perform(self, logger, gettext, users_repository, user_id,
+                rates_repository, drive_requests_repository, perks_repository,
                 payments_repository):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
@@ -46,7 +46,7 @@ class ViewUserWorkflow(Publisher):
 
         class UserEnricherSubscriber(object):
             def user_enriched(self, user):
-                user_serializer.perform(user)
+                user_serializer.perform(gettext, user)
 
         class UsersSerializerSubscriber(object):
             def user_serialized(self, blob):

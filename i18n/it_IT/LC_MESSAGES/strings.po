@@ -46,3 +46,15 @@ msgstr "Oh no! %(name)s non può più offrirti uno strappo.."
 
 msgid "alert_cancelled_drive_request_by_driver"
 msgstr "Oh no! %(name)s non può più offrirti uno strappo.."
+
+msgid "perk_name_standard_driver"
+msgstr "Standard Driver"
+
+msgid "perk_description_standard_driver"
+msgstr "Perk everyone gets at sign-up time"
+
+msgid "perk_name_standard_passenger"
+msgstr "Standard Passenger"
+
+msgid "perk_description_standard_passenger"
+msgstr "Perk everyone gets at sign-up time"
