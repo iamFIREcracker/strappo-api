@@ -89,13 +89,6 @@ def upgrade():
                         per_seat_cost=0.0,
                         per_distance_unit_cost=0.0)
     orm.add(driver_standard)
-    orm.add(PerksRepository.
-            add_passenger_perk(name='passenger_early_bird',
-                               duration=60,
-                               fixed_rate=0.0,
-                               multiplier=0.0,
-                               per_seat_cost=0.0,
-                               per_distance_unit_cost=0.0))
     passenger_standard = PerksRepository.\
         add_passenger_perk(name='passenger_standard',
                            duration=365,
