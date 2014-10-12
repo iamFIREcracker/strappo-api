@@ -29,8 +29,8 @@ from app.pubsub.payments import ReimbursementCalculator
 from app.pubsub.payments import ReimbursementCreator
 from app.pubsub.payments import FareCalculator
 from app.pubsub.payments import FareCreator
-from app.pubsub.perks import DriverPerksGetter
-from app.pubsub.perks import PassengerPerksGetter
+from app.pubsub.perks import ActiveDriverPerksGetter
+from app.pubsub.perks import ActivePassengerPerksGetter
 from app.pubsub.rates import RateCreator
 from app.weblib.forms import describe_invalid_form_localized
 from app.weblib.pubsub import FormValidator
@@ -287,10 +287,10 @@ class AlightPassengerWorkflow(Publisher):
         passengers_deactivator = MultiplePassengersDeactivator()
         accepted_requests_filter = AcceptedDriveRequestsFilter()
         rate_creator = RateCreator()
-        driver_perks_getter = DriverPerksGetter()
+        active_driver_perks_getter = ActiveDriverPerksGetter()
         reimbursement_calculator = ReimbursementCalculator()
         reimbursement_creator = ReimbursementCreator()
-        passenger_perks_getter = PassengerPerksGetter()
+        active_passenger_perks_getter = ActivePassengerPerksGetter()
         fare_calculator = FareCalculator()
         fare_creator = FareCreator()
         requests_deactivator = MultipleDriveRequestsDeactivator()
@@ -342,12 +342,12 @@ class AlightPassengerWorkflow(Publisher):
         class RateCreatorSubscriber(object):
             def rate_created(self, rate):
                 orm.add(rate)
-                driver_perks_getter.\
+                active_driver_perks_getter.\
                     perform(perks_repository,
                             requests_future.get()[0].driver.user.id)
 
-        class DriverPerksGetterSubscriber(object):
-            def driver_perks_found(self, driver_perks):
+        class ActiveDriverPerksGetterSubscriber(object):
+            def active_driver_perks_found(self, driver_perks):
                 requests = requests_future.get()
                 reimbursement_calculator.\
                     perform(driver_perks[0].perk.fixed_rate,
@@ -369,12 +369,12 @@ class AlightPassengerWorkflow(Publisher):
         class ReimbursementCreatorSubscriber(object):
             def reimbursement_created(self, payment):
                 orm.add(payment)
-                passenger_perks_getter.\
+                active_passenger_perks_getter.\
                     perform(perks_repository,
                             requests_future.get()[0].passenger.user.id)
 
-        class PassengerPerksGetterSubscriber(object):
-            def passenger_perks_found(self, passenger_perks):
+        class ActivePassengerPerksGetterSubscriber(object):
+            def active_passenger_perks_found(self, passenger_perks):
                 requests = requests_future.get()
                 fare_calculator.\
                     perform(passenger_perks[0].perk.fixed_rate,
@@ -419,14 +419,14 @@ class AlightPassengerWorkflow(Publisher):
         accepted_requests_filter.\
             add_subscriber(logger, AcceptedDriveRequestsFilterSubscriber())
         rate_creator.add_subscriber(logger, RateCreatorSubscriber())
-        driver_perks_getter.\
-            add_subscriber(logger, DriverPerksGetterSubscriber())
+        active_driver_perks_getter.\
+            add_subscriber(logger, ActiveDriverPerksGetterSubscriber())
         reimbursement_calculator.\
             add_subscriber(logger, ReimbursementCalculatorSubscriber())
         reimbursement_creator.add_subscriber(logger,
                                              ReimbursementCreatorSubscriber())
-        passenger_perks_getter.\
-            add_subscriber(logger, PassengerPerksGetterSubscriber())
+        active_passenger_perks_getter.\
+            add_subscriber(logger, ActivePassengerPerksGetterSubscriber())
         fare_calculator.add_subscriber(logger, FareCalculatorSubscriber())
         fare_creator.add_subscriber(logger, FareCreatorSubscriber())
         requests_deactivator.\

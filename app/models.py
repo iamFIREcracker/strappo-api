@@ -143,8 +143,8 @@ class Rate(Base, ReprMixin):
                      onupdate=datetime.utcnow)
 
 
-class Perk(Base, ReprMixin):
-    __tablename__ = 'perk'
+class DriverPerk(Base, ReprMixin):
+    __tablename__ = 'driver_perk'
 
     id = Column(String, default=uuid, primary_key=True)
     created = Column(DateTime, default=datetime.utcnow)
@@ -159,8 +159,8 @@ class Perk(Base, ReprMixin):
     per_distance_unit_cost = Column(Float, nullable=False)
 
 
-class DriverPerk(Base, ReprMixin):
-    __tablename__ = 'driver_perk'
+class ActiveDriverPerk(Base, ReprMixin):
+    __tablename__ = 'active_driver_perk'
 
     id = Column(String, default=uuid, primary_key=True)
     created = Column(DateTime, default=datetime.utcnow)
@@ -168,10 +168,10 @@ class DriverPerk(Base, ReprMixin):
                      onupdate=datetime.utcnow)
     deleted = Column(Boolean, default=False, nullable=False)
     user_id = Column(String, ForeignKey('user.id'), nullable=True)
-    perk_id = Column(String, ForeignKey('perk.id'), nullable=True)
+    perk_id = Column(String, ForeignKey('driver_perk.id'), nullable=True)
     valid_until = Column(DateTime, nullable=False)
 
-    perk = relationship('Perk', uselist=False, cascade='expunge')
+    perk = relationship('DriverPerk', uselist=False, cascade='expunge')
 
 
 class PassengerPerk(Base, ReprMixin):
@@ -182,11 +182,27 @@ class PassengerPerk(Base, ReprMixin):
     updated = Column(DateTime, default=datetime.utcnow,
                      onupdate=datetime.utcnow)
     deleted = Column(Boolean, default=False, nullable=False)
+    name = Column(String, nullable=False)
+    duration = Column(Integer, nullable=False)
+    fixed_rate = Column(Float, nullable=False)
+    multiplier = Column(Float, nullable=False)
+    per_seat_cost = Column(Float, nullable=False)
+    per_distance_unit_cost = Column(Float, nullable=False)
+
+
+class ActivePassengerPerk(Base, ReprMixin):
+    __tablename__ = 'active_passenger_perk'
+
+    id = Column(String, default=uuid, primary_key=True)
+    created = Column(DateTime, default=datetime.utcnow)
+    updated = Column(DateTime, default=datetime.utcnow,
+                     onupdate=datetime.utcnow)
+    deleted = Column(Boolean, default=False, nullable=False)
     user_id = Column(String, ForeignKey('user.id'), nullable=True)
-    perk_id = Column(String, ForeignKey('perk.id'), nullable=True)
+    perk_id = Column(String, ForeignKey('passenger_perk.id'), nullable=True)
     valid_until = Column(DateTime, nullable=False)
 
-    perk = relationship('Perk', uselist=False, cascade='expunge')
+    perk = relationship('PassengerPerk', uselist=False, cascade='expunge')
 
 
 class Payment(Base, ReprMixin):

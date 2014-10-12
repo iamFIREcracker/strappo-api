@@ -26,7 +26,8 @@ class ViewUserWorkflow(Publisher):
     """Defines a workflow to view the details of an active user."""
 
     def perform(self, logger, gettext, users_repository, user_id,
-                rates_repository, drive_requests_repository, perks_repository,
+                rates_repository, drive_requests_repository,
+                perks_repository, active_perks_repository,
                 payments_repository):
         outer = self # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
@@ -41,6 +42,7 @@ class ViewUserWorkflow(Publisher):
                 user_enricher.perform(rates_repository,
                                       drive_requests_repository,
                                       perks_repository,
+                                      active_perks_repository,
                                       payments_repository,
                                       user)
 
