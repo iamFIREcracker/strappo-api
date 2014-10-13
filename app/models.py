@@ -152,11 +152,27 @@ class DriverPerk(Base, ReprMixin):
                      onupdate=datetime.utcnow)
     deleted = Column(Boolean, default=False, nullable=False)
     name = Column(String, nullable=False)
-    duration = Column(Integer, nullable=False)
+    eligible_for = Column(Integer, nullable=False)
+    active_for = Column(Integer, nullable=False)
     fixed_rate = Column(Float, nullable=False)
     multiplier = Column(Float, nullable=False)
     per_seat_cost = Column(Float, nullable=False)
     per_distance_unit_cost = Column(Float, nullable=False)
+
+
+class EligibleDriverPerk(Base, ReprMixin):
+    __tablename__ = 'eligible_driver_perk'
+
+    id = Column(String, default=uuid, primary_key=True)
+    created = Column(DateTime, default=datetime.utcnow)
+    updated = Column(DateTime, default=datetime.utcnow,
+                     onupdate=datetime.utcnow)
+    deleted = Column(Boolean, default=False, nullable=False)
+    user_id = Column(String, ForeignKey('user.id'), nullable=True)
+    perk_id = Column(String, ForeignKey('driver_perk.id'), nullable=True)
+    valid_until = Column(DateTime, nullable=False)
+
+    perk = relationship('DriverPerk', uselist=False, cascade='expunge')
 
 
 class ActiveDriverPerk(Base, ReprMixin):
@@ -183,11 +199,27 @@ class PassengerPerk(Base, ReprMixin):
                      onupdate=datetime.utcnow)
     deleted = Column(Boolean, default=False, nullable=False)
     name = Column(String, nullable=False)
-    duration = Column(Integer, nullable=False)
+    eligible_for = Column(Integer, nullable=False)
+    active_for = Column(Integer, nullable=False)
     fixed_rate = Column(Float, nullable=False)
     multiplier = Column(Float, nullable=False)
     per_seat_cost = Column(Float, nullable=False)
     per_distance_unit_cost = Column(Float, nullable=False)
+
+
+class EligiblePassengerPerk(Base, ReprMixin):
+    __tablename__ = 'eligible_passenger_perk'
+
+    id = Column(String, default=uuid, primary_key=True)
+    created = Column(DateTime, default=datetime.utcnow)
+    updated = Column(DateTime, default=datetime.utcnow,
+                     onupdate=datetime.utcnow)
+    deleted = Column(Boolean, default=False, nullable=False)
+    user_id = Column(String, ForeignKey('user.id'), nullable=True)
+    perk_id = Column(String, ForeignKey('passenger_perk.id'), nullable=True)
+    valid_until = Column(DateTime, nullable=False)
+
+    perk = relationship('PassengerPerk', uselist=False, cascade='expunge')
 
 
 class ActivePassengerPerk(Base, ReprMixin):

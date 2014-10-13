@@ -12,6 +12,14 @@ def _serialize_perk(gettext, perk):
                 description=gettext("perk_description_%s" % perk.name))
 
 
+def _serialize_eligible_perk(gettext, perk):
+    if perk is None:
+        return None
+    data = _serialize_perk(gettext, perk.perk)
+    data.update(valid_until=serialize_date(perk.valid_until))
+    return data
+
+
 def _serialize_active_perk(gettext, perk):
     if perk is None:
         return None
@@ -20,16 +28,16 @@ def _serialize_active_perk(gettext, perk):
     return data
 
 
-def serialize_driver_perk(gettext, driver_perk):
-    return _serialize_perk(gettext, driver_perk)
+def serialize_eligible_driver_perk(gettext, driver_perk):
+    return _serialize_eligible_perk(gettext, driver_perk)
 
 
 def serialize_active_driver_perk(gettext, driver_perk):
     return _serialize_active_perk(gettext, driver_perk)
 
 
-def serialize_passenger_perk(gettext, passenger_perk):
-    return _serialize_perk(gettext, passenger_perk)
+def serialize_eligible_passenger_perk(gettext, passenger_perk):
+    return _serialize_eligible_perk(gettext, passenger_perk)
 
 
 def serialize_active_passenger_perk(gettext, passenger_perk):

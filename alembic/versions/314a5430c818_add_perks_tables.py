@@ -15,7 +15,6 @@ import sqlalchemy as sa
 
 from app.models import User
 from app.repositories.perks import PerksRepository
-from app.repositories.perks import ActivePerksRepository
 from app.weblib.db import expunged
 from app.weblib.db import create_session
 
@@ -28,11 +27,24 @@ def upgrade():
     sa.Column('updated', sa.DateTime(), nullable=True),
     sa.Column('deleted', sa.Boolean(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
-    sa.Column('duration', sa.Integer(), nullable=False),
+    sa.Column('eligible_for', sa.Integer(), nullable=False),
+    sa.Column('active_for', sa.Integer(), nullable=False),
     sa.Column('fixed_rate', sa.Float(), nullable=False),
     sa.Column('multiplier', sa.Float(), nullable=False),
     sa.Column('per_seat_cost', sa.Float(), nullable=False),
     sa.Column('per_distance_unit_cost', sa.Float(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('eligible_driver_perk',
+    sa.Column('id', sa.String(), nullable=False),
+    sa.Column('created', sa.DateTime(), nullable=True),
+    sa.Column('updated', sa.DateTime(), nullable=True),
+    sa.Column('deleted', sa.Boolean(), nullable=False),
+    sa.Column('user_id', sa.String(), nullable=True),
+    sa.Column('perk_id', sa.String(), nullable=True),
+    sa.Column('valid_until', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['perk_id'], ['driver_perk.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('active_driver_perk',
@@ -53,11 +65,24 @@ def upgrade():
     sa.Column('updated', sa.DateTime(), nullable=True),
     sa.Column('deleted', sa.Boolean(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
-    sa.Column('duration', sa.Integer(), nullable=False),
+    sa.Column('eligible_for', sa.Integer(), nullable=False),
+    sa.Column('active_for', sa.Integer(), nullable=False),
     sa.Column('fixed_rate', sa.Float(), nullable=False),
     sa.Column('multiplier', sa.Float(), nullable=False),
     sa.Column('per_seat_cost', sa.Float(), nullable=False),
     sa.Column('per_distance_unit_cost', sa.Float(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('eligible_passenger_perk',
+    sa.Column('id', sa.String(), nullable=False),
+    sa.Column('created', sa.DateTime(), nullable=True),
+    sa.Column('updated', sa.DateTime(), nullable=True),
+    sa.Column('deleted', sa.Boolean(), nullable=False),
+    sa.Column('user_id', sa.String(), nullable=True),
+    sa.Column('perk_id', sa.String(), nullable=True),
+    sa.Column('valid_until', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['perk_id'], ['passenger_perk.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('active_passenger_perk',
@@ -74,16 +99,19 @@ def upgrade():
     )
     ### end Alembic commands ###
     orm = create_session()
-    orm.add(PerksRepository.
-            add_driver_perk(name='driver_early_bird',
-                            duration=60,
-                            fixed_rate=0.0,
-                            multiplier=0.0,
-                            per_seat_cost=0.0,
-                            per_distance_unit_cost=0.0))
+    driver_early_bird = PerksRepository.\
+        add_driver_perk(name='driver_early_bird',
+                        eligible_for=7,
+                        active_for=60,
+                        fixed_rate=0.0,
+                        multiplier=0.0,
+                        per_seat_cost=0.0,
+                        per_distance_unit_cost=0.0)
+    orm.add(driver_early_bird)
     driver_standard = PerksRepository.\
         add_driver_perk(name='driver_standard',
-                        duration=365,
+                        eligible_for=365,
+                        active_for=365,
                         fixed_rate=0.0,
                         multiplier=0.0,
                         per_seat_cost=0.0,
@@ -91,7 +119,8 @@ def upgrade():
     orm.add(driver_standard)
     passenger_standard = PerksRepository.\
         add_passenger_perk(name='passenger_standard',
-                           duration=365,
+                           eligible_for=365,
+                           active_for=365,
                            fixed_rate=0.0,
                            multiplier=0.0,
                            per_seat_cost=0.0,
@@ -99,9 +128,9 @@ def upgrade():
     orm.add(passenger_standard)
     for u in User.query:
         u = expunged(u, User.session)
-        orm.add(ActivePerksRepository.activate_driver_perk(u, driver_standard))
-        orm.add(ActivePerksRepository.
-                activate_passenger_perk(u, passenger_standard))
+        orm.add(PerksRepository.eligiblify_driver_perk(u, driver_early_bird))
+        orm.add(PerksRepository.activate_driver_perk(u, driver_standard))
+        orm.add(PerksRepository.activate_passenger_perk(u, passenger_standard))
         orm.add(u)
     orm.commit()
 
@@ -109,7 +138,9 @@ def upgrade():
 def downgrade():
     ### commands auto generated by Alembic - please adjust! ###
     op.drop_table('active_passenger_perk')
-    op.drop_table('active_driver_perk')
+    op.drop_table('eligible_passenger_perk')
     op.drop_table('passenger_perk')
+    op.drop_table('active_driver_perk')
+    op.drop_table('eligible_driver_perk')
     op.drop_table('driver_perk')
     ### end Alembic commands ###
