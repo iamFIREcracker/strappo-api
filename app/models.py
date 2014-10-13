@@ -94,7 +94,7 @@ class Passenger(Base, ReprMixin):
     destination = Column(Text)
     destination_latitude = Column(Float)
     destination_longitude = Column(Float)
-    distance = Column(Float)
+    distance = Column(Float, nullable=False, server_default=text('0'))
     seats = Column(Integer)
     matched = Column(Boolean, default=False)
     active = Column(Boolean, default=True)
