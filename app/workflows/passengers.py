@@ -363,7 +363,7 @@ class AlightPassengerWorkflow(Publisher):
                 requests = requests_future.get()
                 reimbursement_creator.perform(payments_repository,
                                               requests[0].id,
-                                              requests[0].driver.id,
+                                              requests[0].driver.user.id,
                                               reimbursement_future.get())
 
         class ReimbursementCreatorSubscriber(object):
@@ -389,7 +389,7 @@ class AlightPassengerWorkflow(Publisher):
                 requests = requests_future.get()
                 fare_creator.perform(payments_repository,
                                      requests[0].id,
-                                     requests[0].passenger.id,
+                                     requests[0].passenger.user.id,
                                      credits_)
 
         class FareCreatorSubscriber(object):
