@@ -134,7 +134,8 @@ class DriveRequestsRepository(object):
 
     @staticmethod
     def distance_driven(user_id):
-        return Base.session.query(func.sum(Passenger.distance)).\
+        return Base.session.query(func.coalesce(func.sum(Passenger.distance),
+                                                0.0)).\
             select_from(DriveRequest).\
             join('driver', 'user').\
             join('passenger').\
