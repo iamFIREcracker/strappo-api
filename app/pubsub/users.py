@@ -169,11 +169,11 @@ def enrich_private(rates_repository, drive_requests_repository,
     user.eligible_driver_perks = perks_repository.\
         eligible_driver_perks(user.id)
     user.active_driver_perks = perks_repository.\
-        active_driver_perks(user.id)
+        active_driver_perks_without_standard_one(user.id)
     user.eligible_passenger_perks = perks_repository.\
         eligible_passenger_perks(user.id)
     user.active_passenger_perks = perks_repository.\
-        active_passenger_perks(user.id)
+        active_passenger_perks_without_standard_one(user.id)
     user.balance = payments_repository.balance(user.id)
     return user
 

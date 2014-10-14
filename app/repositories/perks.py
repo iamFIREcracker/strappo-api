@@ -22,6 +22,9 @@ from sqlalchemy.sql.expression import true
 
 
 class PerksRepository(object):
+    STANDARD_DRIVER_NAME = 'driver_standard'
+    STANDARD_PASSENGER_NAME = 'passenger_standard'
+
     @staticmethod
     def add_driver_perk(name, eligible_for, active_for, fixed_rate,
                         multiplier, per_seat_cost, per_distance_unit_cost):
@@ -79,7 +82,7 @@ class PerksRepository(object):
                                   EligibleDriverPerk.perk_id,
                                   ActiveDriverPerk.user_id ==
                                   EligibleDriverPerk.user_id))).
-                limit(1))
+                order_by(EligibleDriverPerk.created.desc()))
 
     @staticmethod
     def eligible_driver_perks(user_id):
@@ -97,7 +100,7 @@ class PerksRepository(object):
                                   EligiblePassengerPerk.id,
                                   ActivePassengerPerk.user_id ==
                                   EligiblePassengerPerk.user_id))).
-                limit(1))
+                order_by(EligiblePassengerPerk.created.desc()))
 
     @staticmethod
     def eligible_passenger_perks(user_id):
@@ -128,7 +131,7 @@ class PerksRepository(object):
                 filter(ActiveDriverPerk.deleted == false()).
                 filter(ActiveDriverPerk.user_id == user_id).
                 filter(ActiveDriverPerk.valid_until >= date.today()).
-                limit(1))
+                order_by(ActiveDriverPerk.created.desc()))
 
     @staticmethod
     def active_driver_perks(user_id):
@@ -136,14 +139,24 @@ class PerksRepository(object):
                 for p in PerksRepository._active_driver_perks(user_id)]
 
     @staticmethod
+    def active_driver_perks_without_standard_one(user_id):
+        return (p for p in PerksRepository.active_driver_perks(user_id)
+                if p.perk.name != PerksRepository.STANDARD_DRIVER_NAME)
+
+    @staticmethod
     def _active_passenger_perks(user_id):
         return (ActivePassengerPerk.query.options(joinedload('perk')).
                 filter(ActivePassengerPerk.deleted == false()).
                 filter(ActivePassengerPerk.user_id == user_id).
                 filter(ActivePassengerPerk.valid_until >= date.today()).
-                limit(1))
+                order_by(ActivePassengerPerk.created.desc()))
 
     @staticmethod
     def active_passenger_perks(user_id):
         return [expunged(p, Base.session)
                 for p in PerksRepository._active_passenger_perks(user_id)]
+
+    @staticmethod
+    def active_passenger_perks_without_standard_one(user_id):
+        return (p for p in PerksRepository.active_passenger_perks(user_id)
+                if p.perk.name != PerksRepository.STANDARD_PASSENGER_NAME)

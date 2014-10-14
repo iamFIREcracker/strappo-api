@@ -109,7 +109,7 @@ def upgrade():
                         per_distance_unit_cost=0.0)
     orm.add(driver_early_bird)
     driver_standard = PerksRepository.\
-        add_driver_perk(name='driver_standard',
+        add_driver_perk(name=PerksRepository.STANDARD_DRIVER_NAME,
                         eligible_for=365,
                         active_for=365,
                         fixed_rate=0.0,
@@ -118,7 +118,7 @@ def upgrade():
                         per_distance_unit_cost=0.0)
     orm.add(driver_standard)
     passenger_standard = PerksRepository.\
-        add_passenger_perk(name='passenger_standard',
+        add_passenger_perk(name=PerksRepository.STANDARD_PASSENGER_NAME,
                            eligible_for=365,
                            active_for=365,
                            fixed_rate=0.0,
