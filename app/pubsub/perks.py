@@ -8,8 +8,7 @@ from app.pubsub import serialize_date
 def _serialize_perk(gettext, perk):
     if perk is None:
         return None
-    return dict(name=gettext("perk_name_%s" % perk.name),
-                description=gettext("perk_description_%s" % perk.name))
+    return dict(name=gettext("perk_name_%s" % perk.name))
 
 
 def _serialize_eligible_perk(gettext, perk):
@@ -17,6 +16,11 @@ def _serialize_eligible_perk(gettext, perk):
         return None
     data = _serialize_perk(gettext, perk.perk)
     data.update(valid_until=serialize_date(perk.valid_until))
+    data.update(description=gettext("perk_eligible_description_%s" %
+                                    perk.perk.name) %
+                dict(valid_until_year=perk.valid_until.year,
+                     valid_until_month=perk.valid_until.month,
+                     valid_until_day=perk.valid_until.day))
     return data
 
 
@@ -25,6 +29,11 @@ def _serialize_active_perk(gettext, perk):
         return None
     data = _serialize_perk(gettext, perk.perk)
     data.update(valid_until=serialize_date(perk.valid_until))
+    data.update(description=gettext("perk_active_description_%s" %
+                                    perk.perk.name) %
+                dict(valid_until_year=perk.valid_until.year,
+                     valid_until_month=perk.valid_until.month,
+                     valid_until_day=perk.valid_until.day))
     return data
 
 

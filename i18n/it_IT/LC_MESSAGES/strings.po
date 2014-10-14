@@ -47,17 +47,11 @@ msgstr "Oh no! %(name)s non può più offrirti uno strappo.."
 msgid "alert_cancelled_drive_request_by_driver"
 msgstr "Oh no! %(name)s non può più offrirti uno strappo.."
 
-msgid "perk_name_driver_standard"
-msgstr "Guidatore Standard"
-
-msgid "perk_description_driver_standard"
-msgstr "Promozione che ogni utente riceve al momento della registrazione"
-
-msgid "perk_name_passenger_standard"
-msgstr "Passeggero Standard"
-
-msgid "perk_description_passenger_standard"
-msgstr "Promozione che ogni utente riceve al momento della registrazione"
-
 msgid "perk_name_driver_early_bird"
-msgstr "Dai 10 Strappi durante la tua prima settimana, per accedere a tariffe ancora più vantaggiose."
+msgstr "Early Bird"
+
+msgid "perk_eligible_description_driver_early_bird"
+msgstr "Dai un passaggio entro il %(valid_until_day)s/%(valid_until_month)s/%(valid_until_year)s e comincia a guadagnare il doppio!"
+
+msgid "perk_active_description_driver_early_bird"
+msgstr "Guadagni il doppio fino al %(valid_until_day)s/%(valid_until_month)s/%(valid_until_year)s!"
