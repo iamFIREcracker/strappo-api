@@ -63,3 +63,19 @@ class ActivePassengerPerksGetter(Publisher):
     def perform(self, perks_repository, user_id):
         self.publish('active_passenger_perks_found',
                      perks_repository.active_passenger_perks(user_id))
+
+
+class DefaultPerksCreator(Publisher):
+    def perform(self, perks_repository, user,
+                eligible_driver_perks, active_driver_perks,
+                eligible_passenger_perks, active_passenger_perks):
+        perks = []
+        for p in eligible_driver_perks:
+            perks.append(perks_repository.eligiblify_driver_perk(user, p))
+        for p in active_driver_perks:
+            perks.append(perks_repository.activate_driver_perk(user, p))
+        for p in eligible_passenger_perks:
+            perks.append(perks_repository.eligiblify_passenger_perk(user, p))
+        for p in active_passenger_perks:
+            perks.append(perks_repository.activate_passenger_perk(user, p))
+        self.publish('perks_created', perks)

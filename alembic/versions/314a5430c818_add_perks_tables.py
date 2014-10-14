@@ -110,14 +110,14 @@ def upgrade():
                            multiplier=1.0)
     orm.add(passenger_standard)
     driver_early_bird = PerksRepository.\
-        add_driver_perk(name='driver_early_bird',
+        add_driver_perk(name=PerksRepository.EARLY_BIRD_DRIVER_NAME,
                         eligible_for=7,
                         active_for=60,
                         fixed_rate=0.0,
                         multiplier=2.0)
     orm.add(driver_early_bird)
     passenger_early_bird = PerksRepository.\
-        add_passenger_perk(name='passenger_early_bird',
+        add_passenger_perk(name=PerksRepository.EARLY_BIRD_PASSENGER_NAME,
                            eligible_for=0,
                            active_for=60,
                            fixed_rate=0.0,

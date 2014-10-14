@@ -24,6 +24,30 @@ from sqlalchemy.sql.expression import true
 class PerksRepository(object):
     STANDARD_DRIVER_NAME = 'driver_standard'
     STANDARD_PASSENGER_NAME = 'passenger_standard'
+    EARLY_BIRD_DRIVER_NAME = 'driver_early_bird'
+    EARLY_BIRD_PASSENGER_NAME = 'passenger_early_bird'
+
+    @staticmethod
+    def _driver_perks_with_names(*names):
+        return (DriverPerk.query.
+                filter(DriverPerk.deleted == false()).
+                filter(DriverPerk.name.in_(names)))
+
+    @staticmethod
+    def driver_perks_with_names(*names):
+        return [expunged(p, Base.session)
+                for p in PerksRepository._driver_perks_with_names(*names)]
+
+    @staticmethod
+    def _passenger_perks_with_names(*names):
+        return (PassengerPerk.query.
+                filter(PassengerPerk.deleted == false()).
+                filter(PassengerPerk.name.in_(names)))
+
+    @staticmethod
+    def passenger_perks_with_names(*names):
+        return [expunged(p, Base.session)
+                for p in PerksRepository._passenger_perks_with_names(*names)]
 
     @staticmethod
     def add_driver_perk(name, eligible_for, active_for, fixed_rate,

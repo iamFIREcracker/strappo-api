@@ -115,5 +115,10 @@ class LoginUserController(ParamAuthorizableController):
                                             DeactivatePassengerSubscriber())
         login_authorized.perform(web.ctx.orm, web.ctx.logger, UsersRepository,
                                  data.acs_id, FacebookAdapter(),
-                                 data.facebook_token, data.locale)
+                                 data.facebook_token, data.locale,
+                                 PerksRepository,
+                                 web.ctx.default_eligible_driver_perks,
+                                 web.ctx.default_active_driver_perks,
+                                 web.ctx.default_eligible_passenger_perks,
+                                 web.ctx.default_active_passenger_perks)
         return ret.get()
