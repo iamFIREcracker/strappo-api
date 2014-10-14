@@ -69,3 +69,8 @@ def load_and_manage_orm(ormfactory):
         finally:
             ormfactory.remove()
     return inner
+
+def load_dict(**kw):
+    def inner():
+        web.ctx.update(**kw)
+    return inner
