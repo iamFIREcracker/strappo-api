@@ -27,16 +27,14 @@ class PerksRepository(object):
 
     @staticmethod
     def add_driver_perk(name, eligible_for, active_for, fixed_rate,
-                        multiplier, per_seat_cost, per_distance_unit_cost):
+                        multiplier):
         perk = DriverPerk(id=unicode(uuid.uuid4()),
                           deleted=False,
                           name=name,
                           eligible_for=eligible_for,
                           active_for=active_for,
                           fixed_rate=fixed_rate,
-                          multiplier=multiplier,
-                          per_seat_cost=per_seat_cost,
-                          per_distance_unit_cost=per_distance_unit_cost)
+                          multiplier=multiplier)
         return perk
 
     @staticmethod
@@ -50,16 +48,14 @@ class PerksRepository(object):
 
     @staticmethod
     def add_passenger_perk(name, eligible_for, active_for, fixed_rate,
-                           multiplier, per_seat_cost, per_distance_unit_cost):
+                           multiplier):
         perk = PassengerPerk(id=unicode(uuid.uuid4()),
                              deleted=False,
                              name=name,
                              eligible_for=eligible_for,
                              active_for=active_for,
                              fixed_rate=fixed_rate,
-                             multiplier=multiplier,
-                             per_seat_cost=per_seat_cost,
-                             per_distance_unit_cost=per_distance_unit_cost)
+                             multiplier=multiplier)
         return perk
 
     @staticmethod

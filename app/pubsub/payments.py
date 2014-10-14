@@ -4,36 +4,28 @@
 from app.weblib.pubsub import Publisher
 
 
-def reimbursement_for(fixed_rate, multiplier, seats, per_seat_cost,
-                      distance, per_distance_unit_cost):
-    return fixed_rate + \
-        multiplier * (seats * per_seat_cost) * \
-        (distance * per_distance_unit_cost)
+BASE_COST = 0.15  # € per Km per passengers
+
+
+def reimbursement_for(fixed_rate, multiplier, seats, distance):
+    return fixed_rate + multiplier * seats * distance * BASE_COST
 
 
 class ReimbursementCalculator(Publisher):
-    def perform(self, fixed_rate, multiplier, seats, per_seat_cost,
-                distance, per_distance_unit_cost):
+    def perform(self, fixed_rate, multiplier, seats, distance):
         self.publish('reimbursement_calculated',
-                     reimbursement_for(fixed_rate, multiplier,
-                                       seats, per_seat_cost,
-                                       distance, per_distance_unit_cost))
+                     reimbursement_for(fixed_rate, multiplier, seats,
+                                       distance))
 
 
-def fare_for(fixed_rate, multiplier, seats, per_seat_cost,
-             distance, per_distance_unit_cost):
-    return fixed_rate + \
-        multiplier * (seats * per_seat_cost) * \
-        (distance * per_distance_unit_cost)
+def fare_for(fixed_rate, multiplier, seats, distance):
+    return fixed_rate + multiplier * seats * distance * BASE_COST
 
 
 class FareCalculator(Publisher):
-    def perform(self, fixed_rate, multiplier, seats, per_seat_cost,
-                distance, per_distance_unit_cost):
+    def perform(self, fixed_rate, multiplier, seats, distance):
         self.publish('fare_calculated',
-                     fare_for(fixed_rate, multiplier,
-                              seats, per_seat_cost,
-                              distance, per_distance_unit_cost))
+                     fare_for(fixed_rate, multiplier, seats, distance))
 
 
 class ReimbursementCreator(Publisher):

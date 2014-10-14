@@ -31,8 +31,6 @@ def upgrade():
     sa.Column('active_for', sa.Integer(), nullable=False),
     sa.Column('fixed_rate', sa.Float(), nullable=False),
     sa.Column('multiplier', sa.Float(), nullable=False),
-    sa.Column('per_seat_cost', sa.Float(), nullable=False),
-    sa.Column('per_distance_unit_cost', sa.Float(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('eligible_driver_perk',
@@ -69,8 +67,6 @@ def upgrade():
     sa.Column('active_for', sa.Integer(), nullable=False),
     sa.Column('fixed_rate', sa.Float(), nullable=False),
     sa.Column('multiplier', sa.Float(), nullable=False),
-    sa.Column('per_seat_cost', sa.Float(), nullable=False),
-    sa.Column('per_distance_unit_cost', sa.Float(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('eligible_passenger_perk',
@@ -99,38 +95,41 @@ def upgrade():
     )
     ### end Alembic commands ###
     orm = create_session()
+    driver_standard = PerksRepository.\
+        add_driver_perk(name=PerksRepository.STANDARD_DRIVER_NAME,
+                        eligible_for=3650,
+                        active_for=3650,
+                        fixed_rate=0.0,
+                        multiplier=1.0)
+    orm.add(driver_standard)
+    passenger_standard = PerksRepository.\
+        add_passenger_perk(name=PerksRepository.STANDARD_PASSENGER_NAME,
+                           eligible_for=3650,
+                           active_for=3650,
+                           fixed_rate=1.0,
+                           multiplier=1.0)
+    orm.add(passenger_standard)
     driver_early_bird = PerksRepository.\
         add_driver_perk(name='driver_early_bird',
                         eligible_for=7,
                         active_for=60,
                         fixed_rate=0.0,
-                        multiplier=0.0,
-                        per_seat_cost=0.0,
-                        per_distance_unit_cost=0.0)
+                        multiplier=2.0)
     orm.add(driver_early_bird)
-    driver_standard = PerksRepository.\
-        add_driver_perk(name=PerksRepository.STANDARD_DRIVER_NAME,
-                        eligible_for=365,
-                        active_for=365,
-                        fixed_rate=0.0,
-                        multiplier=0.0,
-                        per_seat_cost=0.0,
-                        per_distance_unit_cost=0.0)
-    orm.add(driver_standard)
-    passenger_standard = PerksRepository.\
-        add_passenger_perk(name=PerksRepository.STANDARD_PASSENGER_NAME,
-                           eligible_for=365,
-                           active_for=365,
+    passenger_early_bird = PerksRepository.\
+        add_passenger_perk(name='passenger_early_bird',
+                           eligible_for=0,
+                           active_for=60,
                            fixed_rate=0.0,
-                           multiplier=0.0,
-                           per_seat_cost=0.0,
-                           per_distance_unit_cost=0.0)
-    orm.add(passenger_standard)
+                           multiplier=0.0)
+    orm.add(passenger_early_bird)
     for u in User.query:
         u = expunged(u, User.session)
         orm.add(PerksRepository.eligiblify_driver_perk(u, driver_early_bird))
         orm.add(PerksRepository.activate_driver_perk(u, driver_standard))
         orm.add(PerksRepository.activate_passenger_perk(u, passenger_standard))
+        orm.add(PerksRepository.activate_passenger_perk(u,
+                                                        passenger_early_bird))
         orm.add(u)
     orm.commit()
 

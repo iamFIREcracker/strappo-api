@@ -156,8 +156,6 @@ class DriverPerk(Base, ReprMixin):
     active_for = Column(Integer, nullable=False)
     fixed_rate = Column(Float, nullable=False)
     multiplier = Column(Float, nullable=False)
-    per_seat_cost = Column(Float, nullable=False)
-    per_distance_unit_cost = Column(Float, nullable=False)
 
 
 class EligibleDriverPerk(Base, ReprMixin):
@@ -203,8 +201,6 @@ class PassengerPerk(Base, ReprMixin):
     active_for = Column(Integer, nullable=False)
     fixed_rate = Column(Float, nullable=False)
     multiplier = Column(Float, nullable=False)
-    per_seat_cost = Column(Float, nullable=False)
-    per_distance_unit_cost = Column(Float, nullable=False)
 
 
 class EligiblePassengerPerk(Base, ReprMixin):

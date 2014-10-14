@@ -353,9 +353,7 @@ class AlightPassengerWorkflow(Publisher):
                     perform(driver_perks[0].perk.fixed_rate,
                             driver_perks[0].perk.multiplier,
                             requests[0].passenger.seats,
-                            driver_perks[0].perk.per_seat_cost,
-                            requests[0].passenger.distance,
-                            driver_perks[0].perk.per_distance_unit_cost)
+                            requests[0].passenger.distance)
 
         class ReimbursementCalculatorSubscriber(object):
             def reimbursement_calculated(self, credits_):
@@ -380,9 +378,7 @@ class AlightPassengerWorkflow(Publisher):
                     perform(passenger_perks[0].perk.fixed_rate,
                             passenger_perks[0].perk.multiplier,
                             requests[0].passenger.seats,
-                            passenger_perks[0].perk.per_seat_cost,
-                            requests[0].passenger.distance,
-                            passenger_perks[0].perk.per_distance_unit_cost)
+                            requests[0].passenger.distance)
 
         class FareCalculatorSubscriber(object):
             def fare_calculated(self, credits_):
