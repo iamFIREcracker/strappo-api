@@ -2,13 +2,14 @@
 # -*- coding: utf-8 -*-
 
 from app.weblib.pubsub import Publisher
+from math import floor
 
 
 BASE_COST = 0.15  # € per Km per passengers
 
 
 def reimbursement_for(fixed_rate, multiplier, seats, distance):
-    return fixed_rate + multiplier * seats * distance * BASE_COST
+    return fixed_rate + multiplier * seats * floor(1.0 + distance) * BASE_COST
 
 
 class ReimbursementCalculator(Publisher):
@@ -19,7 +20,7 @@ class ReimbursementCalculator(Publisher):
 
 
 def fare_for(fixed_rate, multiplier, seats, distance):
-    return fixed_rate + multiplier * seats * distance * BASE_COST
+    return fixed_rate + multiplier * seats * floor(1.0 + distance) * BASE_COST
 
 
 class FareCalculator(Publisher):
