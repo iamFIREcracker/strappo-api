@@ -193,19 +193,23 @@ class PassengersACSUserIdExtractor(Publisher):
                      filter(None, [p.user.acs_id for p in passengers]))
 
 
-def enrich(fixed_rate, multiplier, passenger):
+def enrich(passenger):
+    return passenger
+
+
+def enrich_with_reimbursement(fixed_rate, multiplier, passenger):
     from app.pubsub.payments import reimbursement_for
     passenger.reimbursement = reimbursement_for(fixed_rate,
                                                 multiplier,
                                                 passenger.seats,
                                                 passenger.distance)
-    return passenger
+    return enrich(passenger)
 
 
 def _enrich(rates_repository, fixed_rate, multiplier, passenger):
     from app.pubsub.users import enrich as enrich_user
     passenger.user = enrich_user(rates_repository, passenger.user)
-    return enrich(fixed_rate, multiplier, passenger)
+    return enrich_with_reimbursement(fixed_rate, multiplier, passenger)
 
 
 class PassengersEnricher(Publisher):
