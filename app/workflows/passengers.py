@@ -102,7 +102,7 @@ class AddPassengerWorkflow(Publisher):
                             float(form.d.destination_latitude),
                             float(form.d.destination_longitude))
 
-        class DistanceCalculatorPublisher(object):
+        class DistanceCalculatorSubscriber(object):
             def distance_calculated(self, distance):
                 d = form_data_future.get()
                 passenger_creator.perform(repository, user.id,
@@ -141,7 +141,7 @@ class AddPassengerWorkflow(Publisher):
 
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
         distance_calculator.add_subscriber(logger,
-                                           DistanceCalculatorPublisher())
+                                           DistanceCalculatorSubscriber())
         passenger_creator.add_subscriber(logger, PassengerCreatorSubscriber())
         passenger_copier.add_subscriber(logger, PassengerCopierSubscriber())
         passenger_serializer.add_subscriber(logger,
