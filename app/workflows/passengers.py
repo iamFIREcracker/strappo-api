@@ -43,16 +43,29 @@ from app.weblib.pubsub import Future
 class ListUnmatchedPassengersWorkflow(Publisher):
     """Defines a workflow to view the list of unmatched passengers."""
 
-    def perform(self, logger, passengers_epository, rates_repository):
+    def perform(self, logger, passengers_epository, rates_repository,
+                perks_repository, user_id):
         outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         passengers_getter = UnmatchedPassengersGetter()
+        active_passenger_perks_getter = ActivePassengerPerksGetter()
         passengers_enricher = PassengersEnricher()
         passengers_serializer = MultiplePassengersSerializer()
+        passengers_future = Future()
 
         class ActivePassengersGetterSubscriber(object):
             def passengers_found(self, passengers):
-                passengers_enricher.perform(rates_repository, passengers)
+                passengers_future.set(passengers)
+                active_passenger_perks_getter.perform(perks_repository,
+                                                      user_id)
+
+        class ActivePassengerPerksGetterSubscriber(object):
+            def active_passenger_perks_found(self, passenger_perks):
+                passengers_enricher.\
+                    perform(rates_repository,
+                            passenger_perks[0].perk.fixed_rate,
+                            passenger_perks[0].perk.multiplier,
+                            passengers_future.get())
 
         class PassengersEnricherSubscriber(object):
             def passengers_enriched(self, passengers):
@@ -64,6 +77,9 @@ class ListUnmatchedPassengersWorkflow(Publisher):
 
         passengers_getter.add_subscriber(logger,
                                          ActivePassengersGetterSubscriber())
+        active_passenger_perks_getter.\
+            add_subscriber(logger,
+                           ActivePassengerPerksGetterSubscriber())
         passengers_enricher.add_subscriber(logger,
                                            PassengersEnricherSubscriber())
         passengers_serializer.add_subscriber(logger,

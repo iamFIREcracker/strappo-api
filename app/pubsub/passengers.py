@@ -125,6 +125,8 @@ def _serialize(passenger):
     from app.pubsub.users import serialize as serialize_user
     d = serialize(passenger)
     d.update(user=serialize_user(passenger.user))
+    if hasattr(passenger, 'reimbursement'):
+        d.update(reimbursement=passenger.reimbursement)
     return d
 
 
@@ -190,16 +192,24 @@ class PassengersACSUserIdExtractor(Publisher):
         self.publish('acs_user_ids_extracted',
                      filter(None, [p.user.acs_id for p in passengers]))
 
-def enrich(passenger):
+
+def enrich(fixed_rate, multiplier, passenger):
+    from app.pubsub.payments import reimbursement_for
+    passenger.reimbursement = reimbursement_for(fixed_rate,
+                                                multiplier,
+                                                passenger.seats,
+                                                passenger.distance)
     return passenger
 
-def _enrich(rates_repository, passenger):
+
+def _enrich(rates_repository, fixed_rate, multiplier, passenger):
     from app.pubsub.users import enrich as enrich_user
     passenger.user = enrich_user(rates_repository, passenger.user)
-    return enrich(passenger)
+    return enrich(fixed_rate, multiplier, passenger)
 
 
 class PassengersEnricher(Publisher):
-    def perform(self, rates_repository, passengers):
+    def perform(self, rates_repository, fixed_rate, multiplier, passengers):
         self.publish('passengers_enriched',
-                     [_enrich(rates_repository, p) for p in passengers])
+                     [_enrich(rates_repository, fixed_rate, multiplier, p)
+                      for p in passengers])
