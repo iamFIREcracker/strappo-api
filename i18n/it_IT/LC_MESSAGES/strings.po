@@ -55,12 +55,3 @@ msgstr "Dai un passaggio entro il %(valid_until_day)s/%(valid_until_month)s/%(va
 
 msgid "perk_active_description_driver_early_bird"
 msgstr "Guadagni il doppio fino al %(valid_until_day)s/%(valid_until_month)s/%(valid_until_year)s!"
-
-msgid "perk_name_passenger_early_bird"
-msgstr "Early Bird"
-
-msgid "perk_eligible_description_passenger_early_bird"
-msgstr ""
-
-msgid "perk_active_description_passenger_early_bird"
-msgstr "Zero spese fino al %(valid_until_day)s/%(valid_until_month)s/%(valid_until_year)s!"

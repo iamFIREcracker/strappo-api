@@ -63,8 +63,7 @@ def app_factory():
         driver_perks_with_names(PerksRepository.STANDARD_DRIVER_NAME),
         default_eligible_passenger_perks=[],
         default_active_passenger_perks=PerksRepository.
-        passenger_perks_with_names(PerksRepository.STANDARD_PASSENGER_NAME,
-                                   PerksRepository.EARLY_BIRD_PASSENGER_NAME),
+        passenger_perks_with_names(PerksRepository.STANDARD_PASSENGER_NAME),
     )))
 
     return app

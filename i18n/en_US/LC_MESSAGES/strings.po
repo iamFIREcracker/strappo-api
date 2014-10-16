@@ -55,12 +55,3 @@ msgstr "Give your first ride by %(valid_until_month)s/%(valid_until_day)s/%(vali
 
 msgid "perk_active_description_driver_early_bird"
 msgstr "You earn 2x until %(valid_until_month)s/%(valid_until_day)s/%(valid_until_year)s!"
-
-msgid "perk_name_passenger_early_bird"
-msgstr "Early Bird"
-
-msgid "perk_eligible_description_passenger_early_bird"
-msgstr ""
-
-msgid "perk_active_description_passenger_early_bird"
-msgstr "Get around for free until %(valid_until_month)s/%(valid_until_day)s/%(valid_until_year)s!"

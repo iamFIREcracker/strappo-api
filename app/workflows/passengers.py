@@ -290,9 +290,6 @@ class AlightPassengerWorkflow(Publisher):
         active_driver_perks_getter = ActiveDriverPerksGetter()
         reimbursement_calculator = ReimbursementCalculator()
         reimbursement_creator = ReimbursementCreator()
-        active_passenger_perks_getter = ActivePassengerPerksGetter()
-        fare_calculator = FareCalculator()
-        fare_creator = FareCreator()
         requests_deactivator = MultipleDriveRequestsDeactivator()
         requests_serializer = MultipleDriveRequestsSerializer()
         task_submitter = TaskSubmitter()
@@ -367,30 +364,6 @@ class AlightPassengerWorkflow(Publisher):
         class ReimbursementCreatorSubscriber(object):
             def reimbursement_created(self, payment):
                 orm.add(payment)
-                active_passenger_perks_getter.\
-                    perform(perks_repository,
-                            requests_future.get()[0].passenger.user.id)
-
-        class ActivePassengerPerksGetterSubscriber(object):
-            def active_passenger_perks_found(self, passenger_perks):
-                requests = requests_future.get()
-                fare_calculator.\
-                    perform(passenger_perks[0].perk.fixed_rate,
-                            passenger_perks[0].perk.multiplier,
-                            requests[0].passenger.seats,
-                            requests[0].passenger.distance)
-
-        class FareCalculatorSubscriber(object):
-            def fare_calculated(self, credits_):
-                requests = requests_future.get()
-                fare_creator.perform(payments_repository,
-                                     requests[0].id,
-                                     requests[0].passenger.user.id,
-                                     credits_)
-
-        class FareCreatorSubscriber(object):
-            def fare_created(self, payment):
-                orm.add(payment)
                 requests_deactivator.perform(requests_future.get())
 
         class DriveRequestsDeactivatorSubscriber(object):
@@ -421,10 +394,6 @@ class AlightPassengerWorkflow(Publisher):
             add_subscriber(logger, ReimbursementCalculatorSubscriber())
         reimbursement_creator.add_subscriber(logger,
                                              ReimbursementCreatorSubscriber())
-        active_passenger_perks_getter.\
-            add_subscriber(logger, ActivePassengerPerksGetterSubscriber())
-        fare_calculator.add_subscriber(logger, FareCalculatorSubscriber())
-        fare_creator.add_subscriber(logger, FareCreatorSubscriber())
         requests_deactivator.\
             add_subscriber(logger, DriveRequestsDeactivatorSubscriber())
         requests_serializer.add_subscriber(logger,
