@@ -22,6 +22,7 @@ from app.weblib.request_decorators import authorized
 from app.weblib.utils import jsonify
 from app.workflows.passengers import AddPassengerWorkflow
 from app.workflows.passengers import AlightPassengerWorkflow
+from app.workflows.passengers import CalculateFareWorkflow
 from app.workflows.passengers import ListUnmatchedPassengersWorkflow
 from app.workflows.passengers import DeactivatePassengerWorkflow
 from app.workflows.drive_requests import AcceptDriveRequestWorkflow
@@ -204,3 +205,25 @@ class CancelDriveRequestController(ParamAuthorizableController):
                     passenger_id, DriveRequestsRepository,
                     drive_request_id,
                     NotifyDriverDriveRequestCancelledByPassengerTask)
+
+
+class CalculateFareController(ParamAuthorizableController):
+    @api
+    @authorized
+    def GET(self):
+        logger = LoggingSubscriber(web.ctx.logger)
+        calculate_fare = CalculateFareWorkflow()
+        ret = Future()
+
+        class CalculateFareSubscriber(object):
+            def invalid_form(self, errors):
+                web.ctx.orm.rollback()
+                ret.set(jsonify(success=False, errors=errors))
+
+            def success(self, fare):
+                ret.set(jsonify(fare=fare))
+
+        calculate_fare.add_subscriber(logger, CalculateFareSubscriber())
+        calculate_fare.perform(web.ctx.gettext, web.ctx.logger, web.input(),
+                               PerksRepository, self.current_user)
+        return ret.get()

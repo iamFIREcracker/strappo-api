@@ -458,3 +458,53 @@ class DeactivateActivePassengersWorkflow(Publisher):
         passengers_deactivator.\
             add_subscriber(logger, PassengersDeactivatorSubscriber())
         passengers_getter.perform(repository)
+
+
+class CalculateFareWorkflow(Publisher):
+    def perform(self, gettext, logger, params, perks_repository, user):
+        outer = self  # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        form_validator = FormValidator()
+        distance_calculator = DistanceCalculator()
+        active_passenger_perks_getter = ActivePassengerPerksGetter()
+        fare_calculator = FareCalculator()
+        distance_future = Future()
+
+        class FormValidatorSubscriber(object):
+            def invalid_form(self, errors):
+                outer.publish('invalid_form', errors)
+
+            def valid_form(self, form):
+                distance_calculator.\
+                    perform(float(form.d.origin_latitude),
+                            float(form.d.origin_longitude),
+                            float(form.d.destination_latitude),
+                            float(form.d.destination_longitude))
+
+        class DistanceCalculatorSubscriber(object):
+            def distance_calculated(self, distance):
+                distance_future.set(distance)
+                active_passenger_perks_getter.perform(perks_repository,
+                                                      user.id)
+
+        class ActivePassengerPerksGetterSubscriber(object):
+            def active_passenger_perks_found(self, passenger_perks):
+                fare_calculator.\
+                    perform(passenger_perks[0].perk.fixed_rate,
+                            passenger_perks[0].perk.multiplier,
+                            int(params.seats),
+                            distance_future.get())
+
+        class FareCalculatorSubscriber(object):
+            def fare_calculated(self, credits_):
+                outer.publish('success', credits_)
+
+        form_validator.add_subscriber(logger, FormValidatorSubscriber())
+        distance_calculator.add_subscriber(logger,
+                                           DistanceCalculatorSubscriber())
+        active_passenger_perks_getter.\
+            add_subscriber(logger, ActivePassengerPerksGetterSubscriber())
+        fare_calculator.add_subscriber(logger, FareCalculatorSubscriber())
+        form_validator.perform(passengers_forms.calculate_fare(), params,
+                               describe_invalid_form_localized(gettext,
+                                                               user.locale))
