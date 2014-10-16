@@ -5,7 +5,7 @@ from app.weblib.pubsub import Publisher
 from math import floor
 
 
-BASE_COST = 0.15  # € per Km per passengers
+BASE_COST = 0.30  # € per Km per passengers
 
 
 def reimbursement_for(fixed_rate, multiplier, seats, distance):
