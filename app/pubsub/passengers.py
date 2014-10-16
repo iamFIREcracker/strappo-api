@@ -23,7 +23,8 @@ class PassengerWithIdGetter(Publisher):
 class MultiplePassengersWithIdGetter(Publisher):
     def perform(self, repository, passenger_ids):
         self.publish('passengers_found',
-                     filter(None, [repository.get(id) for id in passenger_ids]))
+                     filter(None, [repository.get(id)
+                                   for id in passenger_ids]))
 
 
 class UnmatchedPassengersGetter(Publisher):
