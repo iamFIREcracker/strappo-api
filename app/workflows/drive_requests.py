@@ -33,46 +33,32 @@ from app.weblib.pubsub import Publisher
 from app.weblib.pubsub import TaskSubmitter
 
 
-class ListActiveDriveRequestsWorkflow(Publisher):
-    """Defines a workflow to list all the active drive requests associated
-    with a specific driver ID."""
-
-    def perform(self, logger, drivers_repository, passengers_repository,
+class ListActiveDriverDriveRequestsWorkflow(Publisher):
+    def perform(self, logger, drivers_repository,
                 requests_repository, rates_repository, perks_repository,
-                user_id, params):
-        outer = self # Handy to access ``self`` from inner classes
+                user_id, driver_id):
+        outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
-        filter_extractor = ActiveDriveRequestsFilterExtractor()
-        with_driver_id_requests_getter = ActiveDriveRequestsWithDriverIdGetter()
+        with_driver_id_requests_getter = \
+            ActiveDriveRequestsWithDriverIdGetter()
         driver_getter = DriverWithIdGetter()
         driver_authorizer = DriverWithUserIdAuthorizer()
         active_driver_perks_getter = ActiveDriverPerksGetter()
         driver_requests_enricher = DriverDriveRequestsEnricher()
-        with_passenger_id_requests_getter = \
-                ActiveDriveRequestsWithPassengerIdGetter()
-        passenger_getter = PassengerWithIdGetter()
-        passenger_authorizer = PassengerWithUserIdAuthorizer()
-        passenger_requests_enricher = DriveRequestsEnricher()
         requests_serializer = MultipleDriveRequestsSerializer()
         requests_future = Future()
-
-        class FilterExtractorSubscriber(object):
-            def bad_request(self, params):
-                outer.publish('bad_request')
-            def by_driver_id_filter(self, driver_id):
-                driver_getter.perform(drivers_repository, driver_id)
-            def by_passenger_id_filter(self, passenger_id):
-                passenger_getter.perform(passengers_repository, passenger_id)
 
         class DriverGetterSubscriber(object):
             def driver_not_found(self, driver_id):
                 outer.publish('unauthorized')
+
             def driver_found(self, driver):
                 driver_authorizer.perform(user_id, driver)
 
         class DriverAuthorizerSubscriber(object):
             def unauthorized(self, user_id, driver):
                 outer.publish('unauthorized')
+
             def authorized(self, user_id, driver):
                 with_driver_id_requests_getter.perform(requests_repository,
                                                        driver.id)
@@ -91,15 +77,53 @@ class ListActiveDriveRequestsWorkflow(Publisher):
                             driver_perks[0].perk.multiplier,
                             requests_future.get())
 
+        class DriveRequestsEnricherSubscriber(object):
+            def drive_requests_enriched(self, requests):
+                requests_serializer.perform(requests)
+
+        class DriveRequestsSerializerSubscriber(object):
+            def drive_requests_serialized(self, blob):
+                outer.publish('success', blob)
+
+        driver_getter.add_subscriber(logger, DriverGetterSubscriber())
+        driver_authorizer.add_subscriber(logger, DriverAuthorizerSubscriber())
+        with_driver_id_requests_getter.\
+            add_subscriber(
+                logger, ActiveDriveRequestsWithDriverIdGetterSubscriber())
+        active_driver_perks_getter.\
+            add_subscriber(logger, ActiveDriverPerksGetterSubscriber())
+        driver_requests_enricher.\
+            add_subscriber(logger, DriveRequestsEnricherSubscriber())
+        requests_serializer.add_subscriber(logger,
+                                           DriveRequestsSerializerSubscriber())
+        driver_getter.perform(drivers_repository, driver_id)
+
+
+class ListActivePassengerDriveRequestsWorkflow(Publisher):
+    def perform(self, logger, passengers_repository,
+                requests_repository, rates_repository, perks_repository,
+                user_id, passenger_id):
+        outer = self  # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        with_passenger_id_requests_getter = \
+            ActiveDriveRequestsWithPassengerIdGetter()
+        passenger_getter = PassengerWithIdGetter()
+        passenger_authorizer = PassengerWithUserIdAuthorizer()
+        passenger_requests_enricher = DriveRequestsEnricher()
+        requests_serializer = MultipleDriveRequestsSerializer()
+        requests_future = Future()
+
         class PassengerGetterSubscriber(object):
             def passenger_not_found(self, passenger_id):
                 outer.publish('unauthorized')
+
             def passenger_found(self, passenger):
                 passenger_authorizer.perform(user_id, passenger)
 
         class PassengerAuthorizerSubscriber(object):
             def unauthorized(self, user_id, passenger):
                 outer.publish('unauthorized')
+
             def authorized(self, user_id, passenger):
                 with_passenger_id_requests_getter.perform(requests_repository,
                                                           passenger.id)
@@ -116,16 +140,6 @@ class ListActiveDriveRequestsWorkflow(Publisher):
             def drive_requests_serialized(self, blob):
                 outer.publish('success', blob)
 
-        filter_extractor.add_subscriber(logger, FilterExtractorSubscriber())
-        driver_getter.add_subscriber(logger, DriverGetterSubscriber())
-        driver_authorizer.add_subscriber(logger, DriverAuthorizerSubscriber())
-        with_driver_id_requests_getter.\
-            add_subscriber(
-                logger, ActiveDriveRequestsWithDriverIdGetterSubscriber())
-        active_driver_perks_getter.\
-            add_subscriber(logger, ActiveDriverPerksGetterSubscriber())
-        driver_requests_enricher.\
-            add_subscriber(logger, DriveRequestsEnricherSubscriber())
         passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
         passenger_authorizer.add_subscriber(logger,
                                             PassengerAuthorizerSubscriber())
@@ -136,7 +150,7 @@ class ListActiveDriveRequestsWorkflow(Publisher):
             add_subscriber(logger, DriveRequestsEnricherSubscriber())
         requests_serializer.add_subscriber(logger,
                                            DriveRequestsSerializerSubscriber())
-        filter_extractor.perform(params)
+        passenger_getter.perform(passengers_repository, passenger_id)
 
 
 class ListUnratedDriveRequestsWorkflow(Publisher):
