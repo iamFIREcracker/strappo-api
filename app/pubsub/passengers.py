@@ -109,24 +109,25 @@ class PassengerLinkedToDriverWithUserIdAuthorizer(Publisher):
 def serialize(passenger):
     if passenger is None:
         return None
-    return dict(id=passenger.id,
-                origin=passenger.origin,
-                origin_latitude=passenger.origin_latitude,
-                origin_longitude=passenger.origin_longitude,
-                destination=passenger.destination,
-                destination_latitude=passenger.destination_latitude,
-                destination_longitude=passenger.destination_longitude,
-                distance=passenger.distance,
-                seats=passenger.seats,
-                matched=passenger.matched)
+    d = dict(id=passenger.id,
+             origin=passenger.origin,
+             origin_latitude=passenger.origin_latitude,
+             origin_longitude=passenger.origin_longitude,
+             destination=passenger.destination,
+             destination_latitude=passenger.destination_latitude,
+             destination_longitude=passenger.destination_longitude,
+             distance=passenger.distance,
+             seats=passenger.seats,
+             matched=passenger.matched)
+    if hasattr(passenger, 'reimbursement'):
+        d.update(reimbursement=passenger.reimbursement)
+    return d
 
 
 def _serialize(passenger):
     from app.pubsub.users import serialize as serialize_user
     d = serialize(passenger)
     d.update(user=serialize_user(passenger.user))
-    if hasattr(passenger, 'reimbursement'):
-        d.update(reimbursement=passenger.reimbursement)
     return d
 
 
