@@ -47,7 +47,3 @@ def create_gettext(localedir=None, domain=None):
             return unicode(string)
         return translation.ugettext(string)
     return custom_gettext
-
-
-if __name__ == '__main__':
-    print create_gettext()('alert_unmatched_passenger')
