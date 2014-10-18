@@ -28,7 +28,6 @@ from app.pubsub.passengers import UnmatchedPassengersGetter
 from app.pubsub.payments import ReimbursementCalculator
 from app.pubsub.payments import ReimbursementCreator
 from app.pubsub.payments import FareCalculator
-from app.pubsub.payments import FareCreator
 from app.pubsub.perks import ActiveDriverPerksGetter
 from app.pubsub.perks import ActivePassengerPerksGetter
 from app.pubsub.rates import RateCreator
@@ -48,7 +47,7 @@ class ListUnmatchedPassengersWorkflow(Publisher):
         outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         passengers_getter = UnmatchedPassengersGetter()
-        active_passenger_perks_getter = ActivePassengerPerksGetter()
+        active_driver_perks_getter = ActiveDriverPerksGetter()
         passengers_enricher = PassengersEnricher()
         passengers_serializer = MultiplePassengersSerializer()
         passengers_future = Future()
@@ -56,11 +55,11 @@ class ListUnmatchedPassengersWorkflow(Publisher):
         class ActivePassengersGetterSubscriber(object):
             def passengers_found(self, passengers):
                 passengers_future.set(passengers)
-                active_passenger_perks_getter.perform(perks_repository,
-                                                      user_id)
+                active_driver_perks_getter.perform(perks_repository,
+                                                   user_id)
 
-        class ActivePassengerPerksGetterSubscriber(object):
-            def active_passenger_perks_found(self, passenger_perks):
+        class ActiveDriverPerksGetterSubscriber(object):
+            def active_driver_perks_found(self, passenger_perks):
                 passengers_enricher.\
                     perform(rates_repository,
                             passenger_perks[0].perk.fixed_rate,
@@ -77,9 +76,8 @@ class ListUnmatchedPassengersWorkflow(Publisher):
 
         passengers_getter.add_subscriber(logger,
                                          ActivePassengersGetterSubscriber())
-        active_passenger_perks_getter.\
-            add_subscriber(logger,
-                           ActivePassengerPerksGetterSubscriber())
+        active_driver_perks_getter.\
+            add_subscriber(logger, ActiveDriverPerksGetterSubscriber())
         passengers_enricher.add_subscriber(logger,
                                            PassengersEnricherSubscriber())
         passengers_serializer.add_subscriber(logger,
