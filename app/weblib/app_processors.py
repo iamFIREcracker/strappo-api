@@ -7,7 +7,6 @@ from web.contrib.template import render_jinja
 from app.weblib.logging import create_logger
 
 
-
 def load_logger():
     '''Add a logger to the shared context.'''
     web.ctx.logger = create_logger()
@@ -24,8 +23,9 @@ def load_render(views, **globals):
     render = render_jinja(views, encoding='utf-8',
                           extensions=['jinja2.ext.do'])
     render._lookup.globals.update(globals)
+
     def inner():
-        web.ctx.render = render;
+        web.ctx.render = render
     return inner
 
 
