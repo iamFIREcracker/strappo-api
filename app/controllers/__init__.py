@@ -22,8 +22,8 @@ class ParamAuthorizableController(AbstractParamAuthorizableController):
 class InfoController(object):
     def GET(self):
         return jsonify({
-            'min_version':'0.0.1',
-            'served_regions':[
+            'min_version': '0.0.1',
+            'served_regions': [
                 {
                     'name': 'Viareggio',
                     'center': {
@@ -32,31 +32,35 @@ class InfoController(object):
                     },
                     'radius': 10,
                     'hours': [
-                         {
-                             'day_of_week': 0,
-                             'from': 16,
-                             'to': 24
-                         }, {
-                             'day_of_week': 2,
-                             'from': 22,
-                             'to': 24
-                         }, {
-                             'day_of_week': 3,
-                             'from': 22,
-                             'to': 24
-                         }, {
-                             'day_of_week': 4,
-                             'from': 18,
-                             'to': 24
-                         }, {
-                             'day_of_week': 5,
-                             'from': 18,
-                             'to': 2
-                         }, {
-                             'day_of_week': 6,
-                             'from': 18,
-                             'to': 2
-                         }
+                        {
+                            'day_of_week': 0,
+                            'from': 16,
+                            'to': 24
+                        }, {
+                            'day_of_week': 1,
+                            'from': 21,
+                            'to': 24
+                        }, {
+                            'day_of_week': 2,
+                            'from': 21,
+                            'to': 24
+                        }, {
+                            'day_of_week': 3,
+                            'from': 21,
+                            'to': 24
+                        }, {
+                            'day_of_week': 4,
+                            'from': 18,
+                            'to': 24
+                        }, {
+                            'day_of_week': 5,
+                            'from': 18,
+                            'to': 2
+                        }, {
+                            'day_of_week': 6,
+                            'from': 18,
+                            'to': 2
+                        }
                     ]
                 }
             ]
