@@ -7,12 +7,13 @@ import app.forms.users as user_forms
 from app.pubsub.users import TokenRefresher
 from app.pubsub.users import TokenSerializer
 from app.pubsub.users import UserCreator
-from app.pubsub.users import UserEnricher
+from app.pubsub.users import UserEnricherPrivate
 from app.pubsub.users import UserUpdater
 from app.pubsub.users import UserWithIdGetter
 from app.pubsub.users import UserWithFacebookIdGetter
 from app.pubsub.users import UserWithAcsIdGetter
-from app.pubsub.users import UserSerializer
+from app.pubsub.users import UserSerializerPrivate
+from app.pubsub.perks import DefaultPerksCreator
 from app.weblib.forms import describe_invalid_form
 from app.weblib.pubsub import FacebookProfileGetter
 from app.weblib.pubsub import FormValidator
@@ -21,26 +22,32 @@ from app.weblib.pubsub import Publisher
 from app.weblib.pubsub import Future
 
 
-
 class ViewUserWorkflow(Publisher):
     """Defines a workflow to view the details of an active user."""
 
-    def perform(self, logger, users_repository, user_id, rates_repository):
-        outer = self # Handy to access ``self`` from inner classes
+    def perform(self, logger, gettext, users_repository, user_id,
+                rates_repository, drive_requests_repository,
+                perks_repository, payments_repository):
+        outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         user_getter = UserWithIdGetter()
-        user_enricher = UserEnricher()
-        user_serializer = UserSerializer()
+        user_enricher = UserEnricherPrivate()
+        user_serializer = UserSerializerPrivate()
 
         class UserGetterSubscriber(object):
             def user_not_found(self, user_id):
                 outer.publish('not_found', user_id)
+
             def user_found(self, user):
-                user_enricher.perform(rates_repository, user)
+                user_enricher.perform(rates_repository,
+                                      drive_requests_repository,
+                                      perks_repository,
+                                      payments_repository,
+                                      user)
 
         class UserEnricherSubscriber(object):
             def user_enriched(self, user):
-                user_serializer.perform(user)
+                user_serializer.perform(gettext, user)
 
         class UsersSerializerSubscriber(object):
             def user_serialized(self, blob):
@@ -48,23 +55,25 @@ class ViewUserWorkflow(Publisher):
 
         user_getter.add_subscriber(logger, UserGetterSubscriber())
         user_enricher.add_subscriber(logger, UserEnricherSubscriber())
-        user_serializer.add_subscriber(logger,
-                                            UsersSerializerSubscriber())
+        user_serializer.add_subscriber(logger, UsersSerializerSubscriber())
         user_getter.perform(users_repository, user_id)
 
 
 class LoginUserWorkflow(Publisher):
     """Defines a workflow managing the user login process."""
 
-    def perform(self, orm, logger, repository, acs_id, facebook_adapter,
-                facebook_token, locale):
-        outer = self # Handy to access ``self`` from inner classes
+    def perform(self, orm, logger, users_repository, acs_id, facebook_adapter,
+                facebook_token, locale, perks_repository,
+                eligible_driver_perks, active_driver_perks,
+                eligible_passenger_perks, active_passenger_perks):
+        outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         profile_getter = FacebookProfileGetter()
         form_validator = FormValidator()
         user_with_facebook_id_getter = UserWithFacebookIdGetter()
         user_with_acs_id_getter = UserWithAcsIdGetter()
         user_creator = UserCreator()
+        default_perks_creator = DefaultPerksCreator()
         user_updater = UserUpdater()
         token_refresher = TokenRefresher()
         token_serializer = TokenSerializer()
@@ -74,6 +83,7 @@ class LoginUserWorkflow(Publisher):
         class ProfileGetterSubscriber(object):
             def profile_not_found(self, error):
                 outer.publish('internal_error')
+
             def profile_found(self, profile):
                 params = storage(acs_id=acs_id,
                                  facebook_id=profile['id'],
@@ -88,9 +98,11 @@ class LoginUserWorkflow(Publisher):
             def invalid_form(self, errors):
                 outer.publish('invalid_form',
                               dict(success=False, errors=errors))
+
             def valid_form(self, form):
                 form_future.set(form)
-                user_with_facebook_id_getter.perform(repository, form.d.facebook_id)
+                user_with_facebook_id_getter.perform(users_repository,
+                                                     form.d.facebook_id)
 
         class UserWithFacebookIdGetterSubscriber(object):
             def user_found(self, user):
@@ -99,9 +111,11 @@ class LoginUserWorkflow(Publisher):
                                      form.d.facebook_id, form.d.name,
                                      form.d.avatar, form.d.email,
                                      form.d.locale)
+
             def user_not_found(self, facebook_id):
                 form = form_future.get()
-                user_with_acs_id_getter.perform(repository, form.d.acs_id)
+                user_with_acs_id_getter.perform(users_repository,
+                                                form.d.acs_id)
 
         class UserWithAcsIdGetterSubscriber(object):
             def user_found(self, user):
@@ -110,9 +124,10 @@ class LoginUserWorkflow(Publisher):
                                      form.d.facebook_id, form.d.name,
                                      form.d.avatar, form.d.email,
                                      form.d.locale)
+
             def user_not_found(self, acs_id):
                 form = form_future.get()
-                user_creator.perform(repository, form.d.acs_id,
+                user_creator.perform(users_repository, form.d.acs_id,
                                      form.d.facebook_id, form.d.name,
                                      form.d.avatar, form.d.email,
                                      form.d.locale)
@@ -121,13 +136,23 @@ class LoginUserWorkflow(Publisher):
             def user_created(self, user):
                 orm.add(user)
                 user_future.set(user)
-                token_refresher.perform(repository, user.id)
+                default_perks_creator.perform(perks_repository,
+                                              user,
+                                              eligible_driver_perks,
+                                              active_driver_perks,
+                                              eligible_passenger_perks,
+                                              active_passenger_perks)
+
+        class DefaultPerksCreatorSubscriber(object):
+            def perks_created(self, perks):
+                orm.add_all(perks)
+                token_refresher.perform(users_repository, user_future.get().id)
 
         class UserUpdaterSubscriber(object):
             def user_updated(self, user):
                 orm.add(user)
                 user_future.set(user)
-                token_refresher.perform(repository, user.id)
+                token_refresher.perform(users_repository, user.id)
 
         class TokenRefresherSubscriber(object):
             def token_refreshed(self, token):
@@ -145,6 +170,8 @@ class LoginUserWorkflow(Publisher):
         user_with_acs_id_getter.\
             add_subscriber(logger, UserWithAcsIdGetterSubscriber())
         user_creator.add_subscriber(logger, UserCreatorSubscriber())
+        default_perks_creator.add_subscriber(logger,
+                                             DefaultPerksCreatorSubscriber())
         user_updater.add_subscriber(logger, UserUpdaterSubscriber())
         token_refresher.add_subscriber(logger, TokenRefresherSubscriber())
         token_serializer.add_subscriber(logger, TokenSerializerSubscriber())

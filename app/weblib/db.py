@@ -91,3 +91,21 @@ def expunged(obj, session):
         return None
     session.expunge(obj)
     return obj
+
+
+# Credits to
+# https://bitbucket.org/shadytrees/brownstone/src/tip/brownstone/sqlalchemy.py
+class ReprMixin(object):
+    """Hooks into SQLAlchemy's magic to make :meth:`__repr__`s."""
+    def __repr__(self):
+        def reprs():
+            for col in self.__table__.c:
+                yield col.name, repr(getattr(self, col.name))
+
+        def format(seq):
+            for key, value in seq:
+                yield '%s=%s' % (key, value)
+
+        args = '(%s)' % ', '.join(format(reprs()))
+        classy = type(self).__name__
+        return classy + args

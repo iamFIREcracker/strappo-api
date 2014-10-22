@@ -12,16 +12,17 @@ import web
 ALL_TRANSLATIONS = web.storage()
 
 
-
 def get_translation(localedir, domain, lang):
     # Init translation.
-    if lang is None:
+    if not lang:
         return gettext.NullTranslations()
 
     try:
         return gettext.translation(domain, localedir, languages=[lang])
     except IOError:
-        return gettext.NullTranslations()
+        next_try = lang.split('_')[0]
+        next_try = next_try if next_try != lang else ''
+        return get_translation(localedir, domain, next_try)
 
 
 def load_translation(localedir, domain, lang, string):
@@ -39,8 +40,8 @@ def create_gettext(localedir=None, domain=None):
     if domain is None:
         domain = web.config.get('GETTEXT_DOMAIN', 'strings')
 
-    def custom_gettext(string, lang=None):
-        lang = lang.replace('-', '_') # convert en-US into en_US
+    def custom_gettext(string, lang=''):
+        lang = lang.replace('-', '_')  # convert en-US into en_US
         translation = load_translation(localedir, domain, lang, string)
         if translation is None:
             return unicode(string)

@@ -4,18 +4,17 @@
 import sys
 
 import web
-from werkzeug.debug import DebuggedApplication
 
 from app import app_factory
+from app.weblib.logging import create_logger
 
 
 app = app_factory()
 
-if web.config.debug:
-    def nointernalerror():
-        raise sys.exc_info()
-    app.internalerror = nointernalerror
 
-    app = DebuggedApplication(app.wsgifunc(), evalex=True)
-else:
-    app = app.wsgifunc()
+def internalerror():
+    create_logger().exception('Holy shit!')
+    raise web.internalerror('Holy shit!')
+app.internalerror = internalerror
+
+app = app.wsgifunc()

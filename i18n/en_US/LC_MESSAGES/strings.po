@@ -46,3 +46,12 @@ msgstr "Oh no! %(name)s cannot drive you around anymore.."
 
 msgid "alert_cancelled_drive_request_by_driver"
 msgstr "Oh no! %(name)s cannot drive you around anymore.."
+
+msgid "perk_name_driver_early_bird"
+msgstr "Early Bird"
+
+msgid "perk_eligible_description_driver_early_bird"
+msgstr "Give your first ride by %(valid_until_month)s/%(valid_until_day)s/%(valid_until_year)s and start earning 2x!"
+
+msgid "perk_active_description_driver_early_bird"
+msgstr "You earn 2x until %(valid_until_month)s/%(valid_until_day)s/%(valid_until_year)s!"

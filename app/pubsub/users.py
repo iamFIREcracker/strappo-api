@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from functools import partial
 
 from app.weblib.pubsub import Publisher
 
@@ -18,6 +19,7 @@ class UserWithIdGetter(Publisher):
             self.publish('user_not_found', user_id)
         else:
             self.publish('user_found', user)
+
 
 class UserWithFacebookIdGetter(Publisher):
     def perform(self, repository, facebook_id):
@@ -93,7 +95,7 @@ def serialize(user):
     if user is None:
         return None
     data = dict(id=user.id, name=user.name, avatar=user.avatar,
-             locale=user.locale)
+                locale=user.locale)
     if hasattr(user, 'stars'):
         data.update(stars=user.stars)
     if hasattr(user, 'received_rates'):
@@ -106,10 +108,49 @@ class UserSerializer(Publisher):
         self.publish('user_serialized', serialize(user))
 
 
+def serialize_private(gettext, user):
+    from app.pubsub.perks import serialize_eligible_driver_perk
+    from app.pubsub.perks import serialize_active_driver_perk
+    from app.pubsub.perks import serialize_eligible_passenger_perk
+    from app.pubsub.perks import serialize_active_passenger_perk
+
+    localized_gettext = partial(gettext, lang=user.locale)
+    data = serialize(user)
+    if hasattr(user, 'rides_given'):
+        data.update(rides_given=user.rides_given)
+    if hasattr(user, 'distance_driven'):
+        data.update(distance_driven=user.distance_driven)
+    if hasattr(user, 'eligible_driver_perks'):
+        data.update(eligible_driver_perks=[
+            serialize_eligible_driver_perk(localized_gettext, p)
+            for p in user.eligible_driver_perks])
+    if hasattr(user, 'active_driver_perks'):
+        data.update(active_driver_perks=[
+            serialize_active_driver_perk(localized_gettext, p)
+            for p in user.active_driver_perks])
+    if hasattr(user, 'eligible_passenger_perks'):
+        data.update(eligible_passenger_perks=[
+            serialize_eligible_passenger_perk(localized_gettext, p)
+            for p in user.eligible_passenger_perks])
+    if hasattr(user, 'active_passenger_perks'):
+        data.update(active_passenger_perks=[
+            serialize_active_passenger_perk(localized_gettext, p)
+            for p in user.active_passenger_perks])
+    if hasattr(user, 'balance'):
+        data.update(balance=user.balance)
+    return data
+
+
+class UserSerializerPrivate(Publisher):
+    def perform(self, gettext, user):
+        self.publish('user_serialized', serialize_private(gettext, user))
+
+
 def enrich(rates_repository, user):
     user.stars = rates_repository.avg_stars(user.id)
     user.received_rates = rates_repository.received_rates(user.id)
     return user
+
 
 def _enrich(rates_repository, user):
     return enrich(rates_repository, user)
@@ -118,3 +159,37 @@ def _enrich(rates_repository, user):
 class UserEnricher(Publisher):
     def perform(self, rates_repository, user):
         self.publish('user_enriched', _enrich(rates_repository, user))
+
+
+def enrich_private(rates_repository, drive_requests_repository,
+                   perks_repository, payments_repository, user):
+    user = enrich(rates_repository, user)
+    user.rides_given = drive_requests_repository.rides_given(user.id)
+    user.distance_driven = drive_requests_repository.distance_driven(user.id)
+    user.eligible_driver_perks = perks_repository.\
+        eligible_driver_perks(user.id)
+    user.active_driver_perks = perks_repository.\
+        active_driver_perks_without_standard_one(user.id)
+    user.eligible_passenger_perks = perks_repository.\
+        eligible_passenger_perks(user.id)
+    user.active_passenger_perks = perks_repository.\
+        active_passenger_perks_without_standard_one(user.id)
+    user.balance = payments_repository.balance(user.id)
+    return user
+
+
+def _enrich_private(rates_repository, drive_requests_repository,
+                    perks_repository, payments_repository, user):
+    return enrich_private(rates_repository, drive_requests_repository,
+                          perks_repository, payments_repository, user)
+
+
+class UserEnricherPrivate(Publisher):
+    def perform(self, rates_repository, drive_requests_repository,
+                perks_repository, payments_repository, user):
+        self.publish('user_enriched',
+                     _enrich_private(rates_repository,
+                                     drive_requests_repository,
+                                     perks_repository,
+                                     payments_repository,
+                                     user))

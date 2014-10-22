@@ -23,7 +23,8 @@ class PassengerWithIdGetter(Publisher):
 class MultiplePassengersWithIdGetter(Publisher):
     def perform(self, repository, passenger_ids):
         self.publish('passengers_found',
-                     filter(None, [repository.get(id) for id in passenger_ids]))
+                     filter(None, [repository.get(id)
+                                   for id in passenger_ids]))
 
 
 class UnmatchedPassengersGetter(Publisher):
@@ -58,16 +59,11 @@ class ActivePassengerWithIdGetter(Publisher):
 class PassengerCreator(Publisher):
     def perform(self, repository, user_id, origin, origin_latitude,
                 origin_longitude, destination, destination_latitude,
-                destination_longitude, seats):
-        """Creates a new passenger with the specified set of properties.
-
-        On success a 'passenger_created' message will be published toghether
-        with the created user.
-        """
+                destination_longitude, distance, seats):
         passenger = repository.add(user_id, origin, origin_latitude,
                                    origin_longitude, destination,
                                    destination_latitude, destination_longitude,
-                                   seats)
+                                   distance, seats)
         self.publish('passenger_created', passenger)
 
 
@@ -113,15 +109,19 @@ class PassengerLinkedToDriverWithUserIdAuthorizer(Publisher):
 def serialize(passenger):
     if passenger is None:
         return None
-    return dict(id=passenger.id,
-                origin=passenger.origin,
-                origin_latitude=passenger.origin_latitude,
-                origin_longitude=passenger.origin_longitude,
-                destination=passenger.destination,
-                destination_latitude=passenger.destination_latitude,
-                destination_longitude=passenger.destination_longitude,
-                seats=passenger.seats,
-                matched=passenger.matched)
+    d = dict(id=passenger.id,
+             origin=passenger.origin,
+             origin_latitude=passenger.origin_latitude,
+             origin_longitude=passenger.origin_longitude,
+             destination=passenger.destination,
+             destination_latitude=passenger.destination_latitude,
+             destination_longitude=passenger.destination_longitude,
+             distance=passenger.distance,
+             seats=passenger.seats,
+             matched=passenger.matched)
+    if hasattr(passenger, 'reimbursement'):
+        d.update(reimbursement=passenger.reimbursement)
+    return d
 
 
 def _serialize(passenger):
@@ -193,16 +193,28 @@ class PassengersACSUserIdExtractor(Publisher):
         self.publish('acs_user_ids_extracted',
                      filter(None, [p.user.acs_id for p in passengers]))
 
+
 def enrich(passenger):
     return passenger
 
-def _enrich(rates_repository, passenger):
-    from app.pubsub.users import enrich as enrich_user
-    passenger.user = enrich_user(rates_repository, passenger.user)
+
+def enrich_with_reimbursement(fixed_rate, multiplier, passenger):
+    from app.pubsub.payments import reimbursement_for
+    passenger.reimbursement = reimbursement_for(fixed_rate,
+                                                multiplier,
+                                                passenger.seats,
+                                                passenger.distance)
     return enrich(passenger)
 
 
+def _enrich(rates_repository, fixed_rate, multiplier, passenger):
+    from app.pubsub.users import enrich as enrich_user
+    passenger.user = enrich_user(rates_repository, passenger.user)
+    return enrich_with_reimbursement(fixed_rate, multiplier, passenger)
+
+
 class PassengersEnricher(Publisher):
-    def perform(self, rates_repository, passengers):
+    def perform(self, rates_repository, fixed_rate, multiplier, passengers):
         self.publish('passengers_enriched',
-                     [_enrich(rates_repository, p) for p in passengers])
+                     [_enrich(rates_repository, fixed_rate, multiplier, p)
+                      for p in passengers])

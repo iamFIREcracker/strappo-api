@@ -11,6 +11,7 @@ from app.controllers.drivers import DeactivateDriverController
 from app.controllers.drivers import RateDriveRequestController
 from app.controllers.notifications import ResetNotificationsController
 from app.controllers.passengers import AcceptDriverController
+from app.controllers.passengers import CalculateFareController
 from app.controllers.passengers import AddPassengerController
 from app.controllers.passengers import AlightPassengerController
 from app.controllers.passengers import CancelDriveRequestController
@@ -35,6 +36,7 @@ URLS = (
     '/1/drivers/(.+)/rate/drive_request/(.+)', RateDriveRequestController,
 
     '/1/passengers/unmatched', ListUnmatchedPassengersController,
+    '/1/passengers/calculate_fare', CalculateFareController,
     '/1/passengers/add', AddPassengerController,
     '/1/passengers/(.+)/deactivate', DeactivatePassengerController,
     '/1/passengers/(.+)/alight', AlightPassengerController,

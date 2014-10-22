@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from app.weblib.pubsub import Publisher
+from app.pubsub import serialize_date
 
 
 class ActiveDriveRequestsFilterExtractor(Publisher):
@@ -123,7 +124,7 @@ def serialize(request):
         return None
     return dict(id=request.id, accepted=request.accepted,
                 response_time=request.response_time,
-                created=request.created.strftime('%Y-%m-%dT%H:%M:%SZ'))
+                created=serialize_date(request.created))
 
 
 def _serialize(request):
@@ -193,3 +194,26 @@ class DriveRequestsEnricher(Publisher):
     def perform(self, rates_repository, requests):
         self.publish('drive_requests_enriched',
                      [_enrich(rates_repository, r) for r in requests])
+
+
+def _enrich_driver_request(rates_repository, fixed_rate, multiplier, request):
+    from app.pubsub.passengers import enrich_with_reimbursement as enrich_passenger
+    from app.pubsub.drivers import enrich as enrich_driver
+    from app.pubsub.users import enrich as enrich_user
+    request.passenger.user = enrich_user(rates_repository,
+                                         request.passenger.user)
+    request.passenger = enrich_passenger(fixed_rate, multiplier,
+                                         request.passenger)
+    request.driver.user = enrich_user(rates_repository, request.driver.user)
+    request.driver = enrich_driver(request.driver)
+    return enrich(request)
+
+
+class DriverDriveRequestsEnricher(Publisher):
+    def perform(self, rates_repository, fixed_rate, multiplier, requests):
+        self.publish('drive_requests_enriched',
+                     [_enrich_driver_request(rates_repository,
+                                             fixed_rate,
+                                             multiplier,
+                                             r)
+                      for r in requests])

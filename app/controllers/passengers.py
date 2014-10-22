@@ -7,6 +7,8 @@ import app.weblib
 from app.controllers import ParamAuthorizableController
 from app.repositories.drive_requests import DriveRequestsRepository
 from app.repositories.passengers import PassengersRepository
+from app.repositories.payments import PaymentsRepository
+from app.repositories.perks import PerksRepository
 from app.repositories.rates import RatesRepository
 from app.tasks import NotifyDriverDriveRequestCancelledByPassengerTask
 from app.tasks import NotifyDriverDriveRequestAccepted
@@ -20,6 +22,7 @@ from app.weblib.request_decorators import authorized
 from app.weblib.utils import jsonify
 from app.workflows.passengers import AddPassengerWorkflow
 from app.workflows.passengers import AlightPassengerWorkflow
+from app.workflows.passengers import CalculateFareWorkflow
 from app.workflows.passengers import ListUnmatchedPassengersWorkflow
 from app.workflows.passengers import DeactivatePassengerWorkflow
 from app.workflows.drive_requests import AcceptDriveRequestWorkflow
@@ -40,7 +43,8 @@ class ListUnmatchedPassengersController(ParamAuthorizableController):
 
         passengers.add_subscriber(logger, ListUnmatchedPassengersSubscriber())
         passengers.perform(web.ctx.logger, PassengersRepository,
-                           RatesRepository)
+                           RatesRepository, PerksRepository,
+                           self.current_user.id)
         return ret.get()
 
 
@@ -60,6 +64,7 @@ class AddPassengerController(ParamAuthorizableController):
         class DeactivatePassengerSubscriber(object):
             def unauthorized(self):
                 raise web.unauthorized()
+
             def success(self):
                 add_passenger.perform(web.ctx.gettext, web.ctx.orm,
                                       web.ctx.logger,
@@ -72,6 +77,7 @@ class AddPassengerController(ParamAuthorizableController):
             def invalid_form(self, errors):
                 web.ctx.orm.rollback()
                 ret.set(jsonify(success=False, errors=errors))
+
             def success(self, passenger_id):
                 web.ctx.orm.commit()
                 url = '/1/passengers/%(id)s/view' % dict(id=passenger_id)
@@ -81,7 +87,7 @@ class AddPassengerController(ParamAuthorizableController):
                                             DeactivatePassengerSubscriber())
         add_passenger.add_subscriber(logger, AddPassengerSubscriber())
         deactivate_passenger.perform(web.ctx.logger, web.ctx.orm,
-                                     PassengersRepository,passenger_id,
+                                     PassengersRepository, passenger_id,
                                      self.current_user,
                                      NotifyDriversDeactivatedPassengerTask)
         return ret.get()
@@ -99,9 +105,11 @@ class AlightPassengerController(ParamAuthorizableController):
             def invalid_form(self, errors):
                 web.ctx.orm.rollback()
                 ret.set(jsonify(success=False, errors=errors))
+
             def unauthorized(self):
                 web.ctx.orm.rollback()
                 raise web.unauthorized()
+
             def success(self):
                 web.ctx.orm.commit()
                 raise web.ok()
@@ -111,6 +119,7 @@ class AlightPassengerController(ParamAuthorizableController):
         deactivate_passenger.perform(web.ctx.logger, web.ctx.gettext,
                                      web.ctx.orm, web.input(),
                                      RatesRepository, PassengersRepository,
+                                     PerksRepository, PaymentsRepository,
                                      passenger_id, self.current_user,
                                      NotifyDriversPassengerAlitTask)
         return ret.get()
@@ -126,6 +135,7 @@ class DeactivatePassengerController(ParamAuthorizableController):
         class DeactivatePassengerSubscriber(object):
             def unauthorized(self):
                 raise web.unauthorized()
+
             def success(self):
                 web.ctx.orm.commit()
                 raise web.ok()
@@ -149,9 +159,11 @@ class AcceptDriverController(ParamAuthorizableController):
             def not_found(self):
                 web.ctx.orm.rollback()
                 raise web.notfound()
+
             def unauthorized(self):
                 web.ctx.orm.rollback()
                 raise web.unauthorized()
+
             def success(self):
                 web.ctx.orm.commit()
                 raise app.weblib.nocontent()
@@ -176,16 +188,43 @@ class CancelDriveRequestController(ParamAuthorizableController):
             def not_found(self, driver_id):
                 web.ctx.orm.rollback()
                 raise web.notfound()
+
             def unauthorized(self):
                 web.ctx.orm.rollback()
                 raise web.unauthorized()
+
             def success(self):
                 web.ctx.orm.commit()
                 raise app.weblib.nocontent()
 
-        cancel_drive_request.add_subscriber(logger, CancelDriveRequestSubscriber())
-        cancel_drive_request.perform(web.ctx.orm, web.ctx.logger,
-                                     PassengersRepository, self.current_user.id,
-                                     passenger_id, DriveRequestsRepository,
-                                     drive_request_id,
-                                     NotifyDriverDriveRequestCancelledByPassengerTask)
+        cancel_drive_request.add_subscriber(logger,
+                                            CancelDriveRequestSubscriber())
+        cancel_drive_request.\
+            perform(web.ctx.orm, web.ctx.logger,
+                    PassengersRepository,
+                    self.current_user.id,
+                    passenger_id, DriveRequestsRepository,
+                    drive_request_id,
+                    NotifyDriverDriveRequestCancelledByPassengerTask)
+
+
+class CalculateFareController(ParamAuthorizableController):
+    @api
+    @authorized
+    def GET(self):
+        logger = LoggingSubscriber(web.ctx.logger)
+        calculate_fare = CalculateFareWorkflow()
+        ret = Future()
+
+        class CalculateFareSubscriber(object):
+            def invalid_form(self, errors):
+                web.ctx.orm.rollback()
+                ret.set(jsonify(success=False, errors=errors))
+
+            def success(self, fare):
+                ret.set(jsonify(fare=fare))
+
+        calculate_fare.add_subscriber(logger, CalculateFareSubscriber())
+        calculate_fare.perform(web.ctx.gettext, web.ctx.logger, web.input(),
+                               PerksRepository, self.current_user)
+        return ret.get()

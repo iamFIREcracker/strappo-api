@@ -4,6 +4,8 @@
 import uuid
 from datetime import datetime
 
+from app.models import Base
+from app.models import Driver
 from app.models import DriveRequest
 from app.models import Passenger
 from app.models import Rate
@@ -11,6 +13,7 @@ from app.models import User
 from app.weblib.db import and_
 from app.weblib.db import exists
 from app.weblib.db import expunged
+from app.weblib.db import func
 from app.weblib.db import joinedload_all
 
 
@@ -119,3 +122,23 @@ class DriveRequestsRepository(object):
         if request:
             request.accepted = True
         return request
+
+    @staticmethod
+    def rides_given(user_id):
+        return Base.session.query(func.count()).\
+            select_from(DriveRequest).\
+            join('driver', 'user').\
+            filter(User.id == user_id).\
+            filter(DriveRequest.accepted == True).\
+            first()[0]
+
+    @staticmethod
+    def distance_driven(user_id):
+        return Base.session.query(func.coalesce(func.sum(Passenger.distance),
+                                                0.0)).\
+            select_from(DriveRequest).\
+            join('driver', 'user').\
+            join('passenger').\
+            filter(User.id == user_id).\
+            filter(DriveRequest.accepted == True).\
+            first()[0]

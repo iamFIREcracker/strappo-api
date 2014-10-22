@@ -14,3 +14,9 @@ add = form.Form(form.Textbox('origin', required),
                 form.Textbox('destination_latitude', required),
                 form.Textbox('destination_longitude', required),
                 form.Textbox('seats', integer))
+
+calculate_fare = form.Form(form.Textbox('origin_latitude', required),
+                           form.Textbox('origin_longitude', required),
+                           form.Textbox('destination_latitude', required),
+                           form.Textbox('destination_longitude', required),
+                           form.Textbox('seats', integer))
