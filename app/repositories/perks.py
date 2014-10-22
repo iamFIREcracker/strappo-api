@@ -24,7 +24,6 @@ from sqlalchemy.sql.expression import true
 class PerksRepository(object):
     STANDARD_DRIVER_NAME = 'driver_standard'
     STANDARD_PASSENGER_NAME = 'passenger_standard'
-    EARLY_BIRD_DRIVER_NAME = 'driver_early_bird'
 
     @staticmethod
     def _driver_perks_with_names(*names):

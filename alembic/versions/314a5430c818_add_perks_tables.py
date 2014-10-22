@@ -109,16 +109,8 @@ def upgrade():
                            fixed_rate=1.0,
                            multiplier=1.0)
     orm.add(passenger_standard)
-    driver_early_bird = PerksRepository.\
-        add_driver_perk(name=PerksRepository.EARLY_BIRD_DRIVER_NAME,
-                        eligible_for=7,
-                        active_for=60,
-                        fixed_rate=0.0,
-                        multiplier=2.0)
-    orm.add(driver_early_bird)
     for u in User.query:
         u = expunged(u, User.session)
-        orm.add(PerksRepository.eligiblify_driver_perk(u, driver_early_bird))
         orm.add(PerksRepository.activate_driver_perk(u, driver_standard))
         orm.add(PerksRepository.activate_passenger_perk(u, passenger_standard))
         orm.add(u)
