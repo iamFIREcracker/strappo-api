@@ -9,6 +9,7 @@ from app.controllers.drivers import AddDriverController
 from app.controllers.drivers import CancelDriveOfferController
 from app.controllers.drivers import DeactivateDriverController
 from app.controllers.drivers import RateDriveRequestController
+from app.controllers.feedbacks import AddFeedbackController
 from app.controllers.notifications import ResetNotificationsController
 from app.controllers.passengers import AcceptDriverController
 from app.controllers.passengers import CalculateFareController
@@ -49,6 +50,8 @@ URLS = (
 
     '/1/traces', ListTracesController,
     '/1/traces/add', AddTracesController,
+
+    '/1/feedbacks/add', AddFeedbackController,
 
     '/1/notifications/reset', ResetNotificationsController,
 )
