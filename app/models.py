@@ -260,3 +260,16 @@ class Trace(Base, ReprMixin):
                      onupdate=datetime.utcnow)
 
     user = relationship('User', uselist=False)
+
+
+class Feedback(Base, ReprMixin):
+    __tablename__ = 'feedback'
+
+    id = Column(String, default=uuid, primary_key=True)
+    user_id = Column(String, ForeignKey('user.id'))
+    message = Column(Text)
+    created = Column(DateTime, default=datetime.utcnow)
+    updated = Column(DateTime, default=datetime.utcnow,
+                     onupdate=datetime.utcnow)
+
+    user = relationship('User', uselist=False)
