@@ -18,7 +18,7 @@ class TracesGetter(Publisher):
 class MultipleTracesParser(Publisher):
     def perform(self, blob):
         self.publish('traces_parsed',
-                     [ParsedTrace(o.get('app_version', ''),
+                     [ParsedTrace(o.get('app_version', None),
                                   o['level'], o['date'], o['message'])
                       for o in json.loads(blob)])
 
