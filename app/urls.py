@@ -42,7 +42,7 @@ URLS = (
     '/1/passengers/(.+)/alight', AlightPassengerController,
     '/1/passengers/(.+)/accept/driver/(.+)', AcceptDriverController,
     '/1/passengers/(.+)/cancel/drive_request/(.+)',
-            CancelDriveRequestController,
+    CancelDriveRequestController,
 
     '/1/drive_requests/active', ListActiveDriveRequestsController,
     '/1/drive_requests/unrated', ListUnratedDriveRequestsController,
