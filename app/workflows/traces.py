@@ -10,7 +10,7 @@ from app.pubsub.traces import MultipleTracesParser
 
 class AddTracesWorkflow(Publisher):
     def perform(self, orm, logger, user_id, repository, blob):
-        outer = self # Handy to access ``self`` from inner classes
+        outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         traces_parser = MultipleTracesParser()
         traces_creator = MultipleTracesCreator()
