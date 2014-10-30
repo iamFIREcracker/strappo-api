@@ -9,6 +9,7 @@ from app.controllers.drivers import AddDriverController
 from app.controllers.drivers import CancelDriveOfferController
 from app.controllers.drivers import DeactivateDriverController
 from app.controllers.drivers import RateDriveRequestController
+from app.controllers.feedbacks import AddFeedbackController
 from app.controllers.notifications import ResetNotificationsController
 from app.controllers.passengers import AcceptDriverController
 from app.controllers.passengers import CalculateFareController
@@ -17,7 +18,6 @@ from app.controllers.passengers import AlightPassengerController
 from app.controllers.passengers import CancelDriveRequestController
 from app.controllers.passengers import DeactivatePassengerController
 from app.controllers.passengers import ListUnmatchedPassengersController
-from app.controllers.traces import ListTracesController
 from app.controllers.traces import AddTracesController
 from app.controllers.users import LoginUserController
 from app.controllers.users import ViewUserController
@@ -42,13 +42,14 @@ URLS = (
     '/1/passengers/(.+)/alight', AlightPassengerController,
     '/1/passengers/(.+)/accept/driver/(.+)', AcceptDriverController,
     '/1/passengers/(.+)/cancel/drive_request/(.+)',
-            CancelDriveRequestController,
+    CancelDriveRequestController,
 
     '/1/drive_requests/active', ListActiveDriveRequestsController,
     '/1/drive_requests/unrated', ListUnratedDriveRequestsController,
 
-    '/1/traces', ListTracesController,
     '/1/traces/add', AddTracesController,
+
+    '/1/feedbacks/add', AddFeedbackController,
 
     '/1/notifications/reset', ResetNotificationsController,
 )

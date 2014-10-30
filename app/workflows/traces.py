@@ -6,33 +6,11 @@ from app.weblib.pubsub import Publisher
 
 from app.pubsub.traces import MultipleTracesCreator
 from app.pubsub.traces import MultipleTracesParser
-from app.pubsub.traces import TracesGetter
-from app.pubsub.traces import MultipleTracesSerializer
-
-
-class ListTracesWorkflow(Publisher):
-    def perform(self, logger, repository, limit, offset):
-        outer = self # Handy to access ``self`` from inner classes
-        logger = LoggingSubscriber(logger)
-        traces_getter = TracesGetter()
-        traces_serializer = MultipleTracesSerializer()
-
-        class TracesGetterSubscriber(object):
-            def traces_found(self, traces):
-                traces_serializer.perform(traces)
-
-        class TracesSerializerSusbcriber(object):
-            def traces_serialized(self, traces):
-                outer.publish('success', traces)
-
-        traces_getter.add_subscriber(logger, TracesGetterSubscriber())
-        traces_serializer.add_subscriber(logger, TracesSerializerSusbcriber())
-        traces_getter.perform(repository, limit, offset)
 
 
 class AddTracesWorkflow(Publisher):
     def perform(self, orm, logger, user_id, repository, blob):
-        outer = self # Handy to access ``self`` from inner classes
+        outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         traces_parser = MultipleTracesParser()
         traces_creator = MultipleTracesCreator()
