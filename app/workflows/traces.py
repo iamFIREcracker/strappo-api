@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from app.weblib.pubsub import LoggingSubscriber
-from app.weblib.pubsub import Publisher
+from strappon.pubsub.traces import MultipleTracesCreator
+from strappon.pubsub.traces import MultipleTracesParser
 
-from app.pubsub.traces import MultipleTracesCreator
-from app.pubsub.traces import MultipleTracesParser
+from weblib.pubsub import LoggingSubscriber
+from weblib.pubsub import Publisher
 
 
 class AddTracesWorkflow(Publisher):

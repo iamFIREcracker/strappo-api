@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from app.weblib.pubsub import LoggingSubscriber
-from app.weblib.pubsub import Publisher
+from strappon.pubsub.notifications import NotificationsResetter
 
-from app.pubsub.notifications import NotificationsResetter
+from weblib.pubsub import LoggingSubscriber
+from weblib.pubsub import Publisher
 
 
 class ResetNotificationsWorkflow(Publisher):

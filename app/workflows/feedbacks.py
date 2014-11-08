@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from strappon.pubsub.feedbacks import FeedbackCreator
+from weblib.forms import describe_invalid_form_localized
+from weblib.pubsub import FormValidator
+from weblib.pubsub import LoggingSubscriber
+from weblib.pubsub import Publisher
+
 import app.forms.feedbacks as feedbacks_forms
-from app.pubsub.feedbacks import FeedbackCreator
-from app.weblib.forms import describe_invalid_form_localized
-from app.weblib.pubsub import FormValidator
-from app.weblib.pubsub import LoggingSubscriber
-from app.weblib.pubsub import Publisher
 
 
 class AddFeedbackWorkflow(Publisher):

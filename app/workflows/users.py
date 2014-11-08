@@ -2,24 +2,24 @@
 # -*- coding: utf-8 -*-
 
 from web.utils import storage
+from strappon.pubsub.users import TokenRefresher
+from strappon.pubsub.users import TokenSerializer
+from strappon.pubsub.users import UserCreator
+from strappon.pubsub.users import UserEnricherPrivate
+from strappon.pubsub.users import UserUpdater
+from strappon.pubsub.users import UserWithIdGetter
+from strappon.pubsub.users import UserWithFacebookIdGetter
+from strappon.pubsub.users import UserWithAcsIdGetter
+from strappon.pubsub.users import UserSerializerPrivate
+from strappon.pubsub.perks import DefaultPerksCreator
+from weblib.forms import describe_invalid_form
+from weblib.pubsub import FacebookProfileGetter
+from weblib.pubsub import FormValidator
+from weblib.pubsub import LoggingSubscriber
+from weblib.pubsub import Publisher
+from weblib.pubsub import Future
 
 import app.forms.users as user_forms
-from app.pubsub.users import TokenRefresher
-from app.pubsub.users import TokenSerializer
-from app.pubsub.users import UserCreator
-from app.pubsub.users import UserEnricherPrivate
-from app.pubsub.users import UserUpdater
-from app.pubsub.users import UserWithIdGetter
-from app.pubsub.users import UserWithFacebookIdGetter
-from app.pubsub.users import UserWithAcsIdGetter
-from app.pubsub.users import UserSerializerPrivate
-from app.pubsub.perks import DefaultPerksCreator
-from app.weblib.forms import describe_invalid_form
-from app.weblib.pubsub import FacebookProfileGetter
-from app.weblib.pubsub import FormValidator
-from app.weblib.pubsub import LoggingSubscriber
-from app.weblib.pubsub import Publisher
-from app.weblib.pubsub import Future
 
 
 class ViewUserWorkflow(Publisher):

@@ -2,11 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import web
-
-from app.repositories.users import UsersRepository
-from app.weblib.controllers import AbstractCookieAuthorizableController
-from app.weblib.controllers import AbstractParamAuthorizableController
-from app.weblib.utils import jsonify
+from strappon.repositories.users import UsersRepository
+from weblib.controllers import AbstractCookieAuthorizableController
+from weblib.controllers import AbstractParamAuthorizableController
+from weblib.utils import jsonify
 
 
 class CookieAuthorizableController(AbstractCookieAuthorizableController):
