@@ -2,21 +2,21 @@
 # -*- coding: utf-8 -*-
 
 import web
+import weblib
+from strappon.repositories.drivers import DriversRepository
+from strappon.repositories.drive_requests import DriveRequestsRepository
+from strappon.repositories.passengers import PassengersRepository
+from strappon.repositories.rates import RatesRepository
+from weblib.pubsub import Future
+from weblib.pubsub import LoggingSubscriber
+from weblib.request_decorators import api
+from weblib.request_decorators import authorized
+from weblib.utils import jsonify
 
-import app.weblib
 from app.controllers import ParamAuthorizableController
-from app.repositories.drivers import DriversRepository
-from app.repositories.drive_requests import DriveRequestsRepository
-from app.repositories.passengers import PassengersRepository
-from app.repositories.rates import RatesRepository
 from app.tasks import NotifyPassengerDriveRequestPending
 from app.tasks import NotifyPassengerDriveRequestCancelledTask
 from app.tasks import NotifyPassengersDriverDeactivatedTask
-from app.weblib.pubsub import Future
-from app.weblib.pubsub import LoggingSubscriber
-from app.weblib.request_decorators import api
-from app.weblib.request_decorators import authorized
-from app.weblib.utils import jsonify
 from app.workflows.drivers import AddDriverWorkflow
 from app.workflows.drivers import DeactivateDriverWorkflow
 from app.workflows.drivers import RateDriveRequestWorkflow
@@ -54,7 +54,7 @@ class AddDriverController(ParamAuthorizableController):
             def success(self, driver_id):
                 web.ctx.orm.commit()
                 url = '/1/drivers/%(id)s/view' % dict(id=driver_id)
-                raise app.weblib.created(url)
+                raise weblib.created(url)
 
         deactivate_driver.add_subscriber(logger,
                                          DeactivateDriverSubscriber())
@@ -104,7 +104,7 @@ class CancelDriveOfferController(ParamAuthorizableController):
                 raise web.unauthorized()
             def success(self):
                 web.ctx.orm.commit()
-                raise app.weblib.nocontent()
+                raise weblib.nocontent()
 
         cancel_drive_offer.add_subscriber(logger, CancelDriveOfferSubscriber())
         cancel_drive_offer.perform(web.ctx.orm, web.ctx.logger,
@@ -130,7 +130,7 @@ class AcceptPassengerController(ParamAuthorizableController):
                 raise web.unauthorized()
             def success(self):
                 web.ctx.orm.commit()
-                raise app.weblib.nocontent()
+                raise weblib.nocontent()
 
         add_drive_request.add_subscriber(logger, AddDriveRequestSubscriber())
         add_drive_request.perform(web.ctx.gettext, web.ctx.orm, web.ctx.logger,
@@ -164,7 +164,7 @@ class RateDriveRequestController(ParamAuthorizableController):
                 raise web.notfound()
             def success(self):
                 web.ctx.orm.commit()
-                raise app.weblib.nocontent()
+                raise weblib.nocontent()
 
         rate_passenger.add_subscriber(logger, RatePassengerSubscriber())
         rate_passenger.perform(web.ctx.logger, web.ctx.gettext, web.ctx.orm,

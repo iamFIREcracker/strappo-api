@@ -4,18 +4,16 @@
 import json
 import urllib
 import urllib2
-import uuid
 
 import web
+import weblib
+from strappon.repositories.traces import TracesRepository
+from weblib.pubsub import LoggingSubscriber
+from weblib.request_decorators import api
+from weblib.request_decorators import authorized
 
-import app.weblib
 from app.controllers import ParamAuthorizableController
-from app.repositories.traces import TracesRepository
-from app.weblib.pubsub import LoggingSubscriber
-from app.weblib.request_decorators import api
-from app.weblib.request_decorators import authorized
 from app.workflows.notifications import ResetNotificationsWorkflow
-
 
 
 class ResetNotificationsController(ParamAuthorizableController):
@@ -29,7 +27,7 @@ class ResetNotificationsController(ParamAuthorizableController):
         class ResetNotificationsSubscriber(object):
             def success(self):
                 web.ctx.orm.commit()
-                raise app.weblib.nocontent()
+                raise weblib.nocontent()
 
         reset_notifications.add_subscriber(logger,
                                            ResetNotificationsSubscriber())

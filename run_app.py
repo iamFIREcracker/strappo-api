@@ -4,7 +4,7 @@
 import web
 
 from app import app_factory
-from app.weblib.logging import create_logger
+from weblib.logging import create_logger
 
 
 app = app_factory()

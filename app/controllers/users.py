@@ -2,27 +2,27 @@
 # -*- coding: utf-8 -*-
 
 import web
+from strappon.repositories.drivers import DriversRepository
+from strappon.repositories.drive_requests import DriveRequestsRepository
+from strappon.repositories.payments import PaymentsRepository
+from strappon.repositories.passengers import PassengersRepository
+from strappon.repositories.perks import PerksRepository
+from strappon.repositories.rates import RatesRepository
+from strappon.repositories.users import UsersRepository
+from weblib.adapters.social.facebook import FacebookAdapter
+from weblib.pubsub import Future
+from weblib.pubsub import LoggingSubscriber
+from weblib.request_decorators import api
+from weblib.request_decorators import authorized
+from weblib.utils import jsonify
 
 from app.controllers import ParamAuthorizableController
-from app.repositories.drivers import DriversRepository
-from app.repositories.drive_requests import DriveRequestsRepository
-from app.repositories.payments import PaymentsRepository
-from app.repositories.passengers import PassengersRepository
-from app.repositories.perks import PerksRepository
-from app.repositories.rates import RatesRepository
-from app.repositories.users import UsersRepository
 from app.tasks import NotifyDriversDeactivatedPassengerTask
 from app.tasks import NotifyPassengersDriverDeactivatedTask
-from app.weblib.adapters.social.facebook import FacebookAdapter
-from app.weblib.pubsub import Future
-from app.weblib.pubsub import LoggingSubscriber
-from app.weblib.request_decorators import api
-from app.weblib.request_decorators import authorized
 from app.workflows.drivers import DeactivateDriverWorkflow
 from app.workflows.passengers import DeactivatePassengerWorkflow
 from app.workflows.users import LoginUserWorkflow
 from app.workflows.users import ViewUserWorkflow
-from app.weblib.utils import jsonify
 
 
 class ViewUserController(ParamAuthorizableController):

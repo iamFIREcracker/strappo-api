@@ -10,13 +10,12 @@ Create Date: 2014-10-05 11:51:25.087440
 revision = '314a5430c818'
 down_revision = '4ddf082083cd'
 
-from alembic import op
 import sqlalchemy as sa
-
-from app.models import User
-from app.repositories.perks import PerksRepository
-from app.weblib.db import expunged
-from app.weblib.db import create_session
+from alembic import op
+from strappon.models import User
+from strappon.repositories.perks import PerksRepository
+from weblib.db import expunged
+from weblib.db import create_session
 
 
 def upgrade():
