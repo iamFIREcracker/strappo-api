@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 
 
-import os
-from setuptools import find_packages
 from setuptools import setup
 
 
@@ -19,6 +17,6 @@ def get_version():
 
 setup(name='strappo-api',
       version=get_version(),
-      packages=find_packages(exclude=['fabfile']),
+      packages=['app'],
       install_requires=[
       ])
