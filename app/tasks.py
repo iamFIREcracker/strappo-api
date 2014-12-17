@@ -58,6 +58,7 @@ def NotifyDriverDriveRequestAccepted(request):
                           json.dumps({
                               'badge': badge,
                               'channel': channel,
+                              'slot': 'scoped',
                               'kind': 'matched_passenger',
                               'drive_request': request['id'],
                               'sound': 'default',
@@ -98,6 +99,7 @@ def NotifyDriverDriveRequestCancelledByPassengerTask(request):
                           json.dumps({
                               'badge': badge,
                               'channel': channel,
+                              'slot': 'scoped',
                               'kind': 'cancelled_drive_request',
                               'passenger': request['passenger']['id'],
                               'sound': 'default',
@@ -126,6 +128,7 @@ def NotifyDriversPassengerRegisteredTask(passenger):
         return json.dumps({
             'badge': badge,
             'channel': channel,
+            'slot': 'scoped',
             'kind': 'unmatched_passenger',
             'passenger': passenger['id'],
             'sound': 'default',
@@ -168,6 +171,7 @@ def NotifyDriversPassengerAlitTask(requests):
         return json.dumps({
             'badge': badge,
             'channel': channel,
+            'slot': 'scoped',
             'kind': 'alighted_passenger',
             'drive_request': requests[0]['id'],
             'sound': 'default',
@@ -211,6 +215,7 @@ def NotifyDriversDeactivatedPassengerTask(requests):
         return json.dumps({
             'badge': badge,
             'channel': channel,
+            'slot': 'scoped',
             'kind': 'deactivated_passenger',
             'passenger': requests[0]['passenger']['id'],
             'sound': 'default',
@@ -251,6 +256,7 @@ def NotifyPassengerDriveRequestPending(request):
         return json.dumps({
             'badge': badge,
             'channel': channel,
+            'slot': 'scoped',
             'kind': 'pending_drive_request',
             'drive_request': request['id'],
             'sound': 'default',
@@ -296,6 +302,7 @@ def NotifyPassengersDriverDeactivatedTask(requests):
         return json.dumps({
             'badge': badge,
             'channel': channel,
+            'slot': 'scoped',
             'sound': 'default',
             'icon': 'notificationicon',
             'alert': alert
@@ -336,6 +343,7 @@ def NotifyPassengerDriveRequestCancelledTask(request):
         return json.dumps({
             'badge': badge,
             'channel': channel,
+            'slot': 'scoped',
             'kind': 'cancelled_drive_request',
             'driver': request['driver']['id'],
             'sound': 'default',
