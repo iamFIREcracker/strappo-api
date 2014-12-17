@@ -87,6 +87,8 @@ class LoginUserWorkflow(Publisher):
             def profile_found(self, profile):
                 params = storage(acs_id=acs_id,
                                  facebook_id=profile['id'],
+                                 first_name=profile['first_name'],
+                                 last_name=profile['last_name'],
                                  name=profile['name'],
                                  avatar=profile['avatar'],
                                  email=profile['email'],
@@ -107,9 +109,14 @@ class LoginUserWorkflow(Publisher):
         class UserWithFacebookIdGetterSubscriber(object):
             def user_found(self, user):
                 form = form_future.get()
-                user_updater.perform(user, form.d.acs_id,
-                                     form.d.facebook_id, form.d.name,
-                                     form.d.avatar, form.d.email,
+                user_updater.perform(user,
+                                     form.d.acs_id,
+                                     form.d.facebook_id,
+                                     form.d.first_name,
+                                     form.d.last_name,
+                                     form.d.name,
+                                     form.d.avatar,
+                                     form.d.email,
                                      form.d.locale)
 
             def user_not_found(self, facebook_id):
@@ -120,16 +127,26 @@ class LoginUserWorkflow(Publisher):
         class UserWithAcsIdGetterSubscriber(object):
             def user_found(self, user):
                 form = form_future.get()
-                user_updater.perform(user, form.d.acs_id,
-                                     form.d.facebook_id, form.d.name,
-                                     form.d.avatar, form.d.email,
+                user_updater.perform(user,
+                                     form.d.acs_id,
+                                     form.d.facebook_id,
+                                     form.d.first_name,
+                                     form.d.last_name,
+                                     form.d.name,
+                                     form.d.avatar,
+                                     form.d.email,
                                      form.d.locale)
 
             def user_not_found(self, acs_id):
                 form = form_future.get()
-                user_creator.perform(users_repository, form.d.acs_id,
-                                     form.d.facebook_id, form.d.name,
-                                     form.d.avatar, form.d.email,
+                user_creator.perform(users_repository,
+                                     form.d.acs_id,
+                                     form.d.facebook_id,
+                                     form.d.first_name,
+                                     form.d.last_name,
+                                     form.d.name,
+                                     form.d.avatar,
+                                     form.d.email,
                                      form.d.locale)
 
         class UserCreatorSubscriber(object):
