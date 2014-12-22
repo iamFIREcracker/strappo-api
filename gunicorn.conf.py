@@ -73,6 +73,16 @@ preload = True
 #
 #       A positive integer. Generally set in the 1-5 seconds range.
 #
+#   max_requests - The maximum number of requests a worker will process
+#       before restarting.
+#
+#       Any value greater than zero will limit the number of requests
+#       a work will process before automatically restarting. This is a
+#       simple method to help limit the damage of memory leaks.
+#
+#       If this is set to zero (the default) then the automatic worker
+#       restarts are disabled.
+#
 
 def get_workers():
     procs = os.sysconf('SC_NPROCESSORS_ONLN')
@@ -85,6 +95,7 @@ workers = get_workers()
 worker_class = 'sync'
 timeout = 30
 keepalive = 2
+max_requests = 1200
 
 #
 # Debugging
