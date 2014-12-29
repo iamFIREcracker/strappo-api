@@ -85,14 +85,16 @@ class LoginUserWorkflow(Publisher):
                 outer.publish('internal_error')
 
             def profile_found(self, profile):
-                params = storage(acs_id=acs_id,
-                                 facebook_id=profile['id'],
-                                 first_name=profile['first_name'],
-                                 last_name=profile['last_name'],
-                                 name=profile['name'],
-                                 avatar=profile['avatar'],
-                                 email=profile['email'],
-                                 locale=locale)
+                params = \
+                    storage(acs_id=acs_id,
+                            facebook_id=profile['id'],
+                            first_name=profile['first_name'],
+                            last_name=profile['last_name'],
+                            name=profile['name'],
+                            avatar_unresolved=profile['avatar_unresolved'],
+                            avatar=profile['avatar'],
+                            email=profile['email'],
+                            locale=locale)
                 form_validator.perform(user_forms.add(), params,
                                        describe_invalid_form)
 
@@ -115,6 +117,7 @@ class LoginUserWorkflow(Publisher):
                                      form.d.first_name,
                                      form.d.last_name,
                                      form.d.name,
+                                     form.d.avatar_unresolved,
                                      form.d.avatar,
                                      form.d.email,
                                      form.d.locale)
@@ -133,6 +136,7 @@ class LoginUserWorkflow(Publisher):
                                      form.d.first_name,
                                      form.d.last_name,
                                      form.d.name,
+                                     form.d.avatar_unresolved,
                                      form.d.avatar,
                                      form.d.email,
                                      form.d.locale)
@@ -145,6 +149,7 @@ class LoginUserWorkflow(Publisher):
                                      form.d.first_name,
                                      form.d.last_name,
                                      form.d.name,
+                                     form.d.avatar_unresolved,
                                      form.d.avatar,
                                      form.d.email,
                                      form.d.locale)
