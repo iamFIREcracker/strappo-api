@@ -17,6 +17,7 @@ add = form.Form(form.Hidden('acs_id', form.notnull),
                 form.Textbox('first_name', form.notnull),
                 form.Textbox('last_name', form.notnull),
                 form.Textbox('name', form.notnull),
+                form.Textbox('avatar_unresolved', validurl),
                 form.Textbox('avatar', validurl),
                 form.Textbox('email', form.notnull),
                 form.Textbox('locale', form.notnull))
