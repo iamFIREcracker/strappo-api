@@ -179,10 +179,10 @@ loop() {
             wtf
         esac
         ;;
-    users)
+    u)
         shift
         case $1 in
-        view)
+        v)
             local id
 
             shift; id=$1; shift
