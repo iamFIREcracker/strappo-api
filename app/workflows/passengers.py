@@ -101,7 +101,6 @@ class AddPassengerWorkflow(Publisher):
         notifications_resetter = NotificationsResetter()
         task_submitter = TaskSubmitter()
         form_data_future = Future()
-        passenger_future = Future()
         passenger_id_future = Future()
         passenger_serialized_future = Future()
 
