@@ -20,6 +20,9 @@ msgstr "Nombre entier requis"
 msgid "integer_optional"
 msgstr "Nombre entier requis"
 
+msgid "time_required"
+msgstr "L'horaire doit être passé dans le format hh:mm"
+
 msgid "integer_optional_between_0_and_5"
 msgstr "Nombre entier entre 0 et 5 requis"
 

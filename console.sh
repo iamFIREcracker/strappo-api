@@ -133,16 +133,25 @@ loop() {
             wtf
         esac
         ;;
-    passengers)
+    p)
         shift
         case $1 in
         list_unmatched)
             shift
             gimmeurjson ${SERVER}/1/passengers/unmatched GET "token=${TOKENID}&$@"
             ;;
-        add)
+        a)
             shift
-            gimmeurjson ${SERVER}/1/passengers/add POST "token=tid&$@"
+            data="token=${TOKENID}"
+            data="$data&destination=Bar Eden"
+            data="$data&destination_latitude=44.86937"
+            data="$data&destination_longitude=10.24324"
+            data="$data&origin=Via Mazzini"
+            data="$data&origin_latitude=43.87272"
+            data="$data&origin_longitude=10.25022"
+            data="$data&seats=1"
+            echo $data
+            gimmeurjson ${SERVER}/1/passengers/add POST "token=${TOKENID}&$data"
             ;;
         view)
             local id
