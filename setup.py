@@ -19,6 +19,7 @@ setup(name='strappo-api',
       version=get_version(),
       packages=['app'],
       install_requires=[
+          'alembic==0.7.3',
           'gunicorn==19.1.1.',
           'gevent==1.0.1.',
           'weblib',
