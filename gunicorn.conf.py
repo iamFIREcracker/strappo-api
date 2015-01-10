@@ -1,9 +1,10 @@
 bind = '127.0.0.1:8000'
+reload = True
 preload = True
 workers = 2
 worker_class = 'gevent'
 timeout = 10
 max_requests = 1200
-loglevel = 'info'
+loglevel = 'INFO'
 accesslog = '-'
-errorlog = 'gunicorn.log'
+errorlog = '-'
