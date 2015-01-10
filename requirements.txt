@@ -20,7 +20,7 @@ redis==2.10.3
 requests==2.5.1
 six==1.3.0
 -e .
--e hg+ssh://hg@bitbucket.org/iamFIREcracker/strappon@1e23da602ab1505beb9d3ca9d4902bd345e541e4#egg=strappon-dev
+-e hg+ssh://hg@bitbucket.org/iamFIREcracker/strappon@5520da35b2ffab1072d2b0ba3a9f5f8e8bad5574#egg=strappon-dev
 web.py==0.37
 webassets==0.10.1
 -e hg+ssh://hg@bitbucket.org/iamFIREcracker/weblib@e6415d33384f14bba5176cbbf0d8c7c43a05c014#egg=weblib-dev
