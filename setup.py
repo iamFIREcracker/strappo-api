@@ -19,7 +19,8 @@ setup(name='strappo-api',
       version=get_version(),
       packages=['app'],
       install_requires=[
-          'gunicorn==19.1.1',
+          'gunicorn==19.1.1.',
+          'gevent==1.0.1.',
           'weblib',
           'strappon'
       ])

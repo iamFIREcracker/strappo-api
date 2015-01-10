@@ -9,6 +9,8 @@ anyjson==0.3.3
 argparse==1.2.1
 billiard==3.3.0.19
 celery==3.1.17
+gevent==1.0.1
+greenlet==0.4.5
 gunicorn==19.1.1
 httplib2==0.9
 kombu==3.0.24
