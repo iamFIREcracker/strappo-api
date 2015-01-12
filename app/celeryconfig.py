@@ -22,3 +22,9 @@ CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
         #'schedule': crontab(hour=5, minute=10)
     #}
 #}
+
+
+try:
+    from local_celeryconfig import *
+except ImportError:
+    pass

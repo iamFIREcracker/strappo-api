@@ -6,4 +6,4 @@ from celery import Celery
 
 
 celery = Celery('app.celery')
-celery.config_from_object('celeryconfig')
+celery.config_from_object('app.celeryconfig')
