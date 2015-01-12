@@ -1,13 +1,14 @@
 syntax: glob
 
-*sqlite
-*pyc
 *bak
-.vagrant
+*pyc
+*sqlite
 .ropeproject/*
+.vagrant
 build/*
 cscope*
 dist/*
+local_celeryconfig.py
 local_config.py
 strappo-api.egg*
 tags
