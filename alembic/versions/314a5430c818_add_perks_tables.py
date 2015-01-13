@@ -12,9 +12,9 @@ down_revision = '4ddf082083cd'
 
 import sqlalchemy as sa
 from alembic import op
+from strappon.models import Base
 from strappon.models import User
 from strappon.repositories.perks import PerksRepository
-from weblib.db import expunged
 from weblib.db import create_session
 
 
@@ -108,11 +108,10 @@ def upgrade():
                            fixed_rate=1.0,
                            multiplier=1.0)
     orm.add(passenger_standard)
-    for u in User.query:
-        u = expunged(u, User.session)
+    for u in Base.session.query(User.id):
+        u = LocalUser(u[0])
         orm.add(PerksRepository.activate_driver_perk(u, driver_standard))
         orm.add(PerksRepository.activate_passenger_perk(u, passenger_standard))
-        orm.add(u)
     orm.commit()
 
 
@@ -125,3 +124,8 @@ def downgrade():
     op.drop_table('eligible_driver_perk')
     op.drop_table('driver_perk')
     ### end Alembic commands ###
+
+
+class LocalUser:
+    def __init__(self, id):
+        self.id = id

@@ -38,6 +38,7 @@ from weblib.pubsub import Future
 
 import app.forms.passengers as passengers_forms
 import app.forms.rates as rates_forms
+from app.forms import time_parser
 
 
 class ListUnmatchedPassengersWorkflow(Publisher):
@@ -101,7 +102,6 @@ class AddPassengerWorkflow(Publisher):
         notifications_resetter = NotificationsResetter()
         task_submitter = TaskSubmitter()
         form_data_future = Future()
-        passenger_future = Future()
         passenger_id_future = Future()
         passenger_serialized_future = Future()
 
@@ -128,7 +128,8 @@ class AddPassengerWorkflow(Publisher):
                                           float(d.destination_latitude),
                                           float(d.destination_longitude),
                                           distance,
-                                          int(d.seats))
+                                          int(d.seats),
+                                          time_parser(d.pickup_time))
 
         class PassengerCreatorSubscriber(object):
             def passenger_created(self, passenger):

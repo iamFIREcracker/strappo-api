@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
+
 from celery.schedules import crontab
+
 
 CELERY_IMPORTS = ('app.tasks',)
 
@@ -22,3 +25,9 @@ CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
         #'schedule': crontab(hour=5, minute=10)
     #}
 #}
+
+
+try:
+    from local_celeryconfig import *
+except ImportError:
+    pass
