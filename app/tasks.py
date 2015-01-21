@@ -322,7 +322,6 @@ def NotifyPassengersDriverDeactivatedTask(requests):
     return ret.get()
 
 
-
 @celery.task
 def NotifyPassengerDriveRequestCancelledTask(request):
     channel = web.config.TITANIUM_NOTIFICATION_CHANNEL
@@ -365,58 +364,3 @@ def NotifyPassengerDriveRequestCancelledTask(request):
                               [request['passenger']['id']], push_adapter,
                               channel, payload_factory)
     return ret.get()
-
-
-#@celery.task
-#def DeactivateActivePassengers():
-#    logger = create_logger()
-#    orm = create_session()
-#    logging_subscriber = LoggingSubscriber(logger)
-#    deactivate_passengers = DeactivateActivePassengersWorkflow()
-#    ret = Future()
-#
-#    class DeactivatePassengersSubscriber(object):
-#        def success(self, passengers):
-#            orm.commit()
-#            ret.set(passengers)
-#
-#    deactivate_passengers.add_subscriber(logging_subscriber,
-#                                         DeactivatePassengersSubscriber())
-#    deactivate_passengers.perform(logger, orm, PassengersRepository)
-#    return ret.get()
-#
-#
-#@celery.task
-#def DeactivateActiveDriveRequests():
-#    logger = create_logger()
-#    orm = create_session()
-#    logging_subscriber = LoggingSubscriber(logger)
-#    deactivate_drive_requests = DeactivateActiveDriveRequestsWorkflow()
-#    ret = Future()
-#
-#    class DeactivateDriveRequestsSubscriber(object):
-#        def success(self, drive_requests):
-#            orm.commit()
-#            ret.set(drive_requests)
-#
-#    deactivate_drive_requests.add_subscriber(logging_subscriber,
-#                                             DeactivateDriveRequestsSubscriber())
-#    deactivate_drive_requests.perform(logger, orm, DriveRequestsRepository)
-#    return ret.get()
-#
-#
-#@celery.task
-#def UnhideHiddenDrivers():
-#    logger = create_logger()
-#    orm = create_session()
-#    logging_subscriber = LoggingSubscriber(logger)
-#    unhide_drivers = UnhideHiddenDriversWorkflow()
-#    ret = Future()
-#
-#    class UnhideDriversSubscriber(object):
-#        def success(self, drivers):
-#            orm.commit()
-#            ret.set(drivers)
-#
-#    unhide_drivers.add_subscriber(logger, UnhideDriversSubscriber())
-#    unhide_drivers.perform(logger, orm, DriversRepository)
