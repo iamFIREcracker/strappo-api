@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from datetime import timedelta
 from datetime import datetime
 
 import web
@@ -117,8 +118,12 @@ class CancelDriveOfferController(ParamAuthorizableController):
                                    NotifyPassengerDriveRequestCancelledTask)
 
 
-def default_offered_pickup_time():
-    return serialize_date(datetime.utcnow())
+def default_offered_pickup_time(params):
+    if 'response_time' not in params:
+        return None
+
+    response_time = int(params.response_time)
+    return serialize_date(datetime.utcnow() + timedelta(minutes=response_time))
 
 
 class AcceptPassengerController(ParamAuthorizableController):
@@ -127,7 +132,7 @@ class AcceptPassengerController(ParamAuthorizableController):
     def POST(self, driver_id, passenger_id):
         logger = LoggingSubscriber(web.ctx.logger)
         add_drive_request = AddDriveRequestWorkflow()
-        offered_pickup_time = default_offered_pickup_time()
+        offered_pickup_time = default_offered_pickup_time(web.input())
         params = web.input(offered_pickup_time=offered_pickup_time)
 
         class AddDriveRequestSubscriber(object):

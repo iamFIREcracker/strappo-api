@@ -21,5 +21,13 @@ def datetime_validator(v):
 datetime = form.Validator('datetime', datetime_validator)
 
 
+def datetime_optional_validator(v):
+    return not v or datetime_validator(v)
+
+
+datetime_optional = form.Validator('datetime_optional',
+                                   datetime_optional_validator)
+
+
 stars = form.Validator('integer_optional_between_0_and_5',
                        lambda v: not v or 0 < int(v) <= 5)

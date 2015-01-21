@@ -20,6 +20,9 @@ msgstr "Nombre entier requis"
 msgid "datetime_required"
 msgstr "datetime_required"
 
+msgid "datetime_optional"
+msgstr "datetime_optional"
+
 msgid "integer_optional_between_0_and_5"
 msgstr "Nombre entier entre 0 et 5 requis"
 
