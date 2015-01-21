@@ -28,7 +28,8 @@ def datetime_optional_parser(v):
 
 
 def datetime_optional_validator(v):
-    return datetime_optional_parser(v)
+    datetime_optional_parser(v)
+    return True
 
 
 datetime_optional = form.Validator('datetime_optional',
