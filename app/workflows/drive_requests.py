@@ -35,7 +35,7 @@ from weblib.pubsub import Future
 from weblib.pubsub import LoggingSubscriber
 from weblib.pubsub import Publisher
 from weblib.pubsub import TaskSubmitter
-from app.forms import datetime_parser
+from app.forms import datetime_optional_parser
 
 import app.forms.drive_requests as drive_requests_forms
 
@@ -269,7 +269,7 @@ class AddDriveRequestWorkflow(Publisher):
                 outer.publish('invalid_form', errors)
             def valid_form(self, form):
                 offered_pickup_time_future.\
-                    set(datetime_parser(form.d.offered_pickup_time))
+                    set(datetime_optional_parser(form.d.offered_pickup_time))
                 driver_getter.perform(drivers_repository, driver_id)
 
         class DriverGetterSubscriber(object):
