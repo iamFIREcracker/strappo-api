@@ -121,8 +121,9 @@ class CancelDriveOfferController(ParamAuthorizableController):
 def default_offered_pickup_time(params):
     if 'response_time' not in params:
         return None
-
     response_time = int(params.response_time)
+    if response_time == 0:
+        return None
     return serialize_date(datetime.utcnow() + timedelta(minutes=response_time))
 
 
