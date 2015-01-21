@@ -5,7 +5,6 @@ SQLAlchemy==0.9.8
 alembic==0.7.3
 amqp==1.4.6
 anyjson==0.3.3
-argparse==1.2.1
 billiard==3.3.0.19
 celery==3.1.17
 httplib2==0.9
@@ -15,8 +14,8 @@ pytz==2014.10
 redis==2.10.3
 requests==2.5.1
 -e .
--e hg+ssh://hg@bitbucket.org/iamFIREcracker/strappon@cd31c0edb8fb3a969f63ddf6c9948e09d1cde454#egg=strappon-dev
+-e hg+ssh://hg@bitbucket.org/iamFIREcracker/strappon@c6df228db03d21ea6a8f1ac363b13da0ce783a46#egg=strappon-dev
 web.py==0.37
 webassets==0.10.1
--e hg+ssh://hg@bitbucket.org/iamFIREcracker/weblib@b074f0da03f8cacaba46830441d61b25d342e7b5#egg=weblib-dev
+-e hg+ssh://hg@bitbucket.org/iamFIREcracker/weblib@5b2852bb073ffb31b795db7364764b4e953e4462#egg=weblib-dev
 wsgiref==0.1.2

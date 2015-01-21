@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from datetime import datetime
+
 import web
 import weblib
 from strappon.repositories.drivers import DriversRepository
 from strappon.repositories.drive_requests import DriveRequestsRepository
 from strappon.repositories.passengers import PassengersRepository
 from strappon.repositories.rates import RatesRepository
+from strappon.pubsub import serialize_date
 from weblib.pubsub import Future
 from weblib.pubsub import LoggingSubscriber
 from weblib.request_decorators import api
@@ -114,12 +117,18 @@ class CancelDriveOfferController(ParamAuthorizableController):
                                    NotifyPassengerDriveRequestCancelledTask)
 
 
+def default_offered_pickup_time():
+    return serialize_date(datetime.utcnow())
+
+
 class AcceptPassengerController(ParamAuthorizableController):
     @api
     @authorized
     def POST(self, driver_id, passenger_id):
         logger = LoggingSubscriber(web.ctx.logger)
         add_drive_request = AddDriveRequestWorkflow()
+        offered_pickup_time = default_offered_pickup_time()
+        params = web.input(offered_pickup_time=offered_pickup_time)
 
         class AddDriveRequestSubscriber(object):
             def not_found(self, driver_id):
@@ -134,7 +143,7 @@ class AcceptPassengerController(ParamAuthorizableController):
 
         add_drive_request.add_subscriber(logger, AddDriveRequestSubscriber())
         add_drive_request.perform(web.ctx.gettext, web.ctx.orm, web.ctx.logger,
-                                  web.input(), self.current_user,
+                                  params, self.current_user,
                                   DriversRepository, driver_id,
                                   PassengersRepository, passenger_id,
                                   DriveRequestsRepository,

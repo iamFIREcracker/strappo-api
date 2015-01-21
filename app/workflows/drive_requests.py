@@ -35,6 +35,7 @@ from weblib.pubsub import Future
 from weblib.pubsub import LoggingSubscriber
 from weblib.pubsub import Publisher
 from weblib.pubsub import TaskSubmitter
+from app.forms import datetime_parser
 
 import app.forms.drive_requests as drive_requests_forms
 
@@ -259,7 +260,7 @@ class AddDriveRequestWorkflow(Publisher):
         request_creator = DriveRequestCreator()
         request_serializer = MultipleDriveRequestsSerializer()
         task_submitter = TaskSubmitter()
-        response_time_future = Future()
+        offered_pickup_time_future = Future()
         driver_future = Future()
         passenger_future = Future()
 
@@ -267,8 +268,8 @@ class AddDriveRequestWorkflow(Publisher):
             def invalid_form(self, errors):
                 outer.publish('invalid_form', errors)
             def valid_form(self, form):
-                v = int(form.d.response_time) if form.d.response_time else 0
-                response_time_future.set(v)
+                offered_pickup_time_future.\
+                    set(datetime_parser(form.d.offered_pickup_time))
                 driver_getter.perform(drivers_repository, driver_id)
 
         class DriverGetterSubscriber(object):
@@ -295,9 +296,11 @@ class AddDriveRequestWorkflow(Publisher):
                 outer.publish('not_found', passenger_id)
             def passenger_found(self, passenger):
                 passenger_future.set(passenger)
-                request_creator.perform(requests_repository, driver_id,
-                                        passenger_id,
-                                        response_time=response_time_future.get())
+                offered_pickup_time = offered_pickup_time_future.get()
+                request_creator.\
+                    perform(requests_repository, driver_id,
+                            passenger_id,
+                            offered_pickup_time=offered_pickup_time)
 
         class DriveRequestCreatorSubscriber(object):
             def drive_request_created(self, request):

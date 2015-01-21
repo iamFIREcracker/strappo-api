@@ -17,11 +17,8 @@ msgstr "Required"
 msgid "integer_required"
 msgstr "Integer required"
 
-msgid "integer_optional"
-msgstr "Integer required"
-
-msgid "time_required"
-msgstr "Time value (hh:mm) required"
+msgid "datetime_required"
+msgstr "datetime_required"
 
 msgid "integer_optional_between_0_and_5"
 msgstr "Integer between 0 and 5 required"

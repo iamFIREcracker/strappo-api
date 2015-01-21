@@ -16,7 +16,7 @@ from weblib.request_decorators import api
 from weblib.request_decorators import authorized
 from weblib.utils import jsonify
 
-import app.forms.passengers as passenger_forms
+from strappon.pubsub import serialize_date
 from app.controllers import ParamAuthorizableController
 from app.tasks import NotifyDriverDriveRequestCancelledByPassengerTask
 from app.tasks import NotifyDriverDriveRequestAccepted
@@ -51,10 +51,8 @@ class ListUnmatchedPassengersController(ParamAuthorizableController):
         return ret.get()
 
 
-def default_pickup_time(format):
-    pickup_time = datetime.utcnow().time()
-    return format % dict(hour=pickup_time.hour,
-                         minute=pickup_time.minute)
+def default_pickup_time():
+    return serialize_date(datetime.utcnow())
 
 
 class AddPassengerController(ParamAuthorizableController):
@@ -75,8 +73,7 @@ class AddPassengerController(ParamAuthorizableController):
                 raise web.unauthorized()
 
             def success(self):
-                pickup_time = \
-                    default_pickup_time("%(hour)02d:%(minute)02d")
+                pickup_time = default_pickup_time()
                 params = web.input(pickup_time=pickup_time)
                 add_passenger.perform(web.ctx.gettext, web.ctx.orm,
                                       web.ctx.logger,

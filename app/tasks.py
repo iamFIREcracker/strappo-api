@@ -18,12 +18,9 @@ from weblib.pubsub import Future
 from weblib.pubsub import LoggingSubscriber
 
 from app.celery import celery
-from app.workflows.drive_requests import DeactivateActiveDriveRequestsWorkflow
 from app.workflows.drivers import NotifyDriverWorkflow
 from app.workflows.drivers import NotifyDriversWorkflow
 from app.workflows.drivers import NotifyAllDriversWorkflow
-from app.workflows.drivers import UnhideHiddenDriversWorkflow
-from app.workflows.passengers import DeactivateActivePassengersWorkflow
 from app.workflows.passengers import NotifyPassengersWorkflow
 
 

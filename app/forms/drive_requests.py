@@ -3,7 +3,7 @@
 
 from web import form
 
-from app.forms import integer_optional
+from app.forms import datetime_validator
 
 
-add = form.Form(form.Textbox('response_time', integer_optional))
+add = form.Form(form.Textbox('offered_pickup_time', datetime_validator))
