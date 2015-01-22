@@ -17,11 +17,11 @@ msgstr "Obbligatorio"
 msgid "integer_required"
 msgstr "Deve essere intero"
 
-msgid "integer_optional"
-msgstr "Deve essere intero"
+msgid "datetime_required"
+msgstr "datetime_required"
 
-msgid "time_required"
-msgstr "Deve essere nel formato hh:mm"
+msgid "datetime_optional"
+msgstr "datetime_optional"
 
 msgid "integer_optional_between_0_and_5"
 msgstr "Deve essere un intero tra 0 e 5"

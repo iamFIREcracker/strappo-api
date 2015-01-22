@@ -38,13 +38,12 @@ def app_factory():
     from weblib.app_processors import load_path_url
     from weblib.app_processors import load_render
     from weblib.app_processors import load_gettext
-    from weblib.app_processors import load_redis
+    from weblib.app_processors import load_and_manage_redis
     from weblib.app_processors import load_and_manage_orm
     from weblib.app_processors import load_dict
 
     from app.urls import URLS
 
-    redis = weblib.redis.create_redis()
     views = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'views')
     app = web.application(URLS, globals())
     gettext = weblib.gettext.create_gettext()
@@ -53,7 +52,7 @@ def app_factory():
     app.add_processor(web.loadhook(load_path_url))
     app.add_processor(web.loadhook(load_render(views)))
     app.add_processor(web.loadhook(load_gettext(gettext)))
-    app.add_processor(web.loadhook(load_redis(redis)))
+    app.add_processor(load_and_manage_redis(weblib.redis.create_redis_pool()))
     app.add_processor(load_and_manage_orm(weblib.db.create_session()))
 
     app.add_processor(web.loadhook(load_dict(

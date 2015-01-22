@@ -7,9 +7,6 @@ amqp==1.4.6
 anyjson==0.3.3
 billiard==3.3.0.19
 celery==3.1.17
-gevent==1.0.1
-greenlet==0.4.5
-gunicorn==19.1.1
 httplib2==0.9
 kombu==3.0.24
 oauth2==1.5.211
@@ -17,8 +14,8 @@ pytz==2014.10
 redis==2.10.3
 requests==2.5.1
 -e .
--e hg+ssh://hg@bitbucket.org/iamFIREcracker/strappon@5520da35b2ffab1072d2b0ba3a9f5f8e8bad5574#egg=strappon-dev
+-e hg+ssh://hg@bitbucket.org/iamFIREcracker/strappon@26d5536e8c9ed4ebe0c8cdd2fcc5a87b4e07ba24#egg=strappon-dev
 web.py==0.37
 webassets==0.10.1
--e hg+ssh://hg@bitbucket.org/iamFIREcracker/weblib@402764de017f3f8ea0e8263e8bb9170ac9cf792f#egg=weblib-dev
+-e hg+ssh://hg@bitbucket.org/iamFIREcracker/weblib@5b2852bb073ffb31b795db7364764b4e953e4462#egg=weblib-dev
 wsgiref==0.1.2
