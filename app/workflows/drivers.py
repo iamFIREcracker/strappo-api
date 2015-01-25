@@ -83,17 +83,20 @@ class DeactivateDriverWorkflow(Publisher):
         drivers_deactivator = MultipleDriversDeactivator()
         requests_deactivator = MultipleDriveRequestsDeactivator()
         requests_serializer = MultipleDriveRequestsSerializer()
+        accepted_requests_future = Future()
         task_submitter = TaskSubmitter()
 
         class DriverGetterSubscriber(object):
             def driver_not_found(self, driver_id):
                 outer.publish('success')
+
             def driver_found(self, driver):
                 with_user_id_authorizer.perform(user.id, driver)
 
         class WithUserIdAuthorizerSubscriber(object):
             def unauthorized(self, user_id, driver):
                 outer.publish('unauthorized')
+
             def authorized(self, user_id, driver):
                 drivers_deactivator.perform([driver])
 
@@ -101,12 +104,14 @@ class DeactivateDriverWorkflow(Publisher):
             def drivers_hid(self, drivers):
                 driver = orm.merge(drivers[0])
                 orm.add(driver)
+                accepted_requests_future.\
+                    set([r for r in driver.drive_requests if r.accepted])
                 requests_deactivator.perform(driver.drive_requests)
 
         class DriveRequestsDeactivatorSubscriber(object):
             def drive_requests_hid(self, requests):
                 orm.add_all(requests)
-                requests_serializer.perform(requests)
+                requests_serializer.perform(accepted_requests_future.get())
 
         class DriveRequestSerializerSubscriber(object):
             def drive_requests_serialized(self, requests):
@@ -118,11 +123,11 @@ class DeactivateDriverWorkflow(Publisher):
 
         driver_getter.add_subscriber(logger, DriverGetterSubscriber())
         with_user_id_authorizer.\
-                add_subscriber(logger, WithUserIdAuthorizerSubscriber())
+            add_subscriber(logger, WithUserIdAuthorizerSubscriber())
         drivers_deactivator.add_subscriber(logger,
-                                              DriversDeactivatorSubscriber())
+                                           DriversDeactivatorSubscriber())
         requests_deactivator.\
-                add_subscriber(logger, DriveRequestsDeactivatorSubscriber())
+            add_subscriber(logger, DriveRequestsDeactivatorSubscriber())
         requests_serializer.add_subscriber(logger,
                                            DriveRequestSerializerSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
