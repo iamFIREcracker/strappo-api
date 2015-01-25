@@ -300,6 +300,8 @@ def NotifyPassengersDriverDeactivatedTask(requests):
             'badge': badge,
             'channel': channel,
             'slot': 'scoped',
+            'kind': 'deactivated_driver',
+            'driver': requests[0]['driver']['id'],
             'sound': 'default',
             'icon': 'notificationicon',
             'alert': alert
