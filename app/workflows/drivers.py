@@ -123,6 +123,7 @@ class DeactivateDriverWorkflow(Publisher):
 
         class PassengersUnmatcherSubscriber(object):
             def passengers_unmatched(self, passengers):
+                orm.add_all(passengers)
                 requests_serializer.perform(notifiable_requests_future.get())
 
         class DriveRequestSerializerSubscriber(object):
