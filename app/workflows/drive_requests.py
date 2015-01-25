@@ -346,7 +346,7 @@ class CancelDriveOfferWorkflow(Publisher):
         passenger_unmatcher = PassengerUnmatcher()
         requests_serializer = MultipleDriveRequestsSerializer()
         task_submitter = TaskSubmitter()
-        was_request_accepted = Future()
+        notifiable_request_future = Future()
         driver_future = Future()
         request_future = Future()
 
@@ -371,14 +371,15 @@ class CancelDriveOfferWorkflow(Publisher):
                 outer.publish('success')
 
             def drive_request_found(self, request):
-                was_request_accepted.set(request.accepted)
+                notifiable_request_future.\
+                    set(request.accepted or not request.passenger.matched)
                 request_cancellor.perform(request)
 
         class DriveRequestCancellorSubscriber(object):
             def drive_request_cancelled(self, request):
                 orm.add(request)
                 request_future.set(request)
-                if not was_request_accepted.get():
+                if not notifiable_request_future.get():
                     outer.publish('success')
                 else:
                     passenger_unmatcher.perform(request.passenger)

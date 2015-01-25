@@ -76,14 +76,14 @@ class DeactivateDriverWorkflow(Publisher):
     """Defines a workflow to deactivate a driver given its ID."""
 
     def perform(self, logger, orm, repository, driver_id, user, task):
-        outer = self # Handy to access ``self`` from inner classes
+        outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         driver_getter = ActiveDriverWithIdGetter()
         with_user_id_authorizer = DriverWithUserIdAuthorizer()
         drivers_deactivator = MultipleDriversDeactivator()
         requests_deactivator = MultipleDriveRequestsDeactivator()
         requests_serializer = MultipleDriveRequestsSerializer()
-        accepted_requests_future = Future()
+        notifiable_requests_future = Future()
         task_submitter = TaskSubmitter()
 
         class DriverGetterSubscriber(object):
@@ -104,14 +104,15 @@ class DeactivateDriverWorkflow(Publisher):
             def drivers_hid(self, drivers):
                 driver = orm.merge(drivers[0])
                 orm.add(driver)
-                accepted_requests_future.\
-                    set([r for r in driver.drive_requests if r.accepted])
+                notifiable_requests_future.\
+                    set([r for r in driver.drive_requests
+                         if r.accepted or not r.passenger.matched])
                 requests_deactivator.perform(driver.drive_requests)
 
         class DriveRequestsDeactivatorSubscriber(object):
             def drive_requests_hid(self, requests):
                 orm.add_all(requests)
-                requests_serializer.perform(accepted_requests_future.get())
+                requests_serializer.perform(notifiable_requests_future.get())
 
         class DriveRequestSerializerSubscriber(object):
             def drive_requests_serialized(self, requests):
