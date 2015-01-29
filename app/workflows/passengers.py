@@ -10,7 +10,7 @@ from strappon.pubsub.drive_requests import AcceptedDriveRequestsFilter
 from strappon.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from strappon.pubsub.drive_requests import MultipleDriveRequestsSerializer
 from strappon.pubsub.notifications import NotificationsResetter
-from strappon.pubsub.passengers import ActivePassengersGetter
+from strappon.pubsub.passengers import ExpiredPassengersGetter
 from strappon.pubsub.passengers import ActivePassengerWithIdGetter
 from strappon.pubsub.passengers import PassengerWithIdGetter
 from strappon.pubsub.passengers import MultiplePassengersWithIdGetter
@@ -420,29 +420,74 @@ class AlightPassengerWorkflow(Publisher):
                                                                user.locale))
 
 
-class DeactivateActivePassengersWorkflow(Publisher):
-    """Defines a workflow to deactivate all the active passengers."""
+class DeactivateExpiredPassengersWorkflow(Publisher):
+    """Defines a workflow to view the list of unmatched passengers."""
 
-    def perform(self, logger, orm, repository):
+    def perform(self, logger, orm, expire_after, passengers_repository,
+                notify_passengers_task, notify_drivers_task):
         outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
-        passengers_getter = ActivePassengersGetter()
+        passengers_getter = ExpiredPassengersGetter()
         passengers_deactivator = MultiplePassengersDeactivator()
+        passengers_serializer = MultiplePassengersSerializer()
+        notify_passengers_submitter = TaskSubmitter()
+        requests_deactivator = MultipleDriveRequestsDeactivator()
+        requests_serializer = MultipleDriveRequestsSerializer()
+        notify_drivers_submitter = TaskSubmitter()
+        drive_requests_future = Future()
 
-        class ActivePassengersGetterSubscriber(object):
+        class PassengersGetterSubscriber(object):
             def passengers_found(self, passengers):
-                passengers_deactivator.perform(passengers)
+                if not passengers:
+                    outer.publish('success')
+                else:
+                    passengers_deactivator.perform(passengers)
 
         class PassengersDeactivatorSubscriber(object):
             def passengers_hid(self, passengers):
-                orm.add_all(passengers)
-                outer.publish('success', passengers)
+                merged_passengers = [orm.merge(p) for p in passengers]
+                orm.add_all(merged_passengers)
+                drive_requests = [
+                    d for p in merged_passengers for d in p.drive_requests]
+                drive_requests_future.set(drive_requests)
+                passengers_serializer.perform(passengers)
 
-        passengers_getter.add_subscriber(logger,
-                                         ActivePassengersGetterSubscriber())
+        class PassengersSerializerSubscriber(object):
+            def passengers_serialized(self, passengers):
+                notify_passengers_submitter.perform(notify_passengers_task,
+                                                    passengers)
+
+        class NotifyPassengersSubscriber(object):
+            def task_created(self, task_id):
+                requests_deactivator.perform(drive_requests_future.get())
+
+        class DriveRequestsDeactivatorSubscriber(object):
+            def drive_requests_hid(self, requests):
+                orm.add_all(requests)
+                requests_serializer.perform(requests)
+
+        class DriveRequestSerializerSubscriber(object):
+            def drive_requests_serialized(self, requests):
+                notify_drivers_submitter.perform(notify_drivers_task, requests)
+
+        class NotifyDriversSubscriber(object):
+            def task_created(self, task_id):
+                outer.publish('success')
+
+        passengers_getter.add_subscriber(logger, PassengersGetterSubscriber())
         passengers_deactivator.\
             add_subscriber(logger, PassengersDeactivatorSubscriber())
-        passengers_getter.perform(repository)
+        passengers_serializer.add_subscriber(logger,
+                                             PassengersSerializerSubscriber())
+        notify_passengers_submitter.\
+            add_subscriber(logger, NotifyPassengersSubscriber())
+        requests_deactivator.\
+            add_subscriber(logger, DriveRequestsDeactivatorSubscriber())
+        requests_serializer.add_subscriber(logger,
+                                           DriveRequestSerializerSubscriber())
+        notify_drivers_submitter.add_subscriber(logger,
+                                                NotifyDriversSubscriber())
+        passengers_getter.perform(passengers_repository, expire_after)
 
 
 class CalculateFareWorkflow(Publisher):

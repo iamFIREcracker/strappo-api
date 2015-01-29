@@ -50,6 +50,9 @@ msgstr "Oh no! %(name)s non può più offrirti uno strappo.."
 msgid "alert_cancelled_drive_request_by_driver"
 msgstr "Oh no! %(name)s non può più offrirti uno strappo.."
 
+msgid "alert_expiration"
+msgstr "La tua richiesta è scaduta per inattività."
+
 msgid "perk_name_driver_early_bird"
 msgstr "Early Bird"
 
