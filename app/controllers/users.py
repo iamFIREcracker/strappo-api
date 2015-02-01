@@ -125,3 +125,22 @@ class LoginUserController(ParamAuthorizableController):
                                  web.ctx.default_eligible_passenger_perks,
                                  web.ctx.default_active_passenger_perks)
         return ret.get()
+
+
+class ActivatePromoController(ParamAuthorizableController):
+    @api
+    @authorized
+    def POST(self, user_id):
+        if user_id != self.current_user.id:
+            raise web.unauthorized()
+
+        logger = LoggingSubscriber(web.ctx.logger)
+        activate_promo = ActivatePromoWorkflow()
+        ret = Future()
+
+        class ActivatePromoSubscriber(object):
+            def not_found(self, promo_code):
+                pass
+
+        activate_promo.add_subscriber(logger, ActivatePromoSubscriber())
+        activate_promo.perform(web.ctx.logger)
