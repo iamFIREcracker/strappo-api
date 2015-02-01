@@ -19,7 +19,6 @@ from app.controllers.passengers import CancelDriveRequestController
 from app.controllers.passengers import DeactivatePassengerController
 from app.controllers.passengers import ListUnmatchedPassengersController
 from app.controllers.traces import AddTracesController
-from app.controllers.users import ActivatePromoController
 from app.controllers.users import LoginUserController
 from app.controllers.users import ViewUserController
 
@@ -29,7 +28,6 @@ URLS = (
 
     '/1/users/login', LoginUserController,
     '/1/users/(.+)/view', ViewUserController,
-    '/1/users/(.+)/activate_promo', ActivatePromoController,
 
     '/1/drivers/add', AddDriverController,
     '/1/drivers/(.+)/deactivate', DeactivateDriverController,
