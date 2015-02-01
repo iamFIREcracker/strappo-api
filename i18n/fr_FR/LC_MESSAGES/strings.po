@@ -49,3 +49,15 @@ msgstr "Ah Mince! %(name)s ne peut plus te conduire.."
 
 msgid "alert_cancelled_drive_request_by_driver"
 msgstr "Ah Mince! %(name)s ne peut plus te conduire.."
+
+msgid "alert_expiration"
+msgstr "alert_expiration"
+
+msgid "perk_name_driver_early_bird"
+msgstr "perk_name_driver_early_bird"
+
+msgid "perk_eligible_description_driver_early_bird"
+msgstr "perk_eligible_description_driver_early_bird"
+
+msgid "perk_active_description_driver_early_bird"
+msgstr "perk_active_description_driver_early_bird"

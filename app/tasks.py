@@ -6,7 +6,6 @@ import json
 import web
 
 from strappon.pubsub.notifications import notificationid_for_user
-from strappon.repositories.drive_requests import DriveRequestsRepository
 from strappon.repositories.drivers import DriversRepository
 from strappon.repositories.passengers import PassengersRepository
 from weblib.adapters.push.titanium import TitaniumPushNotificationsAdapter
@@ -22,6 +21,7 @@ from app.workflows.drivers import NotifyDriverWorkflow
 from app.workflows.drivers import NotifyDriversWorkflow
 from app.workflows.drivers import NotifyAllDriversWorkflow
 from app.workflows.passengers import NotifyPassengersWorkflow
+from app.workflows.passengers import DeactivateExpiredPassengersWorkflow
 
 
 @celery.task
@@ -300,6 +300,8 @@ def NotifyPassengersDriverDeactivatedTask(requests):
             'badge': badge,
             'channel': channel,
             'slot': 'scoped',
+            'kind': 'deactivated_driver',
+            'driver': requests[0]['driver']['id'],
             'sound': 'default',
             'icon': 'notificationicon',
             'alert': alert
@@ -361,3 +363,66 @@ def NotifyPassengerDriveRequestCancelledTask(request):
                               [request['passenger']['id']], push_adapter,
                               channel, payload_factory)
     return ret.get()
+
+
+@celery.task
+def NotifyPassengersExpirationTask(passengers):
+    channel = web.config.TITANIUM_NOTIFICATION_CHANNEL
+    logger = create_logger()
+    gettext = create_gettext()
+    redis = create_redis()
+    logging_subscriber = LoggingSubscriber(logger)
+    push_adapter = TitaniumPushNotificationsAdapter()
+    notify_passengers = NotifyPassengersWorkflow()
+    ret = Future()
+
+    def payload_factory(user):
+        # If we are invoked it means there is at least one passenger
+        # in the list of requests, so the following operation should
+        # be safe!
+        alert = gettext('alert_expiration', lang=user.locale)
+        badge = redis.\
+            incr(notificationid_for_user(user.id))
+        return json.dumps({
+            'badge': badge,
+            'channel': channel,
+            'slot': 'expired',
+            'sound': 'default',
+            'icon': 'notificationicon',
+            'alert': alert
+        })
+
+    class NotifyPassengersSubscriber(object):
+        def failure(self, error):
+            ret.set((None, error))
+
+        def success(self):
+            ret.set((None, None))
+
+    notify_passengers.add_subscriber(logging_subscriber,
+                                     NotifyPassengersSubscriber())
+    notify_passengers.perform(logger, PassengersRepository,
+                              [p['id'] for p in passengers],
+                              push_adapter, channel, payload_factory)
+    return ret.get()
+
+
+@celery.task
+def DeactivateExpiredPassengersTask():
+    expire_after = web.config.EXPIRE_PASSENGERS_AFTER_MINUTES
+    logger = create_logger()
+    orm = create_session()
+    logging_subscriber = LoggingSubscriber(logger)
+    deactivate_passengers = DeactivateExpiredPassengersWorkflow()
+
+    class DeactivatePassengersSubscriber(object):
+        def success(self):
+            orm.commit()
+
+    deactivate_passengers.add_subscriber(logging_subscriber,
+                                         DeactivatePassengersSubscriber())
+    deactivate_passengers.perform(logger, orm,
+                                  expire_after,
+                                  PassengersRepository,
+                                  NotifyPassengersExpirationTask,
+                                  NotifyDriversDeactivatedPassengerTask)

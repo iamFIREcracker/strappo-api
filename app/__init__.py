@@ -27,12 +27,16 @@ web.config.TITANIUM_LOGIN = config.TITANIUM_LOGIN
 web.config.TITANIUM_PASSWORD = config.TITANIUM_PASSWORD
 web.config.TITANIUM_NOTIFICATION_CHANNEL = config.TITANIUM_NOTIFICATION_CHANNEL
 
+web.config.EXPIRE_PASSENGERS_AFTER_MINUTES = \
+    config.EXPIRE_PASSENGERS_AFTER_MINUTES
+
 
 def app_factory():
     """App factory."""
     import weblib.db
     import weblib.gettext
     import weblib.redis
+    import weblib.logging
     from strappon.repositories.perks import PerksRepository
     from weblib.app_processors import load_logger
     from weblib.app_processors import load_path_url
@@ -47,8 +51,9 @@ def app_factory():
     views = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'views')
     app = web.application(URLS, globals())
     gettext = weblib.gettext.create_gettext()
+    logger = weblib.logging.create_logger()
 
-    app.add_processor(web.loadhook(load_logger))
+    app.add_processor(web.loadhook(load_logger(logger)))
     app.add_processor(web.loadhook(load_path_url))
     app.add_processor(web.loadhook(load_render(views)))
     app.add_processor(web.loadhook(load_gettext(gettext)))

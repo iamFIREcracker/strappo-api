@@ -12,7 +12,8 @@ from strappon.pubsub.drive_requests import\
 from strappon.pubsub.drive_requests import\
     UnratedDriveRequestsWithPassengerIdGetter
 from strappon.pubsub.drive_requests import DriveRequestAcceptor
-from strappon.pubsub.drive_requests import DriveRequestCancellorByDriverId
+from strappon.pubsub.drive_requests import DriveRequestWithIdAndDriverIdGetter
+from strappon.pubsub.drive_requests import DriveRequestCancellor
 from strappon.pubsub.drive_requests import DriveRequestCancellorByPassengerId
 from strappon.pubsub.drive_requests import DriveRequestCreator
 from strappon.pubsub.drive_requests import DriveRequestsEnricher
@@ -336,20 +337,23 @@ class CancelDriveOfferWorkflow(Publisher):
 
     def perform(self, orm, logger, drivers_repository, user_id, driver_id,
                 requests_repository, drive_request_id, task):
-        outer = self # Handy to access ``self`` from inner classes
+        outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         driver_getter = DriverWithIdGetter()
         authorizer = DriverWithUserIdAuthorizer()
-        request_cancellor = DriveRequestCancellorByDriverId()
+        request_getter = DriveRequestWithIdAndDriverIdGetter()
+        request_cancellor = DriveRequestCancellor()
         passenger_unmatcher = PassengerUnmatcher()
         requests_serializer = MultipleDriveRequestsSerializer()
         task_submitter = TaskSubmitter()
+        notifiable_request_future = Future()
         driver_future = Future()
         request_future = Future()
 
         class DriverGetterSubscriber(object):
             def driver_not_found(self, driver_id):
                 outer.publish('not_found', driver_id)
+
             def driver_found(self, driver):
                 driver_future.set(driver)
                 authorizer.perform(user_id, driver)
@@ -357,17 +361,28 @@ class CancelDriveOfferWorkflow(Publisher):
         class AuthorizerSubscriber(object):
             def unauthorized(self, user_id, driver):
                 outer.publish('unauthorized')
-            def authorized(self, user_id, driver):
-                request_cancellor.perform(requests_repository,
-                                          drive_request_id, driver_id)
 
-        class DriveRequestCancellorSubscriber(object):
+            def authorized(self, user_id, driver):
+                request_getter.perform(requests_repository,
+                                       drive_request_id, driver_id)
+
+        class DriveRequestGetterSubscriber(object):
             def drive_request_not_found(self, drive_request_id, driver_id):
                 outer.publish('success')
+
+            def drive_request_found(self, request):
+                notifiable_request_future.\
+                    set(request.accepted or not request.passenger.matched)
+                request_cancellor.perform(request)
+
+        class DriveRequestCancellorSubscriber(object):
             def drive_request_cancelled(self, request):
                 orm.add(request)
                 request_future.set(request)
-                passenger_unmatcher.perform(request.passenger)
+                if not notifiable_request_future.get():
+                    outer.publish('success')
+                else:
+                    passenger_unmatcher.perform(request.passenger)
 
         class PassengerUnmatcherSubscriber(object):
             def passenger_unmatched(self, passenger):
@@ -384,6 +399,7 @@ class CancelDriveOfferWorkflow(Publisher):
 
         driver_getter.add_subscriber(logger, DriverGetterSubscriber())
         authorizer.add_subscriber(logger, AuthorizerSubscriber())
+        request_getter.add_subscriber(logger, DriveRequestGetterSubscriber())
         request_cancellor.add_subscriber(logger,
                                          DriveRequestCancellorSubscriber())
         passenger_unmatcher.add_subscriber(logger,

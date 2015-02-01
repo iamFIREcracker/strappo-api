@@ -29,6 +29,9 @@ class ViewUserController(ParamAuthorizableController):
     @api
     @authorized
     def GET(self, user_id):
+        if user_id != self.current_user.id:
+            raise web.unauthorized()
+
         logger = LoggingSubscriber(web.ctx.logger)
         view_user = ViewUserWorkflow()
         ret = Future()
