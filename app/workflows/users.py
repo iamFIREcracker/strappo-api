@@ -11,7 +11,11 @@ from strappon.pubsub.users import UserWithIdGetter
 from strappon.pubsub.users import UserWithFacebookIdGetter
 from strappon.pubsub.users import UserWithAcsIdGetter
 from strappon.pubsub.users import UserSerializerPrivate
+from strappon.pubsub.payments import PaymentForPromoCreator
 from strappon.pubsub.perks import DefaultPerksCreator
+from strappon.pubsub.promos import PromoWithNameGetter
+from strappon.pubsub.promos import PromoActivator
+from strappon.pubsub.promos import UserPromoWithUserIdAndPromoIdGetter
 from weblib.forms import describe_invalid_form
 from weblib.pubsub import FacebookProfileGetter
 from weblib.pubsub import FormValidator
@@ -198,3 +202,49 @@ class LoginUserWorkflow(Publisher):
         token_refresher.add_subscriber(logger, TokenRefresherSubscriber())
         token_serializer.add_subscriber(logger, TokenSerializerSubscriber())
         profile_getter.perform(facebook_adapter, facebook_token)
+
+
+class ActivatePromoWorkflow(Publisher):
+    def perform(self, orm, logger, user_id, name, promos_repository,
+                payments_repository):
+        outer = self  # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        promo_getter = PromoWithNameGetter()
+        user_promo_getter = UserPromoWithUserIdAndPromoIdGetter()
+        promo_activator = PromoActivator()
+        payment_creator = PaymentForPromoCreator()
+        promo_future = Future()
+
+        class PromoGetterSubscriber(object):
+            def promo_not_found(self, name):
+                outer.publish('not_found', name)
+
+            def promo_found(self, promo):
+                promo_future.set(promo)
+                user_promo_getter.perform(promos_repository,
+                                          user_id, promo.id)
+
+        class UserPromoGetterSubscriber(object):
+            def user_promo_found(self, user_promo):
+                outer.publish('success')
+
+            def user_promo_not_found(self, user_id, promo_id):
+                promo_activator.perform(promos_repository,
+                                        user_id, promo_id)
+
+        class PromoActivatorSubscriber(object):
+            def user_promo_activated(self, user_promo):
+                orm.add(user_promo)
+                payment_creator.perform(payments_repository,
+                                        user_id, promo_future.get())
+
+        class PaymentsCreatorSubscriber(object):
+            def payment_created(self, payment):
+                orm.add(payment)
+                outer.publish('success')
+
+        promo_getter.add_subscriber(logger, PromoGetterSubscriber())
+        user_promo_getter.add_subscriber(logger, UserPromoGetterSubscriber())
+        promo_activator.add_subscriber(logger, PromoActivatorSubscriber())
+        payment_creator.add_subscriber(logger, PaymentsCreatorSubscriber())
+        promo_getter.perform(promos_repository, name)

@@ -2,11 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import web
+import weblib
 from strappon.repositories.drivers import DriversRepository
 from strappon.repositories.drive_requests import DriveRequestsRepository
 from strappon.repositories.payments import PaymentsRepository
 from strappon.repositories.passengers import PassengersRepository
 from strappon.repositories.perks import PerksRepository
+from strappon.repositories.promos import PromosRepository
 from strappon.repositories.rates import RatesRepository
 from strappon.repositories.users import UsersRepository
 from weblib.adapters.social.facebook import FacebookAdapter
@@ -21,6 +23,7 @@ from app.tasks import NotifyDriversDeactivatedPassengerTask
 from app.tasks import NotifyPassengersDriverDeactivatedTask
 from app.workflows.drivers import DeactivateDriverWorkflow
 from app.workflows.passengers import DeactivatePassengerWorkflow
+from app.workflows.users import ActivatePromoWorkflow
 from app.workflows.users import LoginUserWorkflow
 from app.workflows.users import ViewUserWorkflow
 
@@ -125,3 +128,29 @@ class LoginUserController(ParamAuthorizableController):
                                  web.ctx.default_eligible_passenger_perks,
                                  web.ctx.default_active_passenger_perks)
         return ret.get()
+
+
+class ActivatePromoController(ParamAuthorizableController):
+    @api
+    @authorized
+    def POST(self, user_id):
+        if user_id != self.current_user.id:
+            raise web.unauthorized()
+
+        logger = LoggingSubscriber(web.ctx.logger)
+        activate_promo = ActivatePromoWorkflow()
+
+        class ActivatePromoSubscriber(object):
+            def not_found(self, name):
+                web.ctx.orm.rollback()
+                raise web.notfound()
+
+            def success(self):
+                web.ctx.orm.commit()
+                raise weblib.nocontent()
+
+        activate_promo.add_subscriber(logger, ActivatePromoSubscriber())
+        activate_promo.perform(web.ctx.orm, web.ctx.logger,
+                               self.current_user.id,
+                               web.input(name='').name,
+                               PromosRepository, PaymentsRepository)
