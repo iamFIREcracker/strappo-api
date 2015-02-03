@@ -8,7 +8,7 @@ from strappon.repositories.drive_requests import DriveRequestsRepository
 from strappon.repositories.payments import PaymentsRepository
 from strappon.repositories.passengers import PassengersRepository
 from strappon.repositories.perks import PerksRepository
-from strappon.repositories.promos import PromosRepository
+from strappon.repositories.promo_codes import PromoCodesRepository
 from strappon.repositories.rates import RatesRepository
 from strappon.repositories.users import UsersRepository
 from weblib.adapters.social.facebook import FacebookAdapter
@@ -23,7 +23,7 @@ from app.tasks import NotifyDriversDeactivatedPassengerTask
 from app.tasks import NotifyPassengersDriverDeactivatedTask
 from app.workflows.drivers import DeactivateDriverWorkflow
 from app.workflows.passengers import DeactivatePassengerWorkflow
-from app.workflows.users import ActivatePromoWorkflow
+from app.workflows.users import ActivatePromoCodeWorkflow
 from app.workflows.users import LoginUserWorkflow
 from app.workflows.users import ViewUserWorkflow
 
@@ -130,7 +130,7 @@ class LoginUserController(ParamAuthorizableController):
         return ret.get()
 
 
-class ActivatePromoController(ParamAuthorizableController):
+class ActivatePromoCodeController(ParamAuthorizableController):
     @api
     @authorized
     def POST(self, user_id):
@@ -138,10 +138,10 @@ class ActivatePromoController(ParamAuthorizableController):
             raise web.unauthorized()
 
         logger = LoggingSubscriber(web.ctx.logger)
-        activate_promo = ActivatePromoWorkflow()
+        activate_promo_code = ActivatePromoCodeWorkflow()
         ret = Future()
 
-        class ActivatePromoSubscriber(object):
+        class ActivatePromoCodeSubscriber(object):
             def not_found(self, name):
                 web.ctx.orm.rollback()
                 raise web.notfound()
@@ -152,11 +152,12 @@ class ActivatePromoController(ParamAuthorizableController):
 
             def success(self, blob):
                 web.ctx.orm.commit()
-                ret.set(jsonify(promo=blob))
+                ret.set(jsonify(promo_code=blob))
 
-        activate_promo.add_subscriber(logger, ActivatePromoSubscriber())
-        activate_promo.perform(web.ctx.orm, web.ctx.logger,
-                               self.current_user.id,
-                               web.input(name='').name,
-                               PromosRepository, PaymentsRepository)
+        activate_promo_code.add_subscriber(logger,
+                                           ActivatePromoCodeSubscriber())
+        activate_promo_code.perform(web.ctx.orm, web.ctx.logger,
+                                    self.current_user.id,
+                                    web.input(name='').name,
+                                    PromoCodesRepository, PaymentsRepository)
         return ret.get()

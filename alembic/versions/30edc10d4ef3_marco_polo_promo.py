@@ -13,7 +13,7 @@ down_revision = '1ecc1e5ab38e'
 from datetime import timedelta
 from datetime import datetime as dt
 
-from strappon.repositories.promos import PromosRepository
+from strappon.repositories.promo_codes import PromoCodesRepository
 from weblib.db import create_session
 
 
@@ -22,10 +22,10 @@ def upgrade():
     ### end Alembic commands ###
     eligible_till = dt.utcnow() + timedelta(days=30)
     orm = create_session()
-    marco_polo = PromosRepository.add(name='TUTTIBRIAI15',
-                                      eligible_till=eligible_till,
-                                      active_for=60,
-                                      credits=20)
+    marco_polo = PromoCodesRepository.add(name='TUTTIBRIAI15',
+                                          eligible_till=eligible_till,
+                                          active_for=60,
+                                          credits=20)
     orm.add(marco_polo)
     orm.commit()
 
