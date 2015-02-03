@@ -15,6 +15,7 @@ from strappon.pubsub.payments import PaymentForPromoCreator
 from strappon.pubsub.perks import DefaultPerksCreator
 from strappon.pubsub.promos import PromoWithNameGetter
 from strappon.pubsub.promos import PromoActivator
+from strappon.pubsub.promos import PromoSerializer
 from strappon.pubsub.promos import UserPromoWithUserIdAndPromoIdGetter
 from weblib.forms import describe_invalid_form
 from weblib.pubsub import FacebookProfileGetter
@@ -213,6 +214,7 @@ class ActivatePromoWorkflow(Publisher):
         user_promo_getter = UserPromoWithUserIdAndPromoIdGetter()
         promo_activator = PromoActivator()
         payment_creator = PaymentForPromoCreator()
+        promo_serializer = PromoSerializer()
         promo_future = Future()
 
         class PromoGetterSubscriber(object):
@@ -226,7 +228,7 @@ class ActivatePromoWorkflow(Publisher):
 
         class UserPromoGetterSubscriber(object):
             def user_promo_found(self, user_promo):
-                outer.publish('success')
+                outer.publish('already_activated')
 
             def user_promo_not_found(self, user_id, promo_id):
                 promo_activator.perform(promos_repository,
@@ -241,10 +243,15 @@ class ActivatePromoWorkflow(Publisher):
         class PaymentsCreatorSubscriber(object):
             def payment_created(self, payment):
                 orm.add(payment)
-                outer.publish('success')
+                promo_serializer.perform(promo_future.get())
+
+        class PromoSerializerSubscriber(object):
+            def promo_serialized(self, blob):
+                outer.publish('success', blob)
 
         promo_getter.add_subscriber(logger, PromoGetterSubscriber())
         user_promo_getter.add_subscriber(logger, UserPromoGetterSubscriber())
         promo_activator.add_subscriber(logger, PromoActivatorSubscriber())
         payment_creator.add_subscriber(logger, PaymentsCreatorSubscriber())
+        promo_serializer.add_subscriber(logger, PromoSerializerSubscriber())
         promo_getter.perform(promos_repository, name)

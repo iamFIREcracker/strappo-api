@@ -139,18 +139,24 @@ class ActivatePromoController(ParamAuthorizableController):
 
         logger = LoggingSubscriber(web.ctx.logger)
         activate_promo = ActivatePromoWorkflow()
+        ret = Future()
 
         class ActivatePromoSubscriber(object):
             def not_found(self, name):
                 web.ctx.orm.rollback()
                 raise web.notfound()
 
-            def success(self):
-                web.ctx.orm.commit()
+            def already_activated(self):
+                web.ctx.orm.rollback()
                 raise weblib.nocontent()
+
+            def success(self, blob):
+                web.ctx.orm.commit()
+                ret.set(jsonify(promo=blob))
 
         activate_promo.add_subscriber(logger, ActivatePromoSubscriber())
         activate_promo.perform(web.ctx.orm, web.ctx.logger,
                                self.current_user.id,
                                web.input(name='').name,
                                PromosRepository, PaymentsRepository)
+        return ret.get()
