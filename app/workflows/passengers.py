@@ -487,6 +487,8 @@ class AlightPassengerWorkflow(Publisher):
             add_subscriber(logger, ActivePassengerPerksGetterSubscriber())
         fare_calculator.\
             add_subscriber(logger, FareCalculatorSubscriber())
+        credits_getter.add_subscriber(logger,
+                                      CreditsGetterSubscriber())
         fare_creator.add_subscriber(logger, FareCreatorSubscriber())
         active_driver_perks_getter.\
             add_subscriber(logger, ActiveDriverPerksGetterSubscriber())
