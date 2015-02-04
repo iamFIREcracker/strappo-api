@@ -80,6 +80,8 @@ class AddPassengerController(ParamAuthorizableController):
                                       web.ctx.redis,
                                       params,
                                       PassengersRepository,
+                                      PerksRepository,
+                                      PaymentsRepository,
                                       outer.current_user,
                                       NotifyDriversPassengerRegisteredTask)
 
@@ -87,6 +89,13 @@ class AddPassengerController(ParamAuthorizableController):
             def invalid_form(self, errors):
                 web.ctx.orm.rollback()
                 ret.set(jsonify(success=False, errors=errors))
+
+            def credits_not_found(self, credits):
+                web.ctx.orm.rollback()
+                message = web.ctx.gettext('not_enough_minerals',
+                                          lang=outer.current_user.locale)
+                message = message % dict(credits=credits)
+                ret.set(jsonify(success=False, message=message))
 
             def success(self, passenger_id):
                 web.ctx.orm.commit()

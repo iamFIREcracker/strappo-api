@@ -61,3 +61,6 @@ msgstr "Give your first ride by %(valid_until_month)s/%(valid_until_day)s/%(vali
 
 msgid "perk_active_description_driver_early_bird"
 msgstr "You earn 2x until %(valid_until_month)s/%(valid_until_day)s/%(valid_until_year)s!"
+
+msgid "not_enough_minerals"
+msgstr "Not enough minerals (%(credits)s)."
