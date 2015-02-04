@@ -26,6 +26,7 @@ from strappon.pubsub.passengers import UnmatchedPassengersGetter
 from strappon.pubsub.payments import ReimbursementCalculator
 from strappon.pubsub.payments import ReimbursementCreator
 from strappon.pubsub.payments import FareCalculator
+from strappon.pubsub.payments import FareCreator
 from strappon.pubsub.payments import CreditsByUserIdGetter
 from strappon.pubsub.payments import CreditsReserver
 from strappon.pubsub.perks import ActiveDriverPerksGetter
@@ -348,6 +349,9 @@ class AlightPassengerWorkflow(Publisher):
         passengers_deactivator = MultiplePassengersDeactivator()
         accepted_requests_filter = AcceptedDriveRequestsFilter()
         rate_creator = RateCreator()
+        active_passenger_perks_getter = ActivePassengerPerksGetter()
+        fare_calculator = FareCalculator()
+        fare_creator = FareCreator()
         active_driver_perks_getter = ActiveDriverPerksGetter()
         reimbursement_calculator = ReimbursementCalculator()
         reimbursement_creator = ReimbursementCreator()
@@ -356,7 +360,6 @@ class AlightPassengerWorkflow(Publisher):
         task_submitter = TaskSubmitter()
         stars_future = Future()
         requests_future = Future()
-        reimbursement_future = Future()
 
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
@@ -400,6 +403,30 @@ class AlightPassengerWorkflow(Publisher):
         class RateCreatorSubscriber(object):
             def rate_created(self, rate):
                 orm.add(rate)
+                active_passenger_perks_getter.\
+                    perform(perks_repository,
+                            requests_future.get()[0].passenger.user.id)
+
+        class ActivePassengerPerksGetterSubscriber(object):
+            def active_passenger_perks_found(self, passenger_perks):
+                requests = requests_future.get()
+                fare_calculator.\
+                    perform(passenger_perks[0].perk.fixed_rate,
+                            passenger_perks[0].perk.multiplier,
+                            requests[0].passenger.seats,
+                            requests[0].passenger.distance)
+
+        class FareCalculatorSubscriber(object):
+            def fare_calculated(self, credits_):
+                requests = requests_future.get()
+                fare_creator.perform(payments_repository,
+                                     requests[0].id,
+                                     requests[0].passenger.user.id,
+                                     credits_)
+
+        class FareCreatorSubscriber(object):
+            def fare_created(self, payment):
+                orm.add(payment)
                 active_driver_perks_getter.\
                     perform(perks_repository,
                             requests_future.get()[0].driver.user.id)
@@ -415,12 +442,11 @@ class AlightPassengerWorkflow(Publisher):
 
         class ReimbursementCalculatorSubscriber(object):
             def reimbursement_calculated(self, credits_):
-                reimbursement_future.set(credits_)
                 requests = requests_future.get()
                 reimbursement_creator.perform(payments_repository,
                                               requests[0].id,
                                               requests[0].driver.user.id,
-                                              reimbursement_future.get())
+                                              credits_)
 
         class ReimbursementCreatorSubscriber(object):
             def reimbursement_created(self, payment):
@@ -449,6 +475,11 @@ class AlightPassengerWorkflow(Publisher):
         accepted_requests_filter.\
             add_subscriber(logger, AcceptedDriveRequestsFilterSubscriber())
         rate_creator.add_subscriber(logger, RateCreatorSubscriber())
+        active_passenger_perks_getter.\
+            add_subscriber(logger, ActivePassengerPerksGetterSubscriber())
+        fare_calculator.\
+            add_subscriber(logger, FareCalculatorSubscriber())
+        fare_creator.add_subscriber(logger, FareCreatorSubscriber())
         active_driver_perks_getter.\
             add_subscriber(logger, ActiveDriverPerksGetterSubscriber())
         reimbursement_calculator.\
