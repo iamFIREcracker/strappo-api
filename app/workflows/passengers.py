@@ -351,6 +351,7 @@ class AlightPassengerWorkflow(Publisher):
         rate_creator = RateCreator()
         active_passenger_perks_getter = ActivePassengerPerksGetter()
         fare_calculator = FareCalculator()
+        credits_getter = CreditsByUserIdGetter()
         fare_creator = FareCreator()
         active_driver_perks_getter = ActiveDriverPerksGetter()
         reimbursement_calculator = ReimbursementCalculator()
@@ -360,6 +361,7 @@ class AlightPassengerWorkflow(Publisher):
         task_submitter = TaskSubmitter()
         stars_future = Future()
         requests_future = Future()
+        fare_future = Future()
 
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
@@ -418,15 +420,21 @@ class AlightPassengerWorkflow(Publisher):
 
         class FareCalculatorSubscriber(object):
             def fare_calculated(self, credits_):
+                fare_future.set(credits_)
+                credits_getter.perform(payments_repository, user.id)
+
+        class CreditsGetterSubscriber(object):
+            def credits_found(self, credits):
                 requests = requests_future.get()
                 fare_creator.perform(payments_repository,
                                      requests[0].id,
                                      requests[0].passenger.user.id,
-                                     credits_)
+                                     credits,
+                                     fare_future.get())
 
         class FareCreatorSubscriber(object):
-            def fare_created(self, payment):
-                orm.add(payment)
+            def payments_created(self, payments):
+                orm.add_all(payments)
                 active_driver_perks_getter.\
                     perform(perks_repository,
                             requests_future.get()[0].driver.user.id)
@@ -449,8 +457,8 @@ class AlightPassengerWorkflow(Publisher):
                                               credits_)
 
         class ReimbursementCreatorSubscriber(object):
-            def reimbursement_created(self, payment):
-                orm.add(payment)
+            def payments_created(self, payments):
+                orm.add_all(payments)
                 requests_deactivator.perform(requests_future.get())
 
         class DriveRequestsDeactivatorSubscriber(object):
