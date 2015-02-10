@@ -16,6 +16,7 @@ from datetime import timedelta
 from alembic import op
 from strappon.models import Base
 from strappon.models import User
+from strappon.repositories.payments import PaymentsRepository
 from strappon.repositories.promo_codes import PromoCodesRepository
 from weblib.db import create_session
 
@@ -29,11 +30,16 @@ def upgrade():
                                      eligible_till=eligible_till,
                                      active_for=60,
                                      credits=10)
-    print promo
     orm.add(promo)
     for u in Base.session.query(User.id):
         orm.add(PromoCodesRepository.activate_promo_code(u[0],
                                                          promo.id))
+        orm.add(PaymentsRepository.add(None,
+                                       None,
+                                       u[0],
+                                       0,
+                                       promo.credits,
+                                       promo.id))
     orm.commit()
 
 

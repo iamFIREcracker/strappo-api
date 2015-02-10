@@ -72,7 +72,8 @@ class LoginUserWorkflow(Publisher):
                 facebook_token, locale, perks_repository,
                 eligible_driver_perks, active_driver_perks,
                 eligible_passenger_perks, active_passenger_perks,
-                promo_codes_repository, default_promo_code_id):
+                promo_codes_repository, default_promo_code,
+                payments_repository):
         outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         profile_getter = FacebookProfileGetter()
@@ -82,6 +83,7 @@ class LoginUserWorkflow(Publisher):
         user_creator = UserCreator()
         default_perks_creator = DefaultPerksCreator()
         promo_code_activator = PromoCodeActivator()
+        payment_creator = PaymentForPromoCodeCreator()
         user_updater = UserUpdater()
         token_refresher = TokenRefresher()
         token_serializer = TokenSerializer()
@@ -178,11 +180,18 @@ class LoginUserWorkflow(Publisher):
                 orm.add_all(perks)
                 promo_code_activator.perform(promo_codes_repository,
                                              user_future.get().id,
-                                             default_promo_code_id)
+                                             default_promo_code.id)
 
         class PromoCodeActivatorSubscriber(object):
             def user_promo_code_activated(self, user_promo_code):
                 orm.add(user_promo_code)
+                payment_creator.perform(payments_repository,
+                                        user_future.get().id,
+                                        default_promo_code)
+
+        class PaymentsCreatorSubscriber(object):
+            def payment_created(self, payment):
+                orm.add(payment)
                 token_refresher.perform(users_repository, user_future.get().id)
 
         class UserUpdaterSubscriber(object):
@@ -211,6 +220,7 @@ class LoginUserWorkflow(Publisher):
                                              DefaultPerksCreatorSubscriber())
         promo_code_activator.add_subscriber(logger,
                                             PromoCodeActivatorSubscriber())
+        payment_creator.add_subscriber(logger, PaymentsCreatorSubscriber())
         user_updater.add_subscriber(logger, UserUpdaterSubscriber())
         token_refresher.add_subscriber(logger, TokenRefresherSubscriber())
         token_serializer.add_subscriber(logger, TokenSerializerSubscriber())

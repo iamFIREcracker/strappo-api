@@ -128,7 +128,8 @@ class LoginUserController(ParamAuthorizableController):
                                  web.ctx.default_eligible_passenger_perks,
                                  web.ctx.default_active_passenger_perks,
                                  PromoCodesRepository,
-                                 web.ctx.default_promo_code.id)
+                                 web.ctx.default_promo_code,
+                                 PaymentsRepository)
         return ret.get()
 
 
