@@ -126,7 +126,9 @@ class LoginUserController(ParamAuthorizableController):
                                  web.ctx.default_eligible_driver_perks,
                                  web.ctx.default_active_driver_perks,
                                  web.ctx.default_eligible_passenger_perks,
-                                 web.ctx.default_active_passenger_perks)
+                                 web.ctx.default_active_passenger_perks,
+                                 PromoCodesRepository,
+                                 web.ctx.default_promo_code.id)
         return ret.get()
 
 
