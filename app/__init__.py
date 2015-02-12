@@ -62,8 +62,7 @@ def app_factory():
     app.add_processor(load_and_manage_orm(weblib.db.create_session()))
 
     app.add_processor(web.loadhook(load_dict(
-        default_eligible_driver_perks=PerksRepository.
-        driver_perks_with_names(PerksRepository.EARLY_BIRD_DRIVER_NAME),
+        default_eligible_driver_perks=[],
         default_active_driver_perks=PerksRepository.
         driver_perks_with_names(PerksRepository.STANDARD_DRIVER_NAME),
         default_eligible_passenger_perks=[],
