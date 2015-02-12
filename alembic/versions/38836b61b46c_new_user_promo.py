@@ -29,7 +29,7 @@ def upgrade():
     promo = PromoCodesRepository.add(name=PromoCodesRepository.NEW_USER,
                                      eligible_till=eligible_till,
                                      active_for=60,
-                                     credits=10)
+                                     credits=5)
     orm.add(promo)
     for u in Base.session.query(User.id):
         orm.add(PromoCodesRepository.activate_promo_code(u[0],
