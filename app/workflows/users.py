@@ -11,7 +11,13 @@ from strappon.pubsub.users import UserWithIdGetter
 from strappon.pubsub.users import UserWithFacebookIdGetter
 from strappon.pubsub.users import UserWithAcsIdGetter
 from strappon.pubsub.users import UserSerializerPrivate
+from strappon.pubsub.payments import PaymentForPromoCodeCreator
 from strappon.pubsub.perks import DefaultPerksCreator
+from strappon.pubsub.promo_codes import PromoCodeWithNameGetter
+from strappon.pubsub.promo_codes import PromoCodeActivator
+from strappon.pubsub.promo_codes import PromoCodeSerializer
+from strappon.pubsub.promo_codes import \
+    UserPromoCodeWithUserIdAndPromoCodeIdGetter
 from weblib.forms import describe_invalid_form
 from weblib.pubsub import FacebookProfileGetter
 from weblib.pubsub import FormValidator
@@ -65,7 +71,9 @@ class LoginUserWorkflow(Publisher):
     def perform(self, orm, logger, users_repository, acs_id, facebook_adapter,
                 facebook_token, locale, perks_repository,
                 eligible_driver_perks, active_driver_perks,
-                eligible_passenger_perks, active_passenger_perks):
+                eligible_passenger_perks, active_passenger_perks,
+                promo_codes_repository, default_promo_code,
+                payments_repository):
         outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         profile_getter = FacebookProfileGetter()
@@ -74,6 +82,8 @@ class LoginUserWorkflow(Publisher):
         user_with_acs_id_getter = UserWithAcsIdGetter()
         user_creator = UserCreator()
         default_perks_creator = DefaultPerksCreator()
+        promo_code_activator = PromoCodeActivator()
+        payment_creator = PaymentForPromoCodeCreator()
         user_updater = UserUpdater()
         token_refresher = TokenRefresher()
         token_serializer = TokenSerializer()
@@ -168,6 +178,20 @@ class LoginUserWorkflow(Publisher):
         class DefaultPerksCreatorSubscriber(object):
             def perks_created(self, perks):
                 orm.add_all(perks)
+                promo_code_activator.perform(promo_codes_repository,
+                                             user_future.get().id,
+                                             default_promo_code.id)
+
+        class PromoCodeActivatorSubscriber(object):
+            def user_promo_code_activated(self, user_promo_code):
+                orm.add(user_promo_code)
+                payment_creator.perform(payments_repository,
+                                        user_future.get().id,
+                                        default_promo_code)
+
+        class PaymentsCreatorSubscriber(object):
+            def payment_created(self, payment):
+                orm.add(payment)
                 token_refresher.perform(users_repository, user_future.get().id)
 
         class UserUpdaterSubscriber(object):
@@ -194,7 +218,66 @@ class LoginUserWorkflow(Publisher):
         user_creator.add_subscriber(logger, UserCreatorSubscriber())
         default_perks_creator.add_subscriber(logger,
                                              DefaultPerksCreatorSubscriber())
+        promo_code_activator.add_subscriber(logger,
+                                            PromoCodeActivatorSubscriber())
+        payment_creator.add_subscriber(logger, PaymentsCreatorSubscriber())
         user_updater.add_subscriber(logger, UserUpdaterSubscriber())
         token_refresher.add_subscriber(logger, TokenRefresherSubscriber())
         token_serializer.add_subscriber(logger, TokenSerializerSubscriber())
         profile_getter.perform(facebook_adapter, facebook_token)
+
+
+class ActivatePromoCodeWorkflow(Publisher):
+    def perform(self, orm, logger, user_id, name, promo_codes_repository,
+                payments_repository):
+        outer = self  # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        promo_code_getter = PromoCodeWithNameGetter()
+        user_promo_code_getter = UserPromoCodeWithUserIdAndPromoCodeIdGetter()
+        promo_code_activator = PromoCodeActivator()
+        payment_creator = PaymentForPromoCodeCreator()
+        promo_code_serializer = PromoCodeSerializer()
+        promo_code_future = Future()
+
+        class PromoCodeGetterSubscriber(object):
+            def promo_code_not_found(self, name):
+                outer.publish('not_found', name)
+
+            def promo_code_found(self, promo_code):
+                promo_code_future.set(promo_code)
+                user_promo_code_getter.perform(promo_codes_repository,
+                                               user_id, promo_code.id)
+
+        class UserPromoCodeGetterSubscriber(object):
+            def user_promo_code_found(self, user_promo_code):
+                outer.publish('already_activated')
+
+            def user_promo_code_not_found(self, user_id, promo_code_id):
+                promo_code_activator.perform(promo_codes_repository,
+                                             user_id, promo_code_id)
+
+        class PromoCodeActivatorSubscriber(object):
+            def user_promo_code_activated(self, user_promo_code):
+                orm.add(user_promo_code)
+                payment_creator.perform(payments_repository,
+                                        user_id, promo_code_future.get())
+
+        class PaymentsCreatorSubscriber(object):
+            def payment_created(self, payment):
+                orm.add(payment)
+                promo_code_serializer.perform(promo_code_future.get())
+
+        class PromoCodeSerializerSubscriber(object):
+            def promo_code_serialized(self, blob):
+                outer.publish('success', blob)
+
+        promo_code_getter.add_subscriber(logger,
+                                         PromoCodeGetterSubscriber())
+        user_promo_code_getter.add_subscriber(logger,
+                                              UserPromoCodeGetterSubscriber())
+        promo_code_activator.add_subscriber(logger,
+                                            PromoCodeActivatorSubscriber())
+        payment_creator.add_subscriber(logger, PaymentsCreatorSubscriber())
+        promo_code_serializer.add_subscriber(logger,
+                                             PromoCodeSerializerSubscriber())
+        promo_code_getter.perform(promo_codes_repository, name)

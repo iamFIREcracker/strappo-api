@@ -140,6 +140,18 @@ loop() {
             data="$data&facebook_token=${FACEBOOKTOKEN}"
             gimmeurjson ${SERVER}/1/users/login POST "$data"
             ;;
+        a)
+            shift
+            case $1 in
+            pc)
+                data="token=${TOKENID}"
+                data="$data&name=TUTTIBRIAI15"
+                gimmeurjson ${SERVER}/1/users/${USERID}/activate/promo_code POST "$data"
+                ;;
+            *)
+                wtf
+            esac
+            ;;
         *)
             wtf
         esac

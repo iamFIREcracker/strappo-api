@@ -38,6 +38,7 @@ def app_factory():
     import weblib.redis
     import weblib.logging
     from strappon.repositories.perks import PerksRepository
+    from strappon.repositories.promo_codes import PromoCodesRepository
     from weblib.app_processors import load_logger
     from weblib.app_processors import load_path_url
     from weblib.app_processors import load_render
@@ -61,13 +62,14 @@ def app_factory():
     app.add_processor(load_and_manage_orm(weblib.db.create_session()))
 
     app.add_processor(web.loadhook(load_dict(
-        default_eligible_driver_perks=PerksRepository.
-        driver_perks_with_names(PerksRepository.EARLY_BIRD_DRIVER_NAME),
+        default_eligible_driver_perks=[],
         default_active_driver_perks=PerksRepository.
         driver_perks_with_names(PerksRepository.STANDARD_DRIVER_NAME),
         default_eligible_passenger_perks=[],
         default_active_passenger_perks=PerksRepository.
         passenger_perks_with_names(PerksRepository.STANDARD_PASSENGER_NAME),
+        default_promo_code=PromoCodesRepository.
+        get_promo_code_by_name(PromoCodesRepository.NEW_USER)
     )))
 
     return app
