@@ -175,7 +175,7 @@ loop() {
         a)
             data="token=${TOKENID}"
             data="$data&user_id=${USERID}"
-            gimmeurjson ${SERVER}/1/poi/active GET "$data"
+            gimmeurjson ${SERVER}/1/pois/active GET "$data"
             ;;
         *)
             wtf

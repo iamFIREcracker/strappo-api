@@ -14,7 +14,7 @@ pytz==2014.10
 redis==2.10.3
 requests==2.5.1
 -e .
--e hg+ssh://hg@bitbucket.org/iamFIREcracker/strappon@581713e84e02a9fb8b754a85aaac2eaa664e6eec#egg=strappon-dev
+-e hg+ssh://hg@bitbucket.org/iamFIREcracker/strappon@09a35204c18dd4d3e13c34b6fa414ac144e924b7#egg=strappon-dev
 web.py==0.37
 webassets==0.10.1
 -e hg+ssh://hg@bitbucket.org/iamFIREcracker/weblib@506f7aaa833540747e5558360fe4428bad154a2b#egg=weblib-dev
