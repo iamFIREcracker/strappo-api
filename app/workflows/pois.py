@@ -15,11 +15,11 @@ class ListActivePOISWorkflow(Publisher):
         pois_serializer = POISSerializer()
 
         class POISExtractorSubscriber(object):
-            def poi_extracted(self, pois):
+            def pois_extracted(self, pois):
                 pois_serializer.perform(pois)
 
         class POISSerializerSubscriber(object):
-            def poi_serialized(self, pois):
+            def pois_serialized(self, pois):
                 outer.publish('success', pois)
 
         active_pois_extractor.add_subscriber(logger, POISExtractorSubscriber())
