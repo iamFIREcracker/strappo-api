@@ -169,6 +169,18 @@ loop() {
             wtf
         esac
         ;;
+    po)
+        shift
+        case $1 in
+        a)
+            data="token=${TOKENID}"
+            data="$data&user_id=${USERID}"
+            gimmeurjson ${SERVER}/1/poi/active GET "$data"
+            ;;
+        *)
+            wtf
+        esac
+        ;;
     *)
         wtf
     esac
