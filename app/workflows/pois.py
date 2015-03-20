@@ -8,7 +8,7 @@ from weblib.pubsub import Publisher
 
 
 class ListActivePOISWorkflow(Publisher):
-    def perform(self, logger, pois):
+    def perform(self, logger, localized_gettext, pois):
         outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         active_pois_extractor = ActivePOISExtractor()
@@ -16,7 +16,7 @@ class ListActivePOISWorkflow(Publisher):
 
         class POISExtractorSubscriber(object):
             def pois_extracted(self, pois):
-                pois_serializer.perform(pois)
+                pois_serializer.perform(localized_gettext, pois)
 
         class POISSerializerSubscriber(object):
             def pois_serialized(self, pois):

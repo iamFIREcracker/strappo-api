@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from functools import partial
+
 import web
 from weblib.pubsub import Future
 from weblib.pubsub import LoggingSubscriber
@@ -28,5 +30,8 @@ class ListActivePOISController(ParamAuthorizableController):
                 ret.set(jsonify(pois=blob))
 
         list_pois.add_subscriber(logger, ListActivePOISSubscriber())
-        list_pois.perform(web.ctx.logger, web.config.APP_POIS)
+        list_pois.perform(web.ctx.logger,
+                          partial(web.ctx.gettext,
+                                  lang=self.current_user.locale),
+                          web.config.APP_POIS)
         return ret.get()
