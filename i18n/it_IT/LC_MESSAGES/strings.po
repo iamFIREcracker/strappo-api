@@ -64,3 +64,6 @@ msgstr "Guadagni il doppio fino al %(valid_until_day)s/%(valid_until_month)s/%(v
 
 msgid "not_enough_minerals"
 msgstr "Non hai abbastanza minerali (%(credits)s)."
+
+msgid "poi_info_event"
+msgstr "Evento"

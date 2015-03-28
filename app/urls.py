@@ -18,6 +18,7 @@ from app.controllers.passengers import AlightPassengerController
 from app.controllers.passengers import CancelDriveRequestController
 from app.controllers.passengers import DeactivatePassengerController
 from app.controllers.passengers import ListUnmatchedPassengersController
+from app.controllers.pois import ListActivePOISController
 from app.controllers.traces import AddTracesController
 from app.controllers.users import ActivatePromoCodeController
 from app.controllers.users import LoginUserController
@@ -50,6 +51,8 @@ URLS = (
     '/1/drive_requests/unrated', ListUnratedDriveRequestsController,
 
     '/1/traces/add', AddTracesController,
+
+    '/1/pois/active', ListActivePOISController,
 
     '/1/feedbacks/add', AddFeedbackController,
 

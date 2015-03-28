@@ -64,3 +64,6 @@ msgstr "perk_active_description_driver_early_bird"
 
 msgid "not_enough_minerals"
 msgstr "Not enough minerals (%(credits)s)."
+
+msgid "poi_info_event"
+msgstr "Événement"

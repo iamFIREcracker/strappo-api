@@ -64,3 +64,6 @@ msgstr "You earn 2x until %(valid_until_month)s/%(valid_until_day)s/%(valid_unti
 
 msgid "not_enough_minerals"
 msgstr "Not enough minerals (%(credits)s)."
+
+msgid "poi_info_event"
+msgstr "Event"
