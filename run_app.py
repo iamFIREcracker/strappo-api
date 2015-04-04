@@ -11,7 +11,16 @@ app = app_factory()
 
 
 def internalerror():
-    create_logger().exception('Holy shit!')
+    message = '''
+Holy shit!\n
+method: %(method)s
+fullpath: %(fullpath)s
+env: %(env)s
+''' % dict(method=web.ctx.method,
+           fullpath=web.ctx.fullpath,
+           env=web.ctx.environ
+           )
+    create_logger().exception(message)
     raise web.internalerror('Holy shit!')
 app.internalerror = internalerror
 
