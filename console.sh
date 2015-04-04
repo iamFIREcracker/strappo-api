@@ -93,6 +93,10 @@ loop() {
             wtf
         esac
         ;;
+    i)
+        shift
+        gimmeurjson ${SERVER}/1/info GET
+        ;;
     p)
         shift
         case $1 in
