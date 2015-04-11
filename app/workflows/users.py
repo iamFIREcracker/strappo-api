@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from collections import namedtuple
+
 from web.utils import storage
 from strappon.pubsub.users import TokenRefresher
 from strappon.pubsub.users import TokenSerializer
@@ -20,6 +22,7 @@ from strappon.pubsub.promo_codes import \
     UserPromoCodeWithUserIdAndPromoCodeIdGetter
 from weblib.forms import describe_invalid_form
 from weblib.pubsub import FacebookProfileGetter
+from weblib.pubsub import FacebookMutualFriendsGetter
 from weblib.pubsub import FormValidator
 from weblib.pubsub import LoggingSubscriber
 from weblib.pubsub import Publisher
@@ -63,6 +66,35 @@ class ViewUserWorkflow(Publisher):
         user_enricher.add_subscriber(logger, UserEnricherSubscriber())
         user_serializer.add_subscriber(logger, UsersSerializerSubscriber())
         user_getter.perform(users_repository, user_id)
+
+
+class ListMutualFriendsWorkflow(Publisher):
+    def perform(self, logger, redis, users_repository,
+                facebook_adapter, access_token, other_user_id):
+        outer = self  # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        user_getter = UserWithIdGetter()
+        mutual_friends_getter = FacebookMutualFriendsGetter()
+
+        class UserGetterSubscriber(object):
+            def user_not_found(self, user_id):
+                outer.publish('success', dict(total=0, users=[]))
+
+            def user_found(self, user):
+                mutual_friends_getter.perform(facebook_adapter, access_token,
+                                              user.facebook_id)
+
+        class MutualFriendsGetterSubscriber(object):
+            def mutual_friends_not_found(self, error):
+                outer.publish('success', dict(total=0, users=[]))
+
+            def mutual_friends_found(self, mutual_friends):
+                outer.publish('success', mutual_friends)
+
+        user_getter.add_subscriber(logger, UserGetterSubscriber())
+        mutual_friends_getter.add_subscriber(logger,
+                                             MutualFriendsGetterSubscriber())
+        user_getter.perform(users_repository, other_user_id)
 
 
 class LoginUserWorkflow(Publisher):
