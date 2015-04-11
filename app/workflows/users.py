@@ -78,7 +78,8 @@ class ListMutualFriendsWorkflow(Publisher):
 
         class UserGetterSubscriber(object):
             def user_not_found(self, user_id):
-                outer.publish('success', dict(total=0, users=[]))
+                outer.publish('success', dict(data=[],
+                                              summary=dict(total_count=0)))
 
             def user_found(self, user):
                 mutual_friends_getter.perform(facebook_adapter, access_token,
@@ -86,7 +87,8 @@ class ListMutualFriendsWorkflow(Publisher):
 
         class MutualFriendsGetterSubscriber(object):
             def mutual_friends_not_found(self, error):
-                outer.publish('success', dict(total=0, users=[]))
+                outer.publish('success', dict(data=[],
+                                              summary=dict(total_count=0)))
 
             def mutual_friends_found(self, mutual_friends):
                 outer.publish('success', mutual_friends)
