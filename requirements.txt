@@ -13,7 +13,7 @@ oauth2==1.5.211
 pytz==2014.10
 redis==2.10.3
 requests==2.5.1
--e hg+ssh://hg@bitbucket.org/iamFIREcracker/strappo-api@2c02f95c9436799eb93d09843f12cab8cfb8b6f7#egg=strappo_api-develop
+-e .
 -e hg+ssh://hg@bitbucket.org/iamFIREcracker/strappon@2bf389eeb6cf10157998c9beed9334d6f86d29ef#egg=strappon-dev
 web.py==0.37
 webassets==0.10.1
