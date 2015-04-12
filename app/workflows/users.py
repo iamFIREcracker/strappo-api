@@ -70,7 +70,8 @@ class ViewUserWorkflow(Publisher):
 
 class ListMutualFriendsWorkflow(Publisher):
     def perform(self, logger, redis, users_repository,
-                facebook_adapter, access_token, other_user_id):
+                facebook_adapter, app_secret,
+                access_token, other_user_id):
         outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         user_getter = UserWithIdGetter()
@@ -82,7 +83,9 @@ class ListMutualFriendsWorkflow(Publisher):
                                               summary=dict(total_count=0)))
 
             def user_found(self, user):
-                mutual_friends_getter.perform(facebook_adapter, access_token,
+                mutual_friends_getter.perform(facebook_adapter,
+                                              app_secret,
+                                              access_token,
                                               user.facebook_id)
 
         class MutualFriendsGetterSubscriber(object):
