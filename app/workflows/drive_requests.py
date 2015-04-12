@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from strappon.pubsub.drive_requests import ActiveDriveRequestsFilterExtractor
-from strappon.pubsub.drive_requests import ActiveDriveRequestsGetter
 from strappon.pubsub.drive_requests import\
     ActiveDriveRequestsWithDriverIdGetter
 from strappon.pubsub.drive_requests import\
@@ -18,7 +17,6 @@ from strappon.pubsub.drive_requests import DriveRequestCancellorByPassengerId
 from strappon.pubsub.drive_requests import DriveRequestCreator
 from strappon.pubsub.drive_requests import DriveRequestsEnricher
 from strappon.pubsub.drive_requests import DriverDriveRequestsEnricher
-from strappon.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from strappon.pubsub.drive_requests import MultipleDriveRequestsSerializer
 from strappon.pubsub.drivers import DeepDriverWithIdGetter
 from strappon.pubsub.drivers import DriverWithIdGetter
@@ -526,27 +524,3 @@ class AcceptDriveRequestWorkflow(Publisher):
                                           DriveRequestsSerializerSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         passenger_getter.perform(passengers_repository, passenger_id)
-
-
-class DeactivateActiveDriveRequestsWorkflow(Publisher):
-    """Defines a workflow to mark all active drive requests as hidden"""
-
-    def perform(self, logger, orm, repository):
-        outer = self # Handy to access ``self`` from inner classes
-        logger = LoggingSubscriber(logger)
-        requests_getter = ActiveDriveRequestsGetter()
-        requests_deactivator = MultipleDriveRequestsDeactivator()
-
-        class DriveRequestsGetterSubscriber(object):
-            def drive_requests_found(self, requests):
-                requests_deactivator.perform(requests)
-
-        class DriveRequestsDeactivatorSubscriber(object):
-            def drive_requests_hid(self, requests):
-                orm.add_all(requests)
-                outer.publish('success', requests)
-
-        requests_getter.add_subscriber(logger, DriveRequestsGetterSubscriber())
-        requests_deactivator.add_subscriber(logger,
-                                            DriveRequestsDeactivatorSubscriber())
-        requests_getter.perform(repository)
