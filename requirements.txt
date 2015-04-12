@@ -13,9 +13,9 @@ oauth2==1.5.211
 pytz==2014.10
 redis==2.10.3
 requests==2.5.1
--e hg+ssh://hg@bitbucket.org/iamFIREcracker/strappo-api@15d4f3d5831ff737cfab3e2cc56d8afe1a6999b5#egg=strappo_api-develop
--e hg+ssh://hg@bitbucket.org/iamFIREcracker/strappon@6830f6ba224ec7750c89c02fc676f29c41ab32a8#egg=strappon-dev
+-e hg+ssh://hg@bitbucket.org/iamFIREcracker/strappo-api@2c02f95c9436799eb93d09843f12cab8cfb8b6f7#egg=strappo_api-develop
+-e hg+ssh://hg@bitbucket.org/iamFIREcracker/strappon@2bf389eeb6cf10157998c9beed9334d6f86d29ef#egg=strappon-dev
 web.py==0.37
 webassets==0.10.1
--e hg+ssh://hg@bitbucket.org/iamFIREcracker/weblib@5a18f29589265634b1e4d5cd518549f3a419393a#egg=weblib-dev
+-e hg+ssh://hg@bitbucket.org/iamFIREcracker/weblib@9c3d345d9a7be97527095c3e4c1cc80a054399b8#egg=weblib-dev
 wsgiref==0.1.2
