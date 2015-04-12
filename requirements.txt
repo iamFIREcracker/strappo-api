@@ -17,5 +17,5 @@ requests==2.5.1
 -e hg+ssh://hg@bitbucket.org/iamFIREcracker/strappon@6830f6ba224ec7750c89c02fc676f29c41ab32a8#egg=strappon-dev
 web.py==0.37
 webassets==0.10.1
--e hg+ssh://hg@bitbucket.org/iamFIREcracker/weblib@25d8731a21e39490ab9d905612de12ad4c3ad159#egg=weblib-dev
+-e hg+ssh://hg@bitbucket.org/iamFIREcracker/weblib@5298eb1aac460cba6d15e639003f41c22d43d2f0#egg=weblib-dev
 wsgiref==0.1.2
