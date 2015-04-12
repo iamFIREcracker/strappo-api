@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from collections import namedtuple
-
 from web.utils import storage
 from strappon.pubsub.users import TokenRefresher
 from strappon.pubsub.users import TokenSerializer
@@ -20,9 +18,11 @@ from strappon.pubsub.promo_codes import PromoCodeActivator
 from strappon.pubsub.promo_codes import PromoCodeSerializer
 from strappon.pubsub.promo_codes import \
     UserPromoCodeWithUserIdAndPromoCodeIdGetter
+from weblib.adapters.social.facebook import CachedFacebookMutualFriendsGetter
+from weblib.adapters.social.facebook import CachedFacebookMutualFriendsSetter
+from weblib.adapters.social.facebook import FacebookMutualFriendsGetter
+from weblib.adapters.social.facebook import FacebookProfileGetter
 from weblib.forms import describe_invalid_form
-from weblib.pubsub import FacebookProfileGetter
-from weblib.pubsub import FacebookMutualFriendsGetter
 from weblib.pubsub import FormValidator
 from weblib.pubsub import LoggingSubscriber
 from weblib.pubsub import Publisher
@@ -69,24 +69,39 @@ class ViewUserWorkflow(Publisher):
 
 
 class ListMutualFriendsWorkflow(Publisher):
-    def perform(self, logger, redis, users_repository,
+    def perform(self, logger, redis, users_repository, user,
                 facebook_adapter, app_secret,
-                access_token, other_user_id):
+                access_token, other_user_id,
+                cache_expire_seconds):
         outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         user_getter = UserWithIdGetter()
+        cached_mutual_friends_getter = CachedFacebookMutualFriendsGetter()
         mutual_friends_getter = FacebookMutualFriendsGetter()
+        cached_mutual_friends_setter = CachedFacebookMutualFriendsSetter()
+        other_facebook_id_future = Future()
+        mutual_friends_future = Future()
 
         class UserGetterSubscriber(object):
             def user_not_found(self, user_id):
                 outer.publish('success', dict(data=[],
                                               summary=dict(total_count=0)))
 
-            def user_found(self, user):
+            def user_found(self, other_user):
+                other_facebook_id_future.set(other_user.facebook_id)
+                cached_mutual_friends_getter.perform(redis,
+                                                     user.facebook_id,
+                                                     other_user.facebook_id)
+
+        class CachedMutualFriendsGetterSubscriber(object):
+            def cached_mutual_friends_not_found(self, cache_id):
                 mutual_friends_getter.perform(facebook_adapter,
                                               app_secret,
                                               access_token,
-                                              user.facebook_id)
+                                              other_facebook_id_future.get())
+
+            def cached_mutual_friends_found(self, mutual_friends):
+                outer.publish('success', mutual_friends)
 
         class MutualFriendsGetterSubscriber(object):
             def mutual_friends_not_found(self, error):
@@ -94,11 +109,25 @@ class ListMutualFriendsWorkflow(Publisher):
                                               summary=dict(total_count=0)))
 
             def mutual_friends_found(self, mutual_friends):
-                outer.publish('success', mutual_friends)
+                mutual_friends_future.set(mutual_friends)
+                cached_mutual_friends_setter.\
+                    perform(redis,
+                            user.facebook_id,
+                            other_facebook_id_future.get(),
+                            mutual_friends,
+                            cache_expire_seconds)
+
+        class CachedMutualFriendsSetterSubscriber(object):
+            def cached_mutual_friends_set(self, cache_id):
+                outer.publish('success', mutual_friends_future.get())
 
         user_getter.add_subscriber(logger, UserGetterSubscriber())
+        cached_mutual_friends_getter.\
+            add_subscriber(logger, CachedMutualFriendsGetterSubscriber())
         mutual_friends_getter.add_subscriber(logger,
                                              MutualFriendsGetterSubscriber())
+        cached_mutual_friends_setter.\
+            add_subscriber(logger, CachedMutualFriendsSetterSubscriber())
         user_getter.perform(users_repository, other_user_id)
 
 

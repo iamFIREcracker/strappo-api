@@ -153,10 +153,12 @@ class ListMutualFriendsController(ParamAuthorizableController):
         list_mutual_friends.add_subscriber(logger,
                                            ListMutualFriendsSubscriber())
         list_mutual_friends.perform(web.ctx.logger, web.ctx.redis,
-                                    UsersRepository, FacebookAdapter(),
+                                    UsersRepository, self.current_user,
+                                    FacebookAdapter(),
                                     web.config.FACEBOOK_APP_SECRET,
                                     self.current_user.facebook_token,
-                                    data.with_user)
+                                    data.with_user,
+                                    web.config.FACEBOOK_CACHE_EXPIRE_SECONDS)
         return ret.get()
 
 
