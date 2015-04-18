@@ -1,18 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import web
+from weblib import internalerror
 
 from app import app_factory
-from weblib.logging import create_logger
 
 
 app = app_factory()
-
-
-def internalerror():
-    create_logger().exception('Holy shit!')
-    raise web.internalerror('Holy shit!')
-app.internalerror = internalerror
+app.internalerror = internalerror('Holy shit!')
 
 app = app.wsgifunc()

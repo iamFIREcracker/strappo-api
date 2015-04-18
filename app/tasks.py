@@ -59,6 +59,7 @@ def NotifyDriverDriveRequestAccepted(request):
                               'kind': 'matched_passenger',
                               'drive_request': request['id'],
                               'sound': 'default',
+                              'vibrate': True,
                               'icon': 'notificationicon',
                               'alert': alert
                           }))
@@ -100,6 +101,7 @@ def NotifyDriverDriveRequestCancelledByPassengerTask(request):
                               'kind': 'cancelled_drive_request',
                               'passenger': request['passenger']['id'],
                               'sound': 'default',
+                              'vibrate': True,
                               'icon': 'notificationicon',
                               'alert': alert
                           }))
@@ -129,6 +131,7 @@ def NotifyDriversPassengerRegisteredTask(passenger):
             'kind': 'unmatched_passenger',
             'passenger': passenger['id'],
             'sound': 'default',
+            'vibrate': True,
             'icon': 'notificationicon',
             'alert': alert
         })
@@ -172,6 +175,7 @@ def NotifyDriversPassengerAlitTask(requests):
             'kind': 'alighted_passenger',
             'drive_request': requests[0]['id'],
             'sound': 'default',
+            'vibrate': True,
             'icon': 'notificationicon',
             'alert': alert
         })
@@ -216,6 +220,7 @@ def NotifyDriversDeactivatedPassengerTask(requests):
             'kind': 'deactivated_passenger',
             'passenger': requests[0]['passenger']['id'],
             'sound': 'default',
+            'vibrate': True,
             'icon': 'notificationicon',
             'alert': alert
         })
@@ -257,6 +262,7 @@ def NotifyPassengerDriveRequestPending(request):
             'kind': 'pending_drive_request',
             'drive_request': request['id'],
             'sound': 'default',
+            'vibrate': True,
             'icon': 'notificationicon',
             'alert': alert
         })
@@ -303,6 +309,7 @@ def NotifyPassengersDriverDeactivatedTask(requests):
             'kind': 'deactivated_driver',
             'driver': requests[0]['driver']['id'],
             'sound': 'default',
+            'vibrate': True,
             'icon': 'notificationicon',
             'alert': alert
         })
@@ -345,6 +352,7 @@ def NotifyPassengerDriveRequestCancelledTask(request):
             'kind': 'cancelled_drive_request',
             'driver': request['driver']['id'],
             'sound': 'default',
+            'vibrate': True,
             'icon': 'notificationicon',
             'alert': alert
         })
@@ -388,6 +396,7 @@ def NotifyPassengersExpirationTask(passengers):
             'channel': channel,
             'slot': 'expired',
             'sound': 'default',
+            'vibrate': True,
             'icon': 'notificationicon',
             'alert': alert
         })

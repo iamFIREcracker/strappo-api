@@ -8,6 +8,7 @@ from strappon.pubsub import DistanceCalculator
 from strappon.pubsub import PayloadsByUserCreator
 from strappon.pubsub.drive_requests import AcceptedDriveRequestsFilter
 from strappon.pubsub.drive_requests import MultipleDriveRequestsDeactivator
+from strappon.pubsub.drive_requests import MultipleDriveRequestsCancellor
 from strappon.pubsub.drive_requests import MultipleDriveRequestsSerializer
 from strappon.pubsub.notifications import NotificationsResetter
 from strappon.pubsub.passengers import ExpiredPassengersGetter
@@ -285,7 +286,7 @@ class DeactivatePassengerWorkflow(Publisher):
         passenger_getter = ActivePassengerWithIdGetter()
         with_user_id_authorizer = PassengerWithUserIdAuthorizer()
         passengers_deactivator = MultiplePassengersDeactivator()
-        requests_deactivator = MultipleDriveRequestsDeactivator()
+        requests_cancellor = MultipleDriveRequestsCancellor()
         requests_serializer = MultipleDriveRequestsSerializer()
         task_submitter = TaskSubmitter()
 
@@ -307,10 +308,10 @@ class DeactivatePassengerWorkflow(Publisher):
             def passengers_hid(self, passengers):
                 passenger = orm.merge(passengers[0])
                 orm.add(passenger)
-                requests_deactivator.perform(passenger.drive_requests)
+                requests_cancellor.perform(passenger.drive_requests)
 
-        class DriveRequestsDeactivatorSubscriber(object):
-            def drive_requests_hid(self, requests):
+        class DriveRequestsCancellorSubscriber(object):
+            def drive_requests_cancelled(self, requests):
                 orm.add_all(requests)
                 requests_serializer.perform(requests)
 
@@ -327,8 +328,8 @@ class DeactivatePassengerWorkflow(Publisher):
             add_subscriber(logger, WithUserIdAuthorizerSubscriber())
         passengers_deactivator.\
             add_subscriber(logger, PassengersDeactivatorSubscriber())
-        requests_deactivator.\
-            add_subscriber(logger, DriveRequestsDeactivatorSubscriber())
+        requests_cancellor.\
+            add_subscriber(logger, DriveRequestsCancellorSubscriber())
         requests_serializer.add_subscriber(logger,
                                            DriveRequestSerializerSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())

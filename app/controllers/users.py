@@ -24,6 +24,7 @@ from app.tasks import NotifyPassengersDriverDeactivatedTask
 from app.workflows.drivers import DeactivateDriverWorkflow
 from app.workflows.passengers import DeactivatePassengerWorkflow
 from app.workflows.users import ActivatePromoCodeWorkflow
+from app.workflows.users import ListMutualFriendsWorkflow
 from app.workflows.users import LoginUserWorkflow
 from app.workflows.users import ViewUserWorkflow
 
@@ -130,6 +131,34 @@ class LoginUserController(ParamAuthorizableController):
                                  PromoCodesRepository,
                                  web.ctx.default_promo_code,
                                  PaymentsRepository)
+        return ret.get()
+
+
+class ListMutualFriendsController(ParamAuthorizableController):
+    @api
+    @authorized
+    def GET(self, user_id):
+        if user_id != self.current_user.id:
+            raise web.unauthorized()
+
+        data = web.input(with_user=None)
+        logger = LoggingSubscriber(web.ctx.logger)
+        list_mutual_friends = ListMutualFriendsWorkflow()
+        ret = Future()
+
+        class ListMutualFriendsSubscriber(object):
+            def success(self, blob):
+                ret.set(jsonify(mutual_friends=blob))
+
+        list_mutual_friends.add_subscriber(logger,
+                                           ListMutualFriendsSubscriber())
+        list_mutual_friends.perform(web.ctx.logger, web.ctx.redis,
+                                    UsersRepository, self.current_user,
+                                    FacebookAdapter(),
+                                    web.config.FACEBOOK_APP_SECRET,
+                                    self.current_user.facebook_token,
+                                    data.with_user,
+                                    web.config.FACEBOOK_CACHE_EXPIRE_SECONDS)
         return ret.get()
 
 

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
 SERVER=${1:-http://localhost:8080}
-TOKENID='564321ad-0eb8-4398-ad5d-723afa1d0fb7'
+TOKENID='8a575d5d-ca25-4886-906b-3b3505edd2ed'
 USERID='aaf5d3a4-3465-46e8-b356-74cb158231e8'
-ACSID='5429e4d35b6e911769028f8d'
+ACSID='54d7c6e808c91e0942661cb8'
+OTHER_USER_ID='6bbcf285-1be9-4138-a836-9547f1d2082e'
 DRIVERID=''
 PASSENGERID=''
 
@@ -93,6 +94,10 @@ loop() {
             wtf
         esac
         ;;
+    i)
+        shift
+        gimmeurjson ${SERVER}/1/info GET
+        ;;
     p)
         shift
         case $1 in
@@ -151,6 +156,12 @@ loop() {
             *)
                 wtf
             esac
+            ;;
+        mf)
+            shift
+            data="token=${TOKENID}"
+            data="$data&with_user=${OTHER_USER_ID}"
+            gimmeurjson ${SERVER}/1/users/${USERID}/mutual_friends GET "$data"
             ;;
         *)
             wtf
