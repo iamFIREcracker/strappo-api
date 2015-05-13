@@ -18,16 +18,20 @@ from strappon.pubsub.promo_codes import PromoCodeActivator
 from strappon.pubsub.promo_codes import PromoCodeSerializer
 from strappon.pubsub.promo_codes import \
     UserPromoCodeWithUserIdAndPromoCodeIdGetter
+from strappon.pubsub.positions import ClosestRegionGetter
+from strappon.pubsub.positions import PositionCreator
 from weblib.adapters.social.facebook import CachedFacebookMutualFriendsGetter
 from weblib.adapters.social.facebook import CachedFacebookMutualFriendsSetter
 from weblib.adapters.social.facebook import FacebookMutualFriendsGetter
 from weblib.adapters.social.facebook import FacebookProfileGetter
 from weblib.forms import describe_invalid_form
+from weblib.forms import describe_invalid_form_localized
 from weblib.pubsub import FormValidator
 from weblib.pubsub import LoggingSubscriber
 from weblib.pubsub import Publisher
 from weblib.pubsub import Future
 
+import app.forms.positions as position_forms
 import app.forms.users as user_forms
 
 
@@ -350,3 +354,48 @@ class ActivatePromoCodeWorkflow(Publisher):
         promo_code_serializer.add_subscriber(logger,
                                              PromoCodeSerializerSubscriber())
         promo_code_getter.perform(promo_codes_repository, name)
+
+
+class UpdatePositionWorkflow(Publisher):
+    def perform(self, gettext, orm, logger, user, params,
+                positions_repository, served_regions):
+        outer = self  # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        form_validator = FormValidator()
+        region_getter = ClosestRegionGetter()
+        position_creator = PositionCreator()
+        form_future = Future()
+
+        class FormValidatorSubscriber(object):
+            def invalid_form(self, errors):
+                outer.publish('invalid_form',
+                              dict(success=False, errors=errors))
+
+            def valid_form(self, form):
+                form_future.set(form)
+                region_getter.perform(served_regions,
+                                      float(form.d.latitude),
+                                      float(form.d.longitude))
+
+        class RegionGetterSubscriber(object):
+            def region_not_found(self, latitude, longitude):
+                outer.publish('success')
+
+            def region_found(self, region):
+                position_creator.perform(positions_repository,
+                                         user.id,
+                                         region,
+                                         float(form_future.get().d.latitude),
+                                         float(form_future.get().d.longitude))
+
+        class PositionCreatorSubscriber(object):
+            def position_created(self, position):
+                orm.add(position)
+                outer.publish('success')
+
+        form_validator.add_subscriber(logger, FormValidatorSubscriber())
+        region_getter.add_subscriber(logger, RegionGetterSubscriber())
+        position_creator.add_subscriber(logger, PositionCreatorSubscriber())
+        form_validator.perform(position_forms.add(), params,
+                               describe_invalid_form_localized(gettext,
+                                                               user.locale))

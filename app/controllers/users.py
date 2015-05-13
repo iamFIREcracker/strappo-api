@@ -9,6 +9,7 @@ from strappon.repositories.payments import PaymentsRepository
 from strappon.repositories.passengers import PassengersRepository
 from strappon.repositories.perks import PerksRepository
 from strappon.repositories.promo_codes import PromoCodesRepository
+from strappon.repositories.positions import PositionsRepository
 from strappon.repositories.rates import RatesRepository
 from strappon.repositories.users import UsersRepository
 from weblib.adapters.social.facebook import FacebookAdapter
@@ -26,6 +27,7 @@ from app.workflows.passengers import DeactivatePassengerWorkflow
 from app.workflows.users import ActivatePromoCodeWorkflow
 from app.workflows.users import ListMutualFriendsWorkflow
 from app.workflows.users import LoginUserWorkflow
+from app.workflows.users import UpdatePositionWorkflow
 from app.workflows.users import ViewUserWorkflow
 
 
@@ -159,6 +161,36 @@ class ListMutualFriendsController(ParamAuthorizableController):
                                     self.current_user.facebook_token,
                                     data.with_user,
                                     web.config.FACEBOOK_CACHE_EXPIRE_SECONDS)
+        return ret.get()
+
+
+class UpdatePositionController(ParamAuthorizableController):
+    @api
+    @authorized
+    def POST(self, user_id):
+        if user_id != self.current_user.id:
+            raise web.unauthorized()
+
+        logger = LoggingSubscriber(web.ctx.logger)
+        update_position = UpdatePositionWorkflow()
+        ret = Future()
+
+        class UpdatePositionSubscriber(object):
+            def invalid_form(self, blob):
+                web.ctx.orm.rollback()
+                ret.set(jsonify(blob))
+
+            def success(self):
+                web.ctx.orm.commit()
+                raise web.ok()
+
+        update_position.add_subscriber(logger,
+                                       UpdatePositionSubscriber())
+        update_position.perform(web.ctx.gettext, web.ctx.orm, web.ctx.logger,
+                                self.current_user,
+                                web.input(latitude=None, longitude=None),
+                                PositionsRepository,
+                                web.config.APP_SERVED_REGIONS)
         return ret.get()
 
 
