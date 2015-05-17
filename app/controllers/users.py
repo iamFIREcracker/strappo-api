@@ -11,6 +11,7 @@ from strappon.repositories.perks import PerksRepository
 from strappon.repositories.promo_codes import PromoCodesRepository
 from strappon.repositories.positions import PositionsRepository
 from strappon.repositories.rates import RatesRepository
+from strappon.repositories.tokens import TokensRepository
 from strappon.repositories.users import UsersRepository
 from weblib.adapters.social.facebook import FacebookAdapter
 from weblib.pubsub import Future
@@ -132,7 +133,8 @@ class LoginUserController(ParamAuthorizableController):
                                  web.ctx.default_active_passenger_perks,
                                  PromoCodesRepository,
                                  web.ctx.default_promo_code,
-                                 PaymentsRepository)
+                                 PaymentsRepository,
+                                 TokensRepository)
         return ret.get()
 
 

@@ -2,15 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from web.utils import storage
-from strappon.pubsub.users import TokenRefresher
-from strappon.pubsub.users import TokenSerializer
-from strappon.pubsub.users import UserCreator
-from strappon.pubsub.users import UserEnricherPrivate
-from strappon.pubsub.users import UserUpdater
-from strappon.pubsub.users import UserWithIdGetter
-from strappon.pubsub.users import UserWithFacebookIdGetter
-from strappon.pubsub.users import UserWithAcsIdGetter
-from strappon.pubsub.users import UserSerializerPrivate
 from strappon.pubsub.payments import PaymentForPromoCodeCreator
 from strappon.pubsub.perks import DefaultPerksCreator
 from strappon.pubsub.promo_codes import PromoCodeWithNameGetter
@@ -20,6 +11,16 @@ from strappon.pubsub.promo_codes import \
     UserPromoCodeWithUserIdAndPromoCodeIdGetter
 from strappon.pubsub.positions import ClosestRegionGetter
 from strappon.pubsub.positions import PositionCreator
+from strappon.pubsub.tokens import TokenCreator
+from strappon.pubsub.tokens import TokenSerializer
+from strappon.pubsub.tokens import TokensByUserIdGetter
+from strappon.pubsub.users import UserCreator
+from strappon.pubsub.users import UserEnricherPrivate
+from strappon.pubsub.users import UserUpdater
+from strappon.pubsub.users import UserWithIdGetter
+from strappon.pubsub.users import UserWithFacebookIdGetter
+from strappon.pubsub.users import UserWithAcsIdGetter
+from strappon.pubsub.users import UserSerializerPrivate
 from weblib.adapters.social.facebook import CachedFacebookMutualFriendsGetter
 from weblib.adapters.social.facebook import CachedFacebookMutualFriendsSetter
 from weblib.adapters.social.facebook import FacebookMutualFriendsGetter
@@ -143,7 +144,7 @@ class LoginUserWorkflow(Publisher):
                 eligible_driver_perks, active_driver_perks,
                 eligible_passenger_perks, active_passenger_perks,
                 promo_codes_repository, default_promo_code,
-                payments_repository):
+                payments_repository, tokens_repository):
         outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         profile_getter = FacebookProfileGetter()
@@ -155,7 +156,8 @@ class LoginUserWorkflow(Publisher):
         promo_code_activator = PromoCodeActivator()
         payment_creator = PaymentForPromoCodeCreator()
         user_updater = UserUpdater()
-        token_refresher = TokenRefresher()
+        tokens_getter = TokensByUserIdGetter()
+        token_creator = TokenCreator()
         token_serializer = TokenSerializer()
         form_future = Future()
         user_future = Future()
@@ -265,16 +267,22 @@ class LoginUserWorkflow(Publisher):
         class PaymentsCreatorSubscriber(object):
             def payment_created(self, payment):
                 orm.add(payment)
-                token_refresher.perform(users_repository, user_future.get().id)
+                tokens_getter.perform(tokens_repository, user_future.get().id)
 
         class UserUpdaterSubscriber(object):
             def user_updated(self, user):
                 orm.add(user)
                 user_future.set(user)
-                token_refresher.perform(users_repository, user.id)
+                tokens_getter.perform(tokens_repository, user.id)
 
-        class TokenRefresherSubscriber(object):
-            def token_refreshed(self, token):
+        class TokensGettetSubscriber(object):
+            def tokens_found(self, tokens):
+                for t in tokens:
+                    orm.delete(t)
+                token_creator.perform(tokens_repository, user_future.get().id)
+
+        class TokenCreatorSubscriber(object):
+            def token_created(self, token):
                 orm.add(token)
                 token_serializer.perform(token)
 
@@ -295,7 +303,8 @@ class LoginUserWorkflow(Publisher):
                                             PromoCodeActivatorSubscriber())
         payment_creator.add_subscriber(logger, PaymentsCreatorSubscriber())
         user_updater.add_subscriber(logger, UserUpdaterSubscriber())
-        token_refresher.add_subscriber(logger, TokenRefresherSubscriber())
+        tokens_getter.add_subscriber(logger, TokensGettetSubscriber())
+        token_creator.add_subscriber(logger, TokenCreatorSubscriber())
         token_serializer.add_subscriber(logger, TokenSerializerSubscriber())
         profile_getter.perform(facebook_adapter, facebook_token)
 
