@@ -145,7 +145,7 @@ def NotifyDriversPassengerRegisteredTask(passenger):
     notify_drivers.add_subscriber(logging_subscriber,
                                   NotifyDriversSubscriber())
     notify_drivers.perform(logger, DriversRepository, push_adapter, channel,
-                           payload_factory)
+                           payload_factory, passenger['user'])
     return ret.get()
 
 
