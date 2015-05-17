@@ -64,8 +64,7 @@ class ListUnmatchedPassengersWorkflow(Publisher):
 
         class UserRegionExtractorSubscriber(object):
             def region_not_found(self):
-                passengers_getter.perform(passengers_epository,
-                                          user.region)
+                passengers_getter.perform(passengers_epository)
 
             def region_found(self, region):
                 passengers_by_region_getter.perform(passengers_epository,
