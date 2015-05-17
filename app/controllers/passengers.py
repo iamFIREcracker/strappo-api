@@ -47,7 +47,7 @@ class ListUnmatchedPassengersController(ParamAuthorizableController):
         passengers.add_subscriber(logger, ListUnmatchedPassengersSubscriber())
         passengers.perform(web.ctx.logger, PassengersRepository,
                            RatesRepository, PerksRepository,
-                           self.current_user.id)
+                           self.current_user)
         return ret.get()
 
 

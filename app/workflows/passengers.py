@@ -24,6 +24,7 @@ from strappon.pubsub.passengers import PassengersEnricher
 from strappon.pubsub.passengers import PassengerSerializer
 from strappon.pubsub.passengers import PassengerWithUserIdAuthorizer
 from strappon.pubsub.passengers import UnmatchedPassengersGetter
+from strappon.pubsub.passengers import UnmatchedPassengersByRegionGetter
 from strappon.pubsub.payments import ReimbursementCalculator
 from strappon.pubsub.payments import ReimbursementCreator
 from strappon.pubsub.payments import FareCalculator
@@ -33,6 +34,7 @@ from strappon.pubsub.payments import CreditsReserver
 from strappon.pubsub.perks import ActiveDriverPerksGetter
 from strappon.pubsub.perks import ActivePassengerPerksGetter
 from strappon.pubsub.rates import RateCreator
+from strappon.pubsub.users import UserRegionExtractor
 from weblib.forms import describe_invalid_form_localized
 from weblib.pubsub import FormValidator
 from weblib.pubsub import Publisher
@@ -49,20 +51,37 @@ class ListUnmatchedPassengersWorkflow(Publisher):
     """Defines a workflow to view the list of unmatched passengers."""
 
     def perform(self, logger, passengers_epository, rates_repository,
-                perks_repository, user_id):
+                perks_repository, user):
         outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
+        user_region_extractor = UserRegionExtractor()
         passengers_getter = UnmatchedPassengersGetter()
+        passengers_by_region_getter = UnmatchedPassengersByRegionGetter()
         active_driver_perks_getter = ActiveDriverPerksGetter()
         passengers_enricher = PassengersEnricher()
         passengers_serializer = MultiplePassengersSerializer()
         passengers_future = Future()
 
+        class UserRegionExtractorSubscriber(object):
+            def region_not_found(self):
+                passengers_getter.perform(passengers_epository,
+                                          user.region)
+
+            def region_found(self, region):
+                passengers_by_region_getter.perform(passengers_epository,
+                                                    region)
+
         class ActivePassengersGetterSubscriber(object):
             def passengers_found(self, passengers):
                 passengers_future.set(passengers)
                 active_driver_perks_getter.perform(perks_repository,
-                                                   user_id)
+                                                   user.id)
+
+        class ActivePassengersByRegionGetterSubscriber(object):
+            def passengers_found(self, passengers):
+                passengers_future.set(passengers)
+                active_driver_perks_getter.perform(perks_repository,
+                                                   user.id)
 
         class ActiveDriverPerksGetterSubscriber(object):
             def active_driver_perks_found(self, passenger_perks):
@@ -80,15 +99,20 @@ class ListUnmatchedPassengersWorkflow(Publisher):
             def passengers_serialized(self, blob):
                 outer.publish('success', blob)
 
+        user_region_extractor.add_subscriber(logger,
+                                             UserRegionExtractorSubscriber())
         passengers_getter.add_subscriber(logger,
                                          ActivePassengersGetterSubscriber())
+        passengers_by_region_getter.\
+            add_subscriber(logger,
+                           ActivePassengersByRegionGetterSubscriber())
         active_driver_perks_getter.\
             add_subscriber(logger, ActiveDriverPerksGetterSubscriber())
         passengers_enricher.add_subscriber(logger,
                                            PassengersEnricherSubscriber())
         passengers_serializer.add_subscriber(logger,
                                              PassengersSerializerSubscriber())
-        passengers_getter.perform(passengers_epository)
+        user_region_extractor.perform(user)
 
 
 class AddPassengerWorkflow(Publisher):
