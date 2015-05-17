@@ -5,6 +5,7 @@ from datetime import datetime
 
 import web
 import weblib
+from strappon.repositories.drivers import DriversRepository
 from strappon.repositories.drive_requests import DriveRequestsRepository
 from strappon.repositories.passengers import PassengersRepository
 from strappon.repositories.payments import PaymentsRepository
@@ -23,6 +24,8 @@ from app.tasks import NotifyDriverDriveRequestAccepted
 from app.tasks import NotifyDriversPassengerRegisteredTask
 from app.tasks import NotifyDriversPassengerAlitTask
 from app.tasks import NotifyDriversDeactivatedPassengerTask
+from app.tasks import NotifyPassengersDriverDeactivatedTask
+from app.workflows.drivers import DeactivateDriverWorkflow
 from app.workflows.passengers import AddPassengerWorkflow
 from app.workflows.passengers import AlightPassengerWorkflow
 from app.workflows.passengers import CalculateFareWorkflow
@@ -60,13 +63,27 @@ class AddPassengerController(ParamAuthorizableController):
     @authorized
     def POST(self):
         outer = self
+        driver_id = self.current_user.active_driver.id \
+            if self.current_user.active_driver is not None else None
         passenger_id = self.current_user.active_passenger.id \
             if self.current_user.active_passenger is not None else None
 
         logger = LoggingSubscriber(web.ctx.logger)
+        deactivate_driver = DeactivateDriverWorkflow()
         deactivate_passenger = DeactivatePassengerWorkflow()
         add_passenger = AddPassengerWorkflow()
         ret = Future()
+
+        class DeactivateDriverSubscriber(object):
+            def unauthorized(self):
+                raise web.unauthorized()
+
+            def success(self):
+                deactivate_passenger.\
+                    perform(web.ctx.logger, web.ctx.orm,
+                            PassengersRepository, passenger_id,
+                            outer.current_user,
+                            NotifyDriversDeactivatedPassengerTask)
 
         class DeactivatePassengerSubscriber(object):
             def unauthorized(self):
@@ -102,13 +119,15 @@ class AddPassengerController(ParamAuthorizableController):
                 url = '/1/passengers/%(id)s/view' % dict(id=passenger_id)
                 raise weblib.created(url)
 
+        deactivate_driver.add_subscriber(logger,
+                                         DeactivateDriverSubscriber())
         deactivate_passenger.add_subscriber(logger,
                                             DeactivatePassengerSubscriber())
         add_passenger.add_subscriber(logger, AddPassengerSubscriber())
-        deactivate_passenger.perform(web.ctx.logger, web.ctx.orm,
-                                     PassengersRepository, passenger_id,
-                                     self.current_user,
-                                     NotifyDriversDeactivatedPassengerTask)
+        deactivate_driver.perform(web.ctx.logger, web.ctx.orm,
+                                  DriversRepository, driver_id,
+                                  outer.current_user,
+                                  NotifyPassengersDriverDeactivatedTask)
         return ret.get()
 
 
