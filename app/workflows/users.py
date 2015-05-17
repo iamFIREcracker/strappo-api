@@ -10,6 +10,8 @@ from strappon.pubsub.promo_codes import PromoCodeSerializer
 from strappon.pubsub.promo_codes import \
     UserPromoCodeWithUserIdAndPromoCodeIdGetter
 from strappon.pubsub.positions import ClosestRegionGetter
+from strappon.pubsub.positions import MultiplePositionsArchiver
+from strappon.pubsub.positions import PositionsByUserIdGetter
 from strappon.pubsub.positions import PositionCreator
 from strappon.pubsub.tokens import TokenCreator
 from strappon.pubsub.tokens import TokenSerializer
@@ -372,8 +374,11 @@ class UpdatePositionWorkflow(Publisher):
         logger = LoggingSubscriber(logger)
         form_validator = FormValidator()
         region_getter = ClosestRegionGetter()
+        positions_getter = PositionsByUserIdGetter()
+        positions_archiver = MultiplePositionsArchiver()
         position_creator = PositionCreator()
         form_future = Future()
+        region_future = Future()
 
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
@@ -391,9 +396,20 @@ class UpdatePositionWorkflow(Publisher):
                 outer.publish('success')
 
             def region_found(self, region):
+                region_future.set(region)
+                positions_getter.perform(positions_repository,
+                                         user.id)
+
+        class PositionsGetterSubscriber(object):
+            def positions_found(self, positions):
+                positions_archiver.perform(positions)
+
+        class PositionsArchiverSubscriber(object):
+            def positions_archived(self, positions):
+                orm.add_all(positions)
                 position_creator.perform(positions_repository,
                                          user.id,
-                                         region,
+                                         region_future.get(),
                                          float(form_future.get().d.latitude),
                                          float(form_future.get().d.longitude))
 
@@ -404,6 +420,9 @@ class UpdatePositionWorkflow(Publisher):
 
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
         region_getter.add_subscriber(logger, RegionGetterSubscriber())
+        positions_getter.add_subscriber(logger, PositionsGetterSubscriber())
+        positions_archiver.add_subscriber(logger,
+                                          PositionsArchiverSubscriber())
         position_creator.add_subscriber(logger, PositionCreatorSubscriber())
         form_validator.perform(position_forms.add(), params,
                                describe_invalid_form_localized(gettext,
