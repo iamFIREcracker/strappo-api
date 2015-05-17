@@ -21,7 +21,7 @@ from strappon.pubsub.passengers import PassengersACSUserIdExtractor
 from strappon.pubsub.passengers import PassengerCreator
 from strappon.pubsub.passengers import PassengerCopier
 from strappon.pubsub.passengers import PassengersEnricher
-from strappon.pubsub.passengers import PassengerSerializer
+from strappon.pubsub.passengers import PassengerWithRegionSerializer
 from strappon.pubsub.passengers import PassengerWithUserIdAuthorizer
 from strappon.pubsub.passengers import UnmatchedPassengersGetter
 from strappon.pubsub.passengers import UnmatchedPassengersByRegionGetter
@@ -130,7 +130,7 @@ class AddPassengerWorkflow(Publisher):
         credits_reserver = CreditsReserver()
         passenger_creator = PassengerCreator()
         passenger_copier = PassengerCopier()
-        passenger_serializer = PassengerSerializer()
+        passenger_serializer = PassengerWithRegionSerializer()
         notifications_resetter = NotificationsResetter()
         task_submitter = TaskSubmitter()
         form_data_future = Future()
