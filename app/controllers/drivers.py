@@ -21,11 +21,13 @@ from app.controllers import ParamAuthorizableController
 from app.tasks import NotifyPassengerDriveRequestPending
 from app.tasks import NotifyPassengerDriveRequestCancelledTask
 from app.tasks import NotifyPassengersDriverDeactivatedTask
+from app.tasks import NotifyDriversDeactivatedPassengerTask
 from app.workflows.drivers import AddDriverWorkflow
 from app.workflows.drivers import DeactivateDriverWorkflow
 from app.workflows.drivers import RateDriveRequestWorkflow
 from app.workflows.drive_requests import AddDriveRequestWorkflow
 from app.workflows.drive_requests import CancelDriveOfferWorkflow
+from app.workflows.passengers import DeactivatePassengerWorkflow
 
 
 class AddDriverController(ParamAuthorizableController):
@@ -33,17 +35,32 @@ class AddDriverController(ParamAuthorizableController):
     @authorized
     def POST(self):
         outer = self
+        passenger_id = self.current_user.active_passenger.id \
+            if self.current_user.active_passenger is not None else None
         driver_id = self.current_user.active_driver.id \
             if self.current_user.active_driver is not None else None
 
         logger = LoggingSubscriber(web.ctx.logger)
+        deactivate_passenger = DeactivatePassengerWorkflow()
         deactivate_driver = DeactivateDriverWorkflow()
         add_driver = AddDriverWorkflow()
         ret = Future()
 
+        class DeactivatePassengerSubscriber(object):
+            def unauthorized(self):
+                raise web.unauthorized()
+
+            def success(self):
+                deactivate_driver.\
+                    perform(web.ctx.logger, web.ctx.orm,
+                            DriversRepository, driver_id,
+                            outer.current_user,
+                            NotifyPassengersDriverDeactivatedTask)
+
         class DeactivateDriverSubscriber(object):
             def unauthorized(self):
                 raise web.unauthorized()
+
             def success(self):
                 add_driver.perform(web.ctx.gettext, web.ctx.orm,
                                    web.ctx.logger,
@@ -55,18 +72,21 @@ class AddDriverController(ParamAuthorizableController):
             def invalid_form(self, errors):
                 web.ctx.orm.rollback()
                 ret.set(jsonify(success=False, errors=errors))
+
             def success(self, driver_id):
                 web.ctx.orm.commit()
                 url = '/1/drivers/%(id)s/view' % dict(id=driver_id)
                 raise weblib.created(url)
 
+        deactivate_passenger.add_subscriber(logger,
+                                            DeactivatePassengerSubscriber())
         deactivate_driver.add_subscriber(logger,
                                          DeactivateDriverSubscriber())
         add_driver.add_subscriber(logger, AddDriverSubscriber())
-        deactivate_driver.perform(web.ctx.logger, web.ctx.orm,
-                                  DriversRepository, driver_id,
-                                  self.current_user,
-                                  NotifyPassengersDriverDeactivatedTask)
+        deactivate_passenger.perform(web.ctx.logger, web.ctx.orm,
+                                     PassengersRepository, passenger_id,
+                                     self.current_user,
+                                     NotifyDriversDeactivatedPassengerTask)
         return ret.get()
 
 

@@ -13,14 +13,14 @@ from strappon.pubsub.drivers import DriverCreator
 from strappon.pubsub.drivers import DriverWithIdGetter
 from strappon.pubsub.drivers import DriversACSUserIdExtractor
 from strappon.pubsub.drivers import DriverWithUserIdAuthorizer
-from strappon.pubsub.drivers import HiddenDriversGetter
 from strappon.pubsub.drivers import MultipleDriversWithIdGetter
 from strappon.pubsub.drivers import MultipleDriversDeactivator
-from strappon.pubsub.drivers import MultipleDriversUnhider
 from strappon.pubsub.drivers import UnhiddenDriversGetter
-from strappon.pubsub.passengers import MultiplePassengersUnmatcher
+from strappon.pubsub.drivers import UnhiddenDriversByRegionGetter
 from strappon.pubsub.notifications import NotificationsResetter
 from strappon.pubsub.rates import RateCreator
+from strappon.pubsub.passengers import MultiplePassengersUnmatcher
+from strappon.pubsub.users import SerializedUserRegionExtractor
 from weblib.forms import describe_invalid_form_localized
 from weblib.pubsub import FormValidator
 from weblib.pubsub import Future
@@ -249,10 +249,12 @@ class NotifyDriversWorkflow(Publisher):
 
 class NotifyAllDriversWorkflow(Publisher):
     def perform(self, logger, repository, push_adapter, channel,
-                payload_factory):
-        outer = self # Handy to access ``self`` from inner classes
+                payload_factory, serialized_user):
+        outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
+        region_extractor = SerializedUserRegionExtractor()
         drivers_getter = UnhiddenDriversGetter()
+        drivers_by_region_getter = UnhiddenDriversByRegionGetter()
         payloads_creator = PayloadsByUserCreator()
         acs_ids_extractor = DriversACSUserIdExtractor()
         acs_session_creator = ACSSessionCreator()
@@ -261,7 +263,20 @@ class NotifyAllDriversWorkflow(Publisher):
         payloads_future = Future()
         user_ids_future = Future()
 
+        class RegionExtractorSubscriber(object):
+            def region_not_found(self):
+                drivers_getter.perform(repository)
+
+            def region_found(self, region):
+                drivers_by_region_getter.perform(repository, region)
+
         class DriversGetterSubscriber(object):
+            def unhidden_drivers_found(self, drivers):
+                drivers_future.set(drivers)
+                payloads_creator.perform(payload_factory,
+                                         [d.user for d in drivers])
+
+        class DriversByRegionGetterSubscriber(object):
             def unhidden_drivers_found(self, drivers):
                 drivers_future.set(drivers)
                 payloads_creator.perform(payload_factory,
@@ -280,6 +295,7 @@ class NotifyAllDriversWorkflow(Publisher):
         class ACSSessionCreatorSubscriber(object):
             def acs_session_not_created(self, error):
                 outer.publish('failure', error)
+
             def acs_session_created(self, session_id):
                 acs_notifier.perform(push_adapter, session_id, channel,
                                      zip(user_ids_future.get(),
@@ -288,40 +304,21 @@ class NotifyAllDriversWorkflow(Publisher):
         class ACSNotifierSubscriber(object):
             def acs_user_ids_not_notified(self, error):
                 outer.publish('failure', error)
+
             def acs_user_ids_notified(self):
                 outer.publish('success')
 
+        region_extractor.add_subscriber(logger, RegionExtractorSubscriber())
         drivers_getter.add_subscriber(logger, DriversGetterSubscriber())
+        drivers_by_region_getter.\
+            add_subscriber(logger, DriversByRegionGetterSubscriber())
         payloads_creator.add_subscriber(logger, PayloadsCreatorSubscriber())
         acs_ids_extractor.add_subscriber(logger,
                                          ACSUserIdsExtractorSubscriber())
         acs_session_creator.add_subscriber(logger,
                                            ACSSessionCreatorSubscriber())
         acs_notifier.add_subscriber(logger, ACSNotifierSubscriber())
-        drivers_getter.perform(repository)
-
-
-class UnhideHiddenDriversWorkflow(Publisher):
-    """Defines a workflow to unhide all the previously hidden drivers."""
-
-    def perform(self, logger, orm, repository):
-        outer = self # Handy to access ``self`` from inner classes
-        logger = LoggingSubscriber(logger)
-        drivers_getter = HiddenDriversGetter()
-        drivers_unhider = MultipleDriversUnhider()
-
-        class DriversGetterSubscriber(object):
-            def hidden_drivers_found(self, drivers):
-                drivers_unhider.perform(drivers)
-
-        class DriversUnhiderSubscriber(object):
-            def drivers_unhid(self, drivers):
-                orm.add_all(drivers)
-                outer.publish('success', drivers)
-
-        drivers_getter.add_subscriber(logger, DriversGetterSubscriber())
-        drivers_unhider.add_subscriber(logger, DriversUnhiderSubscriber())
-        drivers_getter.perform(repository)
+        region_extractor.perform(serialized_user)
 
 
 class RateDriveRequestWorkflow(Publisher):

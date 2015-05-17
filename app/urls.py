@@ -23,6 +23,7 @@ from app.controllers.traces import AddTracesController
 from app.controllers.users import ActivatePromoCodeController
 from app.controllers.users import ListMutualFriendsController
 from app.controllers.users import LoginUserController
+from app.controllers.users import UpdatePositionController
 from app.controllers.users import ViewUserController
 
 
@@ -33,6 +34,7 @@ URLS = (
     '/1/users/(.+)/view', ViewUserController,
     '/1/users/(.+)/activate/promo_code', ActivatePromoCodeController,
     '/1/users/(.+)/mutual_friends', ListMutualFriendsController,
+    '/1/users/(.+)/update/position', UpdatePositionController,
 
     '/1/drivers/add', AddDriverController,
     '/1/drivers/(.+)/deactivate', DeactivateDriverController,

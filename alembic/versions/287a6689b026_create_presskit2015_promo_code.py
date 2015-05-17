@@ -1,14 +1,14 @@
-"""add eggpartyoff promo code
+"""Create PRESSKIT2015 promo code
 
-Revision ID: 38190f6b986e
-Revises: 38836b61b46c
-Create Date: 2015-03-28 15:36:55.201497
+Revision ID: 287a6689b026
+Revises: 1030ec6cfb61
+Create Date: 2015-05-17 18:05:38.161025
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '38190f6b986e'
-down_revision = '38836b61b46c'
+revision = '287a6689b026'
+down_revision = '1030ec6cfb61'
 
 from datetime import timedelta
 from datetime import datetime as dt
@@ -22,11 +22,11 @@ def upgrade():
     ### end Alembic commands ###
     eligible_till = dt.utcnow() + timedelta(days=7)
     orm = create_session()
-    eggoff = PromoCodesRepository.add(name='EGGOFF',
-                                      eligible_till=eligible_till,
-                                      active_for=30,
-                                      credits=5)
-    orm.add(eggoff)
+    presskit2015 = PromoCodesRepository.add(name='PRESSKIT2015',
+                                            eligible_till=eligible_till,
+                                            active_for=30,
+                                            credits=5)
+    orm.add(presskit2015)
     orm.commit()
 
 

@@ -157,6 +157,19 @@ loop() {
                 wtf
             esac
             ;;
+        u)
+            shift
+            case $1 in
+            p)
+                data="token=${TOKENID}"
+                data="$data&latitude=43.8727249"
+                data="$data&longitude=10.250217"
+                gimmeurjson ${SERVER}/1/users/${USERID}/update/position POST "$data"
+                ;;
+            *)
+                wtf
+            esac
+            ;;
         mf)
             shift
             data="token=${TOKENID}"

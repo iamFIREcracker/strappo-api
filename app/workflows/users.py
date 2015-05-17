@@ -2,15 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from web.utils import storage
-from strappon.pubsub.users import TokenRefresher
-from strappon.pubsub.users import TokenSerializer
-from strappon.pubsub.users import UserCreator
-from strappon.pubsub.users import UserEnricherPrivate
-from strappon.pubsub.users import UserUpdater
-from strappon.pubsub.users import UserWithIdGetter
-from strappon.pubsub.users import UserWithFacebookIdGetter
-from strappon.pubsub.users import UserWithAcsIdGetter
-from strappon.pubsub.users import UserSerializerPrivate
 from strappon.pubsub.payments import PaymentForPromoCodeCreator
 from strappon.pubsub.perks import DefaultPerksCreator
 from strappon.pubsub.promo_codes import PromoCodeWithNameGetter
@@ -18,16 +9,32 @@ from strappon.pubsub.promo_codes import PromoCodeActivator
 from strappon.pubsub.promo_codes import PromoCodeSerializer
 from strappon.pubsub.promo_codes import \
     UserPromoCodeWithUserIdAndPromoCodeIdGetter
+from strappon.pubsub.positions import ClosestRegionGetter
+from strappon.pubsub.positions import MultiplePositionsArchiver
+from strappon.pubsub.positions import PositionsByUserIdGetter
+from strappon.pubsub.positions import PositionCreator
+from strappon.pubsub.tokens import TokenCreator
+from strappon.pubsub.tokens import TokenSerializer
+from strappon.pubsub.tokens import TokensByUserIdGetter
+from strappon.pubsub.users import UserCreator
+from strappon.pubsub.users import UserEnricherPrivate
+from strappon.pubsub.users import UserUpdater
+from strappon.pubsub.users import UserWithIdGetter
+from strappon.pubsub.users import UserWithFacebookIdGetter
+from strappon.pubsub.users import UserWithAcsIdGetter
+from strappon.pubsub.users import UserSerializerPrivate
 from weblib.adapters.social.facebook import CachedFacebookMutualFriendsGetter
 from weblib.adapters.social.facebook import CachedFacebookMutualFriendsSetter
 from weblib.adapters.social.facebook import FacebookMutualFriendsGetter
 from weblib.adapters.social.facebook import FacebookProfileGetter
 from weblib.forms import describe_invalid_form
+from weblib.forms import describe_invalid_form_localized
 from weblib.pubsub import FormValidator
 from weblib.pubsub import LoggingSubscriber
 from weblib.pubsub import Publisher
 from weblib.pubsub import Future
 
+import app.forms.positions as position_forms
 import app.forms.users as user_forms
 
 
@@ -139,7 +146,7 @@ class LoginUserWorkflow(Publisher):
                 eligible_driver_perks, active_driver_perks,
                 eligible_passenger_perks, active_passenger_perks,
                 promo_codes_repository, default_promo_code,
-                payments_repository):
+                payments_repository, tokens_repository):
         outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         profile_getter = FacebookProfileGetter()
@@ -151,7 +158,8 @@ class LoginUserWorkflow(Publisher):
         promo_code_activator = PromoCodeActivator()
         payment_creator = PaymentForPromoCodeCreator()
         user_updater = UserUpdater()
-        token_refresher = TokenRefresher()
+        tokens_getter = TokensByUserIdGetter()
+        token_creator = TokenCreator()
         token_serializer = TokenSerializer()
         form_future = Future()
         user_future = Future()
@@ -261,16 +269,22 @@ class LoginUserWorkflow(Publisher):
         class PaymentsCreatorSubscriber(object):
             def payment_created(self, payment):
                 orm.add(payment)
-                token_refresher.perform(users_repository, user_future.get().id)
+                tokens_getter.perform(tokens_repository, user_future.get().id)
 
         class UserUpdaterSubscriber(object):
             def user_updated(self, user):
                 orm.add(user)
                 user_future.set(user)
-                token_refresher.perform(users_repository, user.id)
+                tokens_getter.perform(tokens_repository, user.id)
 
-        class TokenRefresherSubscriber(object):
-            def token_refreshed(self, token):
+        class TokensGettetSubscriber(object):
+            def tokens_found(self, tokens):
+                for t in tokens:
+                    orm.delete(t)
+                token_creator.perform(tokens_repository, user_future.get().id)
+
+        class TokenCreatorSubscriber(object):
+            def token_created(self, token):
                 orm.add(token)
                 token_serializer.perform(token)
 
@@ -291,7 +305,8 @@ class LoginUserWorkflow(Publisher):
                                             PromoCodeActivatorSubscriber())
         payment_creator.add_subscriber(logger, PaymentsCreatorSubscriber())
         user_updater.add_subscriber(logger, UserUpdaterSubscriber())
-        token_refresher.add_subscriber(logger, TokenRefresherSubscriber())
+        tokens_getter.add_subscriber(logger, TokensGettetSubscriber())
+        token_creator.add_subscriber(logger, TokenCreatorSubscriber())
         token_serializer.add_subscriber(logger, TokenSerializerSubscriber())
         profile_getter.perform(facebook_adapter, facebook_token)
 
@@ -350,3 +365,67 @@ class ActivatePromoCodeWorkflow(Publisher):
         promo_code_serializer.add_subscriber(logger,
                                              PromoCodeSerializerSubscriber())
         promo_code_getter.perform(promo_codes_repository, name)
+
+
+class UpdatePositionWorkflow(Publisher):
+    def perform(self, gettext, orm, logger, user, params,
+                positions_repository, served_regions):
+        outer = self  # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        form_validator = FormValidator()
+        region_getter = ClosestRegionGetter()
+        positions_getter = PositionsByUserIdGetter()
+        positions_archiver = MultiplePositionsArchiver()
+        position_creator = PositionCreator()
+        form_future = Future()
+        region_future = Future()
+
+        class FormValidatorSubscriber(object):
+            def invalid_form(self, errors):
+                outer.publish('invalid_form',
+                              dict(success=False, errors=errors))
+
+            def valid_form(self, form):
+                form_future.set(form)
+                region_getter.perform(served_regions,
+                                      float(form.d.latitude),
+                                      float(form.d.longitude))
+
+        class RegionGetterSubscriber(object):
+            def region_not_found(self, latitude, longitude):
+                region_future.set('Unknown')
+                positions_getter.perform(positions_repository,
+                                         user.id)
+
+            def region_found(self, region):
+                region_future.set(region)
+                positions_getter.perform(positions_repository,
+                                         user.id)
+
+        class PositionsGetterSubscriber(object):
+            def positions_found(self, positions):
+                positions_archiver.perform(positions)
+
+        class PositionsArchiverSubscriber(object):
+            def positions_archived(self, positions):
+                orm.add_all(positions)
+                position_creator.perform(positions_repository,
+                                         user.id,
+                                         region_future.get(),
+                                         float(form_future.get().d.latitude),
+                                         float(form_future.get().d.longitude))
+
+        class PositionCreatorSubscriber(object):
+            def position_created(self, position):
+                orm.add(position)
+                outer.publish('success')
+
+        form_validator.add_subscriber(logger, FormValidatorSubscriber())
+        region_getter.add_subscriber(logger, RegionGetterSubscriber())
+        positions_getter.add_subscriber(logger, PositionsGetterSubscriber())
+        positions_archiver.add_subscriber(logger,
+                                          PositionsArchiverSubscriber())
+        position_creator.add_subscriber(logger, PositionCreatorSubscriber())
+        form_validator.perform(position_forms.add(), params,
+                               describe_invalid_form_localized(gettext,
+                                                               user.locale))
