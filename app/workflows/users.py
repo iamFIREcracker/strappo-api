@@ -393,7 +393,9 @@ class UpdatePositionWorkflow(Publisher):
 
         class RegionGetterSubscriber(object):
             def region_not_found(self, latitude, longitude):
-                outer.publish('success')
+                region_future.set('Unknown')
+                positions_getter.perform(positions_repository,
+                                         user.id)
 
             def region_found(self, region):
                 region_future.set(region)
