@@ -13,10 +13,8 @@ from strappon.pubsub.drivers import DriverCreator
 from strappon.pubsub.drivers import DriverWithIdGetter
 from strappon.pubsub.drivers import DriversACSUserIdExtractor
 from strappon.pubsub.drivers import DriverWithUserIdAuthorizer
-from strappon.pubsub.drivers import HiddenDriversGetter
 from strappon.pubsub.drivers import MultipleDriversWithIdGetter
 from strappon.pubsub.drivers import MultipleDriversDeactivator
-from strappon.pubsub.drivers import MultipleDriversUnhider
 from strappon.pubsub.drivers import UnhiddenDriversGetter
 from strappon.pubsub.passengers import MultiplePassengersUnmatcher
 from strappon.pubsub.notifications import NotificationsResetter
@@ -298,29 +296,6 @@ class NotifyAllDriversWorkflow(Publisher):
         acs_session_creator.add_subscriber(logger,
                                            ACSSessionCreatorSubscriber())
         acs_notifier.add_subscriber(logger, ACSNotifierSubscriber())
-        drivers_getter.perform(repository)
-
-
-class UnhideHiddenDriversWorkflow(Publisher):
-    """Defines a workflow to unhide all the previously hidden drivers."""
-
-    def perform(self, logger, orm, repository):
-        outer = self # Handy to access ``self`` from inner classes
-        logger = LoggingSubscriber(logger)
-        drivers_getter = HiddenDriversGetter()
-        drivers_unhider = MultipleDriversUnhider()
-
-        class DriversGetterSubscriber(object):
-            def hidden_drivers_found(self, drivers):
-                drivers_unhider.perform(drivers)
-
-        class DriversUnhiderSubscriber(object):
-            def drivers_unhid(self, drivers):
-                orm.add_all(drivers)
-                outer.publish('success', drivers)
-
-        drivers_getter.add_subscriber(logger, DriversGetterSubscriber())
-        drivers_unhider.add_subscriber(logger, DriversUnhiderSubscriber())
         drivers_getter.perform(repository)
 
 
