@@ -100,6 +100,7 @@ class DeactivateDriverController(ParamAuthorizableController):
         class DeactivateDriverSubscriber(object):
             def unauthorized(self):
                 raise web.unauthorized()
+
             def success(self):
                 web.ctx.orm.commit()
                 raise web.ok()
@@ -123,9 +124,11 @@ class CancelDriveOfferController(ParamAuthorizableController):
             def not_found(self, driver_id):
                 web.ctx.orm.rollback()
                 raise web.notfound()
+
             def unauthorized(self):
                 web.ctx.orm.rollback()
                 raise web.unauthorized()
+
             def success(self):
                 web.ctx.orm.commit()
                 raise weblib.nocontent()
@@ -161,12 +164,15 @@ class AcceptPassengerController(ParamAuthorizableController):
             def invalid_form(self, errors):
                 web.ctx.orm.rollback()
                 ret.set(jsonify(success=False, errors=errors))
+
             def not_found(self, driver_id):
                 web.ctx.orm.rollback()
                 raise web.notfound()
+
             def unauthorized(self):
                 web.ctx.orm.rollback()
                 raise web.unauthorized()
+
             def success(self):
                 web.ctx.orm.commit()
                 raise weblib.nocontent()
@@ -193,15 +199,19 @@ class RateDriveRequestController(ParamAuthorizableController):
             def invalid_form(self, errors):
                 web.ctx.orm.rollback()
                 ret.set(jsonify(success=False, errors=errors))
+
             def driver_not_found(self, driver_id):
                 web.ctx.orm.rollback()
                 raise web.notfound()
+
             def unauthorized(self):
                 web.ctx.orm.rollback()
                 raise web.unauthorized()
+
             def drive_request_not_found(self, drive_request_id):
                 web.ctx.orm.rollback()
                 raise web.notfound()
+
             def success(self):
                 web.ctx.orm.commit()
                 raise weblib.nocontent()
