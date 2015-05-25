@@ -155,8 +155,12 @@ class AcceptPassengerController(ParamAuthorizableController):
         add_drive_request = AddDriveRequestWorkflow()
         offered_pickup_time = default_offered_pickup_time(web.input())
         params = web.input(offered_pickup_time=offered_pickup_time)
+        ret = Future()
 
         class AddDriveRequestSubscriber(object):
+            def invalid_form(self, errors):
+                web.ctx.orm.rollback()
+                ret.set(jsonify(success=False, errors=errors))
             def not_found(self, driver_id):
                 web.ctx.orm.rollback()
                 raise web.notfound()
