@@ -178,6 +178,7 @@ class AcceptPassengerController(ParamAuthorizableController):
                                   PassengersRepository, passenger_id,
                                   DriveRequestsRepository,
                                   NotifyPassengerDriveRequestPending)
+        return ret.get()
 
 
 class RateDriveRequestController(ParamAuthorizableController):
