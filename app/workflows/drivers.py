@@ -383,9 +383,3 @@ class RateDriveRequestWorkflow(Publisher):
         form_validator.perform(rates_forms.add(), params,
                                describe_invalid_form_localized(gettext,
                                                                user.locale))
-
-
-class HonkPassengerWorkflow(Publisher):
-    def perform(self, orm, logger, user, drivers_repository, driver_id,
-                passengers_repository, passenger_id):
-        self.publish('succes')

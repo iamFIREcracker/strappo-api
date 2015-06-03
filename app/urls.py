@@ -5,7 +5,6 @@ from app.controllers import InfoController
 from app.controllers.drive_requests import ListActiveDriveRequestsController
 from app.controllers.drive_requests import ListUnratedDriveRequestsController
 from app.controllers.drivers import AcceptPassengerController
-from app.controllers.drivers import HonkPassengerController
 from app.controllers.drivers import AddDriverController
 from app.controllers.drivers import CancelDriveOfferController
 from app.controllers.drivers import DeactivateDriverController
@@ -40,7 +39,6 @@ URLS = (
     '/1/drivers/add', AddDriverController,
     '/1/drivers/(.+)/deactivate', DeactivateDriverController,
     '/1/drivers/(.+)/accept/passenger/(.+)', AcceptPassengerController,
-    '/1/drivers/(.+)/honk/passenger/(.+)', HonkPassengerController,
     '/1/drivers/(.+)/cancel/drive_request/(.+)', CancelDriveOfferController,
     '/1/drivers/(.+)/rate/drive_request/(.+)', RateDriveRequestController,
 
