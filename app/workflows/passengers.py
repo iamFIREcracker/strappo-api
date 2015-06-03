@@ -13,7 +13,7 @@ from strappon.pubsub.drive_requests import MultipleDriveRequestsSerializer
 from strappon.pubsub.notifications import NotificationsResetter
 from strappon.pubsub.passengers import ExpiredPassengersGetter
 from strappon.pubsub.passengers import ActivePassengerWithIdGetter
-from strappon.pubsub.passengers import PassengerWithIdGetter
+from strappon.pubsub.passengers import MatchedPassengerWithIdGetter
 from strappon.pubsub.passengers import MultiplePassengersWithIdGetter
 from strappon.pubsub.passengers import MultiplePassengersDeactivator
 from strappon.pubsub.passengers import MultiplePassengersSerializer
@@ -368,7 +368,7 @@ class AlightPassengerWorkflow(Publisher):
         outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         form_validator = FormValidator()
-        passenger_getter = PassengerWithIdGetter()
+        passenger_getter = MatchedPassengerWithIdGetter()
         with_user_id_authorizer = PassengerWithUserIdAuthorizer()
         passengers_deactivator = MultiplePassengersDeactivator()
         accepted_requests_filter = AcceptedDriveRequestsFilter()
