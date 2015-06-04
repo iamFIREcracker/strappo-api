@@ -36,7 +36,7 @@ class AddDriverWorkflow(Publisher):
     """Defines a workflow to add a new driver."""
 
     def perform(self, gettext, orm, logger, redis, params, repository, user):
-        outer = self # Handy to access ``self`` from inner classes
+        outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         form_validator = FormValidator()
         driver_creator = DriverCreator()
@@ -46,6 +46,7 @@ class AddDriverWorkflow(Publisher):
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
                 outer.publish('invalid_form', errors)
+
             def valid_form(self, form):
                 driver_creator.perform(repository, user.id,
                                        form.d.car_make,
@@ -67,10 +68,10 @@ class AddDriverWorkflow(Publisher):
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
         driver_creator.add_subscriber(logger, DriverCreatorSubscriber())
         notifications_resetter.\
-                add_subscriber(logger, NotificationsResetterSubscriber())
+            add_subscriber(logger, NotificationsResetterSubscriber())
         form_validator.perform(drivers_forms.add(), params,
-                                describe_invalid_form_localized(gettext,
-                                                                user.locale))
+                               describe_invalid_form_localized(gettext,
+                                                               user.locale))
 
 
 class DeactivateDriverWorkflow(Publisher):
@@ -152,7 +153,7 @@ class DeactivateDriverWorkflow(Publisher):
 class NotifyDriverWorkflow(Publisher):
     def perform(self, logger, repository, driver_id, push_adapter, channel,
                 payload):
-        outer = self # Handy to access ``self`` from inner classes
+        outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         driver_getter = DriverWithIdGetter()
         acs_ids_extractor = DriversACSUserIdExtractor()
@@ -163,6 +164,7 @@ class NotifyDriverWorkflow(Publisher):
         class DriverGetterSubscriber(object):
             def driver_not_found(self, driver_id):
                 outer.publish('driver_not_found', driver_id)
+
             def driver_found(self, driver):
                 acs_ids_extractor.perform([driver])
 
@@ -174,6 +176,7 @@ class NotifyDriverWorkflow(Publisher):
         class ACSSessionCreatorSubscriber(object):
             def acs_session_not_created(self, error):
                 outer.publish('failure', error)
+
             def acs_session_created(self, session_id):
                 acs_notifier.perform(push_adapter, session_id, channel,
                                      user_ids_future.get(), payload)
@@ -181,6 +184,7 @@ class NotifyDriverWorkflow(Publisher):
         class ACSNotifierSubscriber(object):
             def acs_user_ids_not_notified(self, error):
                 outer.publish('failure', error)
+
             def acs_user_ids_notified(self):
                 outer.publish('success')
 
@@ -196,7 +200,7 @@ class NotifyDriverWorkflow(Publisher):
 class NotifyDriversWorkflow(Publisher):
     def perform(self, logger, repository, driver_ids, push_adapter, channel,
                 payload_factory):
-        outer = self # Handy to access ``self`` from inner classes
+        outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         drivers_getter = MultipleDriversWithIdGetter()
         payloads_creator = PayloadsByUserCreator()
@@ -226,6 +230,7 @@ class NotifyDriversWorkflow(Publisher):
         class ACSSessionCreatorSubscriber(object):
             def acs_session_not_created(self, error):
                 outer.publish('failure', error)
+
             def acs_session_created(self, session_id):
                 acs_notifier.perform(push_adapter, session_id, channel,
                                      zip(user_ids_future.get(),
@@ -234,6 +239,7 @@ class NotifyDriversWorkflow(Publisher):
         class ACSNotifierSubscriber(object):
             def acs_user_ids_not_notified(self, error):
                 outer.publish('failure', error)
+
             def acs_user_ids_notified(self):
                 outer.publish('success')
 
@@ -325,7 +331,7 @@ class RateDriveRequestWorkflow(Publisher):
     def perform(self, logger, gettext, orm, user, params, driver_id,
                 drive_request_id, drivers_repository,
                 drive_requests_repository, rate_repository):
-        outer = self # Handy to access ``self`` from inner classes
+        outer = self  # Handy to access ``self`` from inner classes
         logger = LoggingSubscriber(logger)
         form_validator = FormValidator()
         driver_getter = DriverWithIdGetter()
@@ -337,6 +343,7 @@ class RateDriveRequestWorkflow(Publisher):
         class FormValidatorSubscriber(object):
             def invalid_form(self, errors):
                 outer.publish('invalid_form', errors)
+
             def valid_form(self, form):
                 v = int(form.d.stars) if form.d.stars else 3
                 stars_future.set(v)
@@ -345,12 +352,14 @@ class RateDriveRequestWorkflow(Publisher):
         class DriverGetterSubscriber(object):
             def driver_not_found(self, driver_id):
                 outer.publish('driver_not_found', driver_id)
+
             def driver_found(self, driver):
                 with_user_id_authorizer.perform(user.id, driver)
 
         class WithUserIdAuthorizerSubscriber(object):
             def unauthorized(self, user_id, driver):
                 outer.publish('unauthorized')
+
             def authorized(self, user_id, driver):
                 drive_request_getter.perform(drive_requests_repository,
                                              drive_request_id,
@@ -360,6 +369,7 @@ class RateDriveRequestWorkflow(Publisher):
         class DriveRequestGetterSubscriber(object):
             def drive_request_not_found(self, id):
                 outer.publish('drive_request_not_found', id)
+
             def drive_request_found(self, request):
                 rate_creator.perform(rate_repository,
                                      request.id,
@@ -376,7 +386,7 @@ class RateDriveRequestWorkflow(Publisher):
         form_validator.add_subscriber(logger, FormValidatorSubscriber())
         driver_getter.add_subscriber(logger, DriverGetterSubscriber())
         with_user_id_authorizer.\
-                add_subscriber(logger, WithUserIdAuthorizerSubscriber())
+            add_subscriber(logger, WithUserIdAuthorizerSubscriber())
         drive_request_getter.add_subscriber(logger,
                                             DriveRequestGetterSubscriber())
         rate_creator.add_subscriber(logger, RateCreatorSubscriber())
