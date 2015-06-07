@@ -67,3 +67,6 @@ msgstr "Not enough minerals (%(credits)s)."
 
 msgid "poi_info_event"
 msgstr "Event"
+
+msgid "alert_honked_driver"
+msgstr "Your driver is approaching, get ready!"

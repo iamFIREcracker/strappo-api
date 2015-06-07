@@ -9,7 +9,9 @@ from strappon.pubsub.drive_requests import UnratedDriveRequestWithIdGetter
 from strappon.pubsub.drive_requests import MultipleDriveRequestsDeactivator
 from strappon.pubsub.drive_requests import MultipleDriveRequestsSerializer
 from strappon.pubsub.drivers import ActiveDriverWithIdGetter
+from strappon.pubsub.drivers import DeepDriverWithIdGetter
 from strappon.pubsub.drivers import DriverCreator
+from strappon.pubsub.drivers import DriverWithLatLonSerializer
 from strappon.pubsub.drivers import DriverWithIdGetter
 from strappon.pubsub.drivers import DriversACSUserIdExtractor
 from strappon.pubsub.drivers import DriverWithUserIdAuthorizer
@@ -19,7 +21,10 @@ from strappon.pubsub.drivers import UnhiddenDriversGetter
 from strappon.pubsub.drivers import UnhiddenDriversByRegionGetter
 from strappon.pubsub.notifications import NotificationsResetter
 from strappon.pubsub.rates import RateCreator
+from strappon.pubsub.passengers import PassengerLinkedToDriverWithIdAuthorizer
+from strappon.pubsub.passengers import PassengerSerializer
 from strappon.pubsub.passengers import MultiplePassengersUnmatcher
+from strappon.pubsub.passengers import DeepMatchedPassengerWithIdGetter
 from strappon.pubsub.users import SerializedUserRegionExtractor
 from weblib.forms import describe_invalid_form_localized
 from weblib.pubsub import FormValidator
@@ -393,3 +398,70 @@ class RateDriveRequestWorkflow(Publisher):
         form_validator.perform(rates_forms.add(), params,
                                describe_invalid_form_localized(gettext,
                                                                user.locale))
+
+
+class HonkPassengerWorkflow(Publisher):
+    def perform(self, orm, logger, user, drivers_repository, driver_id,
+                passengers_repository, passenger_id, task):
+        outer = self  # Handy to access ``self`` from inner classes
+        logger = LoggingSubscriber(logger)
+        driver_getter = DeepDriverWithIdGetter()
+        driver_authorizer = DriverWithUserIdAuthorizer()
+        driver_serializer = DriverWithLatLonSerializer()
+        passenger_getter = DeepMatchedPassengerWithIdGetter()
+        passenger_authorizer = PassengerLinkedToDriverWithIdAuthorizer()
+        passenger_serializer = PassengerSerializer()
+        task_submitter = TaskSubmitter()
+        driver_future = Future()
+
+        class DriverGetterSubscriber(object):
+            def driver_not_found(self, driver_id):
+                outer.publish('not_found', driver_id)
+
+            def driver_found(self, driver):
+                driver_authorizer.perform(user.id, driver)
+
+        class DriverAuthorizerSubscriber(object):
+            def unauthorized(self, user_id, driver):
+                outer.publish('unauthorized')
+
+            def authorized(self, user_id, driver):
+                driver_serializer.perform(driver)
+
+        class DriverSerializerSubscriber(object):
+            def driver_serialized(self, driver):
+                driver_future.set(driver)
+                passenger_getter.perform(passengers_repository, passenger_id)
+
+        class PassengerGetterSubscriber(object):
+            def passenger_not_found(self, passenger_id):
+                outer.publish('not_found', passenger_id)
+
+            def passenger_found(self, passenger):
+                passenger_authorizer.perform(driver_id, passenger)
+
+        class PassengerAuthorizerSubscriber(object):
+            def unauthorized(self, driver_id, passenger):
+                outer.publish('unauthorized')
+
+            def authorized(self, driver_id, passenger):
+                passenger_serializer.perform(passenger)
+
+        class PassengerSerializerSubscriber(object):
+            def passenger_serialized(self, passenger):
+                task_submitter.perform(task, passenger, driver_future.get())
+
+        class TaskSubmitterSubscriber(object):
+            def task_created(self, task_id):
+                outer.publish('success')
+
+        driver_getter.add_subscriber(logger, DriverGetterSubscriber())
+        driver_authorizer.add_subscriber(logger, DriverAuthorizerSubscriber())
+        driver_serializer.add_subscriber(logger, DriverSerializerSubscriber())
+        passenger_getter.add_subscriber(logger, PassengerGetterSubscriber())
+        passenger_authorizer.add_subscriber(logger,
+                                            PassengerAuthorizerSubscriber())
+        passenger_serializer.add_subscriber(logger,
+                                            PassengerSerializerSubscriber())
+        task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
+        driver_getter.perform(drivers_repository, driver_id)

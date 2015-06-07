@@ -386,6 +386,52 @@ def NotifyPassengerDriveRequestCancelledTask(request):
 
 
 @celery.task
+def NotifyPassengerDriverHonkedTask(passenger, driver):
+    channel = web.config.TITANIUM_NOTIFICATION_CHANNEL
+    logger = create_logger()
+    gettext = create_gettext()
+    redis = create_redis()
+    logging_subscriber = LoggingSubscriber(logger)
+    push_adapter = TitaniumPushNotificationsAdapter()
+    notify_passengers = NotifyPassengersWorkflow()
+    ret = Future()
+
+    def payload_factory(user):
+        alert = gettext('alert_honked_driver', lang=user.locale) % \
+            dict(name=driver['user']['name'])
+        badge = redis.\
+            incr(notificationid_for_user(user.id))
+        return json.dumps({
+            'badge': badge,
+            'channel': channel,
+            'slot': 'honk',
+            'latitude': driver['user']['latitude'],
+            'longitude': driver['user']['longitude'],
+            'sound': 'default',
+            'vibrate': True,
+            'icon': 'notificationicon',
+            'alert': alert
+        })
+
+    class NotifyPassengerSubscriber(object):
+        def passenger_not_found(self, passenger_id):
+            ret.set((None, 'Passenger not found: %(passenger_id)s' % locals()))
+
+        def failure(self, error):
+            ret.set((None, error))
+
+        def success(self):
+            ret.set((None, None))
+
+    notify_passengers.add_subscriber(logging_subscriber,
+                                     NotifyPassengerSubscriber())
+    notify_passengers.perform(logger, PassengersRepository,
+                              [passenger['id']], push_adapter,
+                              channel, payload_factory)
+    return ret.get()
+
+
+@celery.task
 def NotifyPassengersExpirationTask(passengers):
     channel = web.config.TITANIUM_NOTIFICATION_CHANNEL
     logger = create_logger()

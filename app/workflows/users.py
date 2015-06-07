@@ -417,6 +417,7 @@ class UpdatePositionWorkflow(Publisher):
 
         class PositionCreatorSubscriber(object):
             def position_created(self, position):
+                user.position = position
                 orm.add(position)
                 outer.publish('success')
 
