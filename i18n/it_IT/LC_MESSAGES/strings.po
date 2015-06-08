@@ -67,3 +67,7 @@ msgstr "Non hai abbastanza minerali (%(credits)s)."
 
 msgid "poi_info_event"
 msgstr "Evento"
+
+msgid "poi_info_bar"
+msgstr "Bar"
+
