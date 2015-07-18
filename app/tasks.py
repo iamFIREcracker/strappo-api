@@ -476,8 +476,8 @@ def NotifyPassengersExpirationTask(passengers):
     return ret.get()
 
 
-@celery.task
-def NotifyUserBonusCreditAddedTask(user, payment):
+@celery.task(bind=True)
+def NotifyUserBonusCreditAddedTask(self, user, payment):
     channel = web.config.TITANIUM_NOTIFICATION_CHANNEL
     logger = create_logger()
     gettext = create_gettext()
@@ -514,7 +514,9 @@ def NotifyUserBonusCreditAddedTask(user, payment):
                             'icon': 'notificationicon',
                             'alert': alert
                         }))
-    return ret.get()
+    _, error = ret.get()
+    if error:
+        self.retry(countdown=min(2 ** self.retries, 128))
 
 
 @celery.task
