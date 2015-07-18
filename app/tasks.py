@@ -8,6 +8,7 @@ import web
 from strappon.pubsub.notifications import notificationid_for_user
 from strappon.repositories.drivers import DriversRepository
 from strappon.repositories.passengers import PassengersRepository
+from strappon.repositories.users import UsersRepository
 from weblib.adapters.push.titanium import TitaniumPushNotificationsAdapter
 from weblib.db import create_session
 from weblib.gettext import create_gettext
@@ -22,6 +23,7 @@ from app.workflows.drivers import NotifyDriversWorkflow
 from app.workflows.drivers import NotifyAllDriversWorkflow
 from app.workflows.passengers import NotifyPassengersWorkflow
 from app.workflows.passengers import DeactivateExpiredPassengersWorkflow
+from app.workflows.users import NotifyUserWorkflow
 
 
 @celery.task
@@ -471,6 +473,47 @@ def NotifyPassengersExpirationTask(passengers):
     notify_passengers.perform(logger, PassengersRepository,
                               [p['id'] for p in passengers],
                               push_adapter, channel, payload_factory)
+    return ret.get()
+
+
+@celery.task
+def NotifyUserBonusCreditAddedTask(user, payment):
+    channel = web.config.TITANIUM_NOTIFICATION_CHANNEL
+    logger = create_logger()
+    gettext = create_gettext()
+    redis = create_redis()
+    logging_subscriber = LoggingSubscriber(logger)
+    push_adapter = TitaniumPushNotificationsAdapter()
+    notify_user = NotifyUserWorkflow()
+    ret = Future()
+    alert = gettext('alert_added_bonus_credit', lang=user['locale']) % \
+        dict(bonus=payment['bonus_credits'])
+    badge = redis.incr(notificationid_for_user(user['id']))
+
+    class NotifyUserSubscriber(object):
+        def user_not_found(self, user_id):
+            ret.set((None, 'User not found: %(user_id)s' % locals()))
+
+        def failure(self, error):
+            ret.set((None, error))
+
+        def success(self):
+            ret.set((None, None))
+
+    notify_user.add_subscriber(logging_subscriber,
+                               NotifyUserSubscriber())
+    notify_user.perform(logger, UsersRepository, user['id'],
+                        push_adapter, channel,
+                        json.dumps({
+                            'badge': badge,
+                            'channel': channel,
+                            'slot': 'bonus',
+                            'bonus': payment['bonus_credits'],
+                            'sound': 'default',
+                            'vibrate': True,
+                            'icon': 'notificationicon',
+                            'alert': alert
+                        }))
     return ret.get()
 
 

@@ -18,7 +18,6 @@ web.config.LOG_ENABLE = config.LOG_ENABLE
 web.config.LOG_FORMAT = config.LOG_FORMAT
 
 web.config.DISABLE_HTTP_ACCEPT_CHECK = config.DISABLE_HTTP_ACCEPT_CHECK
-web.config.ANALYTICS_IP = config.ANALYTICS_IP
 
 web.config.DATABASE_URL = config.DATABASE_URL
 
