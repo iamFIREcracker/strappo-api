@@ -329,7 +329,8 @@ class LoginUserWorkflow(Publisher):
         promo_code_activator.add_subscriber(logger,
                                             PromoCodeActivatorSubscriber())
         payment_creator.add_subscriber(logger, PaymentsCreatorSubscriber())
-        payment_serializer.add_subscriber(logger, PaymentSerializer())
+        payment_serializer.add_subscriber(logger,
+                                          PaymentSerializerSubscriber())
         user_serializer.add_subscriber(logger, UserSerializerSubscriber())
         task_submitter.add_subscriber(logger, TaskSubmitterSubscriber())
         user_updater.add_subscriber(logger, UserUpdaterSubscriber())
