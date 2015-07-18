@@ -516,7 +516,7 @@ def NotifyUserBonusCreditAddedTask(self, user, payment):
                         }))
     _, error = ret.get()
     if error:
-        self.retry(countdown=min(2 ** self.retries, 128))
+        self.retry(countdown=min(2 ** self.request.retries, 128))
 
 
 @celery.task
