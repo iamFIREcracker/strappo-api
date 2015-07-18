@@ -508,7 +508,7 @@ def NotifyUserBonusCreditAddedTask(self, user, payment):
                             'badge': badge,
                             'channel': channel,
                             'slot': 'bonus',
-                            'bonus': payment['bonus_credits'],
+                            'credits': payment['bonus_credits'],
                             'sound': 'default',
                             'vibrate': True,
                             'icon': 'notificationicon',
