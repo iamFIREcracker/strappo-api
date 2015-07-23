@@ -8,6 +8,7 @@ import web
 from strappon.pubsub.notifications import notificationid_for_user
 from strappon.repositories.drivers import DriversRepository
 from strappon.repositories.passengers import PassengersRepository
+from strappon.repositories.users import UsersRepository
 from weblib.adapters.push.titanium import TitaniumPushNotificationsAdapter
 from weblib.db import create_session
 from weblib.gettext import create_gettext
@@ -22,6 +23,7 @@ from app.workflows.drivers import NotifyDriversWorkflow
 from app.workflows.drivers import NotifyAllDriversWorkflow
 from app.workflows.passengers import NotifyPassengersWorkflow
 from app.workflows.passengers import DeactivateExpiredPassengersWorkflow
+from app.workflows.users import NotifyUserWorkflow
 
 
 @celery.task
@@ -36,15 +38,17 @@ def NotifyDriverDriveRequestAccepted(request):
     ret = Future()
     alert = gettext('alert_matched_passenger',
                     lang=request['driver']['user']['locale']) % \
-            dict(name=request['passenger']['user']['name'])
+        dict(name=request['passenger']['user']['name'])
     badge = redis.\
-            incr(notificationid_for_user(request['passenger']['user']['id']))
+        incr(notificationid_for_user(request['passenger']['user']['id']))
 
     class NotifyDriverSubscriber(object):
         def driver_not_found(self, driver_id):
             ret.set((None, 'Driver not found: %(driver_id)s' % locals()))
+
         def failure(self, error):
             ret.set((None, error))
+
         def success(self):
             ret.set((None, None))
 
@@ -78,15 +82,17 @@ def NotifyDriverDriveRequestCancelledByPassengerTask(request):
     ret = Future()
     alert = gettext('alert_cancelled_drive_request_by_passenger',
                     lang=request['driver']['user']['locale']) % \
-            dict(name=request['passenger']['user']['name'])
+        dict(name=request['passenger']['user']['name'])
     badge = redis.\
-            incr(notificationid_for_user(request['driver']['user']['id']))
+        incr(notificationid_for_user(request['driver']['user']['id']))
 
     class NotifyDriverSubscriber(object):
         def driver_not_found(self, driver_id):
             ret.set((None, 'Driver not found: %(driver_id)s' % locals()))
+
         def failure(self, error):
             ret.set((None, error))
+
         def success(self):
             ret.set((None, None))
 
@@ -121,9 +127,9 @@ def NotifyDriversPassengerRegisteredTask(passenger):
 
     def payload_factory(user):
         alert = gettext('alert_unmatched_passenger', lang=user.locale) % \
-                dict(name=passenger['user']['name'])
+            dict(name=passenger['user']['name'])
         badge = redis.\
-                incr(notificationid_for_user(user.id))
+            incr(notificationid_for_user(user.id))
         return json.dumps({
             'badge': badge,
             'channel': channel,
@@ -139,6 +145,7 @@ def NotifyDriversPassengerRegisteredTask(passenger):
     class NotifyDriversSubscriber(object):
         def failure(self, error):
             ret.set((None, error))
+
         def success(self):
             ret.set((None, None))
 
@@ -165,9 +172,9 @@ def NotifyDriversPassengerAlitTask(requests):
         # in the list of requests, so the following operation should
         # be safe!
         alert = gettext('alert_alit_passenger', lang=user.locale) % \
-                dict(name=requests[0]['passenger']['user']['name'])
+            dict(name=requests[0]['passenger']['user']['name'])
         badge = redis.\
-                incr(notificationid_for_user(user.id))
+            incr(notificationid_for_user(user.id))
         return json.dumps({
             'badge': badge,
             'channel': channel,
@@ -183,6 +190,7 @@ def NotifyDriversPassengerAlitTask(requests):
     class NotifyDriversSubscriber(object):
         def failure(self, error):
             ret.set((None, error))
+
         def success(self):
             ret.set((None, None))
 
@@ -210,9 +218,9 @@ def NotifyDriversDeactivatedPassengerTask(requests):
         # in the list of requests, so the following operation should
         # be safe!
         alert = gettext('alert_deactivated_passenger', lang=user.locale) % \
-                dict(name=requests[0]['passenger']['user']['name'])
+            dict(name=requests[0]['passenger']['user']['name'])
         badge = redis.\
-                incr(notificationid_for_user(user.id))
+            incr(notificationid_for_user(user.id))
         return json.dumps({
             'badge': badge,
             'channel': channel,
@@ -228,6 +236,7 @@ def NotifyDriversDeactivatedPassengerTask(requests):
     class NotifyDriversSubscriber(object):
         def failure(self, error):
             ret.set((None, error))
+
         def success(self):
             ret.set((None, None))
 
@@ -254,7 +263,7 @@ def NotifyPassengerDriveRequestPending(request):
         alert = gettext('alert_pending_drive_request', lang=user.locale) % \
             dict(name=request['driver']['user']['name'])
         badge = redis.\
-                incr(notificationid_for_user(user.id))
+            incr(notificationid_for_user(user.id))
         return json.dumps({
             'badge': badge,
             'channel': channel,
@@ -270,13 +279,15 @@ def NotifyPassengerDriveRequestPending(request):
     class NotifyPassengerSubscriber(object):
         def passenger_not_found(self, passenger_id):
             ret.set((None, 'Passenger not found: %(passenger_id)s' % locals()))
+
         def failure(self, error):
             ret.set((None, error))
+
         def success(self):
             ret.set((None, None))
 
     notify_passengers.add_subscriber(logging_subscriber,
-                                    NotifyPassengerSubscriber())
+                                     NotifyPassengerSubscriber())
     notify_passengers.perform(logger, PassengersRepository,
                               [request['passenger']['id']],
                               push_adapter, channel, payload_factory)
@@ -299,9 +310,9 @@ def NotifyPassengersDriverDeactivatedTask(requests):
         # in the list of requests, so the following operation should
         # be safe!
         alert = gettext('alert_deactivated_driver', lang=user.locale) % \
-                dict(name=requests[0]['driver']['user']['name'])
+            dict(name=requests[0]['driver']['user']['name'])
         badge = redis.\
-                incr(notificationid_for_user(user.id))
+            incr(notificationid_for_user(user.id))
         return json.dumps({
             'badge': badge,
             'channel': channel,
@@ -317,6 +328,7 @@ def NotifyPassengersDriverDeactivatedTask(requests):
     class NotifyPassengersSubscriber(object):
         def failure(self, error):
             ret.set((None, error))
+
         def success(self):
             ret.set((None, None))
 
@@ -342,9 +354,9 @@ def NotifyPassengerDriveRequestCancelledTask(request):
     def payload_factory(user):
         alert = gettext('alert_cancelled_drive_request_by_driver',
                         lang=user.locale) % \
-                dict(name=request['driver']['user']['name'])
+            dict(name=request['driver']['user']['name'])
         badge = redis.\
-                incr(notificationid_for_user(user.id))
+            incr(notificationid_for_user(user.id))
         return json.dumps({
             'badge': badge,
             'channel': channel,
@@ -360,15 +372,63 @@ def NotifyPassengerDriveRequestCancelledTask(request):
     class NotifyPassengerSubscriber(object):
         def passenger_not_found(self, passenger_id):
             ret.set((None, 'Passenger not found: %(passenger_id)s' % locals()))
+
         def failure(self, error):
             ret.set((None, error))
+
         def success(self):
             ret.set((None, None))
 
     notify_passengers.add_subscriber(logging_subscriber,
-                                    NotifyPassengerSubscriber())
+                                     NotifyPassengerSubscriber())
     notify_passengers.perform(logger, PassengersRepository,
                               [request['passenger']['id']], push_adapter,
+                              channel, payload_factory)
+    return ret.get()
+
+
+@celery.task
+def NotifyPassengerDriverHonkedTask(passenger, driver):
+    channel = web.config.TITANIUM_NOTIFICATION_CHANNEL
+    logger = create_logger()
+    gettext = create_gettext()
+    redis = create_redis()
+    logging_subscriber = LoggingSubscriber(logger)
+    push_adapter = TitaniumPushNotificationsAdapter()
+    notify_passengers = NotifyPassengersWorkflow()
+    ret = Future()
+
+    def payload_factory(user):
+        alert = gettext('alert_honked_driver', lang=user.locale) % \
+            dict(name=driver['user']['name'])
+        badge = redis.\
+            incr(notificationid_for_user(user.id))
+        return json.dumps({
+            'badge': badge,
+            'channel': channel,
+            'slot': 'honk',
+            'latitude': driver['user']['latitude'],
+            'longitude': driver['user']['longitude'],
+            'sound': 'default',
+            'vibrate': True,
+            'icon': 'notificationicon',
+            'alert': alert
+        })
+
+    class NotifyPassengerSubscriber(object):
+        def passenger_not_found(self, passenger_id):
+            ret.set((None, 'Passenger not found: %(passenger_id)s' % locals()))
+
+        def failure(self, error):
+            ret.set((None, error))
+
+        def success(self):
+            ret.set((None, None))
+
+    notify_passengers.add_subscriber(logging_subscriber,
+                                     NotifyPassengerSubscriber())
+    notify_passengers.perform(logger, PassengersRepository,
+                              [passenger['id']], push_adapter,
                               channel, payload_factory)
     return ret.get()
 
@@ -414,6 +474,49 @@ def NotifyPassengersExpirationTask(passengers):
                               [p['id'] for p in passengers],
                               push_adapter, channel, payload_factory)
     return ret.get()
+
+
+@celery.task(bind=True)
+def NotifyUserBonusCreditAddedTask(self, user, payment):
+    channel = web.config.TITANIUM_NOTIFICATION_CHANNEL
+    logger = create_logger()
+    gettext = create_gettext()
+    redis = create_redis()
+    logging_subscriber = LoggingSubscriber(logger)
+    push_adapter = TitaniumPushNotificationsAdapter()
+    notify_user = NotifyUserWorkflow()
+    ret = Future()
+    alert = gettext('alert_added_bonus_credit', lang=user['locale']) % \
+        dict(bonus=payment['bonus_credits'])
+    badge = redis.incr(notificationid_for_user(user['id']))
+
+    class NotifyUserSubscriber(object):
+        def user_not_found(self, user_id):
+            ret.set((None, 'User not found: %(user_id)s' % locals()))
+
+        def failure(self, error):
+            ret.set((None, error))
+
+        def success(self):
+            ret.set((None, None))
+
+    notify_user.add_subscriber(logging_subscriber,
+                               NotifyUserSubscriber())
+    notify_user.perform(logger, UsersRepository, user['id'],
+                        push_adapter, channel,
+                        json.dumps({
+                            'badge': badge,
+                            'channel': channel,
+                            'slot': 'bonus',
+                            'credits': payment['bonus_credits'],
+                            'sound': 'default',
+                            'vibrate': True,
+                            'icon': 'notificationicon',
+                            'alert': alert
+                        }))
+    _, error = ret.get()
+    if error:
+        self.retry(countdown=min(2 ** self.request.retries, 128))
 
 
 @celery.task

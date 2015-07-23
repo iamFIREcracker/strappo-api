@@ -9,6 +9,7 @@ import weblib
 from strappon.repositories.drivers import DriversRepository
 from strappon.repositories.drive_requests import DriveRequestsRepository
 from strappon.repositories.passengers import PassengersRepository
+from strappon.repositories.positions import PositionsRepository
 from strappon.repositories.rates import RatesRepository
 from strappon.pubsub import serialize_date
 from weblib.pubsub import Future
@@ -22,12 +23,15 @@ from app.tasks import NotifyPassengerDriveRequestPending
 from app.tasks import NotifyPassengerDriveRequestCancelledTask
 from app.tasks import NotifyPassengersDriverDeactivatedTask
 from app.tasks import NotifyDriversDeactivatedPassengerTask
+from app.tasks import NotifyPassengerDriverHonkedTask
 from app.workflows.drivers import AddDriverWorkflow
 from app.workflows.drivers import DeactivateDriverWorkflow
 from app.workflows.drivers import RateDriveRequestWorkflow
+from app.workflows.drivers import HonkPassengerWorkflow
 from app.workflows.drive_requests import AddDriveRequestWorkflow
 from app.workflows.drive_requests import CancelDriveOfferWorkflow
 from app.workflows.passengers import DeactivatePassengerWorkflow
+from app.workflows.users import UpdatePositionWorkflow
 
 
 class AddDriverController(ParamAuthorizableController):
@@ -223,3 +227,47 @@ class RateDriveRequestController(ParamAuthorizableController):
                                DriversRepository, DriveRequestsRepository,
                                RatesRepository)
         return ret.get()
+
+
+class HonkPassengerController(ParamAuthorizableController):
+    @api
+    @authorized
+    def POST(self, driver_id, passenger_id):
+        outer = self
+        logger = LoggingSubscriber(web.ctx.logger)
+        update_position = UpdatePositionWorkflow()
+        honk_passenger = HonkPassengerWorkflow()
+        ret = Future()
+
+        class UpdatePositionSubscriber(object):
+            def invalid_form(self, blob):
+                web.ctx.orm.rollback()
+                ret.set(jsonify(blob))
+
+            def success(self):
+                web.ctx.orm.commit()
+                honk_passenger.perform(web.ctx.orm, web.ctx.logger,
+                                       outer.current_user,
+                                       DriversRepository, driver_id,
+                                       PassengersRepository, passenger_id,
+                                       NotifyPassengerDriverHonkedTask)
+
+        class HonkPassengerSubscriber(object):
+            def not_found(self, driver_id):
+                raise web.notfound()
+
+            def unauthorized(self):
+                raise web.unauthorized()
+
+            def success(self):
+                raise weblib.nocontent()
+
+        update_position.add_subscriber(logger,
+                                       UpdatePositionSubscriber())
+        honk_passenger.add_subscriber(logger,
+                                      HonkPassengerSubscriber())
+        update_position.perform(web.ctx.gettext, web.ctx.orm, web.ctx.logger,
+                                self.current_user,
+                                web.input(latitude=None, longitude=None),
+                                PositionsRepository,
+                                web.config.APP_SERVED_REGIONS)

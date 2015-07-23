@@ -12,7 +12,6 @@ LOG_ENABLE = True
 LOG_FORMAT = '[%(process)d] %(levelname)s %(message)s [in %(pathname)s:%(lineno)d]'
 
 DISABLE_HTTP_ACCEPT_CHECK = False
-ANALYTICS_IP = '127.0.0.1'
 
 DATABASE_URL = 'sqlite:///appdb.sqlite'
 

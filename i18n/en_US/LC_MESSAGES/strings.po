@@ -71,3 +71,8 @@ msgstr "Event"
 msgid "poi_info_bar"
 msgstr "Bar"
 
+msgid "alert_honked_driver"
+msgstr "Your driver is approaching, get ready!"
+
+msgid "alert_added_bonus_credit"
+msgstr "alert_added_bonus_credit %(bonus)s"

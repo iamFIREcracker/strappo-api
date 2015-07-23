@@ -76,6 +76,10 @@ loop() {
             echo ${location}
             DRIVERID=$(echo $location | cut -d/ -f 6)
             ;;
+        ap)
+            data="token=${DRIVER_TOKENID}"
+            gimmeurjson ${SERVER}/1/drivers/${DRIVERID}/accept/passenger/${PASSENGERID} POST "$data"
+            ;;
         hp)
             data="token=${DRIVER_TOKENID}"
             data="$data&latitude=43.8727249"
@@ -135,6 +139,10 @@ loop() {
             echo ${location}
             PASSENGERID=$(echo $location | cut -d/ -f 6)
             ;;
+        ad)
+            data="token=${PASSENGER_TOKENID}"
+            gimmeurjson ${SERVER}/1/passengers/${PASSENGERID}/accept/driver/${DRIVERID} POST "$data"
+            ;;
         cf)
             shift
             data="token=${PASSENGER_TOKENID}"
@@ -168,30 +176,16 @@ loop() {
                 ;;
             esac
             ;;
-        a)
-            shift
-            case $1 in
-            pc)
-                data="token=${PASSENGER_TOKENID}"
-                data="$data&name=TUTTIBRIAI15"
-                gimmeurjson ${SERVER}/1/users/${PASSENGER_USERID}/activate/promo_code POST "$data"
-                ;;
-            *)
-                wtf
-            esac
+        ap)
+            data="token=${PASSENGER_TOKENID}"
+            data="$data&name=TUTTIBRIAI15"
+            gimmeurjson ${SERVER}/1/users/${PASSENGER_USERID}/activate/promo_code POST "$data"
             ;;
-        u)
-            shift
-            case $1 in
-            p)
-                data="token=${PASSENGER_TOKENID}"
-                data="$data&latitude=43.8727249"
-                data="$data&longitude=10.250217"
-                gimmeurjson ${SERVER}/1/users/${PASSENGER_USERID}/update/position POST "$data"
-                ;;
-            *)
-                wtf
-            esac
+        up)
+            data="token=${PASSENGER_TOKENID}"
+            data="$data&latitude=43.878883"
+            data="$data&longitude=10.250298"
+            gimmeurjson ${SERVER}/1/users/${DRIVER_USERID}/update/position POST "$data"
             ;;
         mf)
             shift

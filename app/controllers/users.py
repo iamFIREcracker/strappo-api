@@ -23,6 +23,7 @@ from weblib.utils import jsonify
 from app.controllers import ParamAuthorizableController
 from app.tasks import NotifyDriversDeactivatedPassengerTask
 from app.tasks import NotifyPassengersDriverDeactivatedTask
+from app.tasks import NotifyUserBonusCreditAddedTask
 from app.workflows.drivers import DeactivateDriverWorkflow
 from app.workflows.passengers import DeactivatePassengerWorkflow
 from app.workflows.users import ActivatePromoCodeWorkflow
@@ -134,7 +135,8 @@ class LoginUserController(ParamAuthorizableController):
                                  PromoCodesRepository,
                                  web.ctx.default_promo_code,
                                  PaymentsRepository,
-                                 TokensRepository)
+                                 TokensRepository,
+                                 NotifyUserBonusCreditAddedTask)
         return ret.get()
 
 
