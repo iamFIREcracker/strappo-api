@@ -21,6 +21,8 @@ class ParamAuthorizableController(AbstractParamAuthorizableController):
 class InfoController(object):
     def GET(self):
         return jsonify({
+            'min_version_android': web.config.APP_MIN_VERSION_ANDROID,
+            'min_version_ios': web.config.APP_MIN_VERSION_IOS,
             'min_version': web.config.APP_MIN_VERSION,
             'served_regions': web.config.APP_SERVED_REGIONS
         })
