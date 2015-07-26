@@ -75,4 +75,4 @@ msgid "alert_honked_driver"
 msgstr "Your driver is approaching, get ready!"
 
 msgid "alert_added_bonus_credit"
-msgstr "alert_added_bonus_credit %(bonus)s"
+msgstr "You just got € %(bonus)s in bonus credits that you can use to go around the city for free!"
