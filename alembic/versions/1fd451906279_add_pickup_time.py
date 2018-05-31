@@ -1,14 +1,14 @@
 """add pickup_time
 
 Revision ID: 1fd451906279
-Revises: 26a0446f93b6
+Revises: 1c47b16ffb16
 Create Date: 2015-01-06 10:54:29.190817
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '1fd451906279'
-down_revision = '26a0446f93b6'
+down_revision = '1c47b16ffb16'
 
 from alembic import op
 import sqlalchemy as sa
